@@ -28,11 +28,11 @@
 <script setup lang="ts">
 const links = [
   { to: "/", label: "Overview", icon: "i-heroicons-squares-2x2-16-solid" },
-  {
-    to: "/servers",
-    label: "Servers",
-    icon: "i-heroicons-server-stack-16-solid",
-  },
+  // {
+  //   to: "/servers",
+  //   label: "Servers",
+  //   icon: "i-heroicons-server-stack-16-solid",
+  // },
   // { to: "/settings", label: "Settings", icon: "i-heroicons-cog-16-solid" },
 ];
 </script>

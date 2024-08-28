@@ -1,20 +1,16 @@
 <template>
   <UContainer>
     <UPage>
-      <UPageHeader
-        headline="Server"
-        title="Create"
-        description="Create a new server."
-      />
+      <UPageHeader title="Create Server">
+        <template #description>
+          <UProgress
+            :max="['Choose Type', 'Details', 'Settings', 'Review']"
+            :value="step"
+            :ui="{ step: { align: 'text-left' } }"
+          />
+        </template>
+      </UPageHeader>
       <UPageBody class="flex flex-col gap-4">
-        <UProgress
-          :max="['Choose Type', 'Details', 'Settings', 'Review']"
-          :value="step"
-          :ui="{ step: { align: 'text-left' } }"
-        />
-
-        <hr class="border-gray-200 dark:border-gray-800 my-4" />
-
         <component :is="stepComponents[step]" v-model:form="form" />
 
         <hr class="border-gray-200 dark:border-gray-800 my-4" />
@@ -46,12 +42,13 @@
 </template>
 
 <script lang="ts" setup>
-import Type from "~/components/server/steps/type.vue";
-import Details from "~/components/server/steps/details.vue";
+import Type from "~/components/server/steps/Type.vue";
+import Details from "~/components/server/steps/Details.vue";
+import ServerProperties from "~/components/server/steps/ServerProperties.vue";
 
 const step = ref(0);
 
-const stepComponents = [Type, Details];
+const stepComponents = [Type, Details, ServerProperties];
 
 const form = ref<Record<string, string | null>>({
   type: null,
@@ -60,6 +57,7 @@ const form = ref<Record<string, string | null>>({
   domain: null,
   version: null,
   memory: null,
+  difficulty: "normal",
 });
 
 function nextStep() {

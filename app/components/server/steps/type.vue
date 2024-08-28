@@ -42,8 +42,10 @@
           v-model="form.version"
           v-if="field.type === 'version'"
           :options="versionOptions"
+          value-attribute="value"
+          option-attribute="label"
         />
-        <UInput v-model="form[field.name]" v-else />
+        <UInput v-model="form[field.name]" :type="field.type" v-else />
       </UFormGroup>
     </UDashboardSection>
   </template>
@@ -124,7 +126,6 @@ const types = [
       {
         name: "CF_FILE_ID",
         label: "File ID",
-        required: true,
         type: "text",
       },
     ],
