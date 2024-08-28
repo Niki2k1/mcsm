@@ -15,4 +15,30 @@ export default defineNuxtConfig({
   colorMode: {
     preference: "dark",
   },
+
+  nitro: {
+    storage: {
+      proxy: {
+        driver: "fs",
+        base: "./.data/proxy",
+      },
+    },
+
+    imports: {
+      presets: [
+        {
+          from: "h3-zod",
+          imports: [
+            "useValidatedQuery",
+            "useValidatedBody",
+            "useValidatedParams",
+          ],
+        },
+        {
+          from: "consola",
+          imports: ["consola"],
+        },
+      ],
+    },
+  },
 });
