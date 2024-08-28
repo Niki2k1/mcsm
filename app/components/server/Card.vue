@@ -17,7 +17,10 @@
           {{ server.status }}
         </UBadge>
       </div>
-      <p class="mb-2 font-[Minecraft] text-sm">{{ server.motd }}</p>
+      <p
+        class="mb-2 font-[Minecraft] text-sm"
+        v-html="motdParser(server.motd)"
+      />
       <div class="flex justify-between text-sm">
         <span class="flex gap-2 items-center">
           <UIcon name="i-heroicons-users-20-solid" />
@@ -43,6 +46,8 @@ defineProps<{
     status: string;
   };
 }>();
+
+const motdParser = useMotdParser();
 
 const getStatusColor = (status: string) => {
   switch (status.toLowerCase()) {

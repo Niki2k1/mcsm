@@ -22,7 +22,7 @@ const servers = ref([
   {
     id: 1,
     name: "Hypixel",
-    motd: "Welcome to Hypixel - The Best Minecraft Server",
+    motd: "§aHypixel Network §7§c1.8/1.9/1.10/1.11/1.12 §e§lNEW PTL GAME:§b§l THE BRIDGE",
     currentPlayers: 45000,
     maxPlayers: 100000,
     ping: 23,
