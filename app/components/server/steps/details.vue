@@ -31,29 +31,24 @@
           class="grid grid-cols-2 gap-2"
           :ui="{ container: '' }"
         >
-          <UInput
-            v-model="form.domain"
-            type="text"
-            placeholder="my-awesome-server"
-            autocomplete="off"
-            size="md"
-          >
-            <template #trailing>
-              <span class="text-gray-500 dark:text-gray-400 text-sm"
-                >.niki2k1.dev</span
-              >
-            </template>
-          </UInput>
-        </UFormGroup>
-
-        <UFormGroup
-          name="version"
-          label="Version"
-          required
-          class="grid grid-cols-2 gap-2"
-          :ui="{ container: '' }"
-        >
-          <USelectMenu v-model="form.version" :options="versionOptions" />
+          <div class="grid grid-cols-3 gap-2">
+            <UInput
+              v-model="form.subdomain"
+              class="col-span-2"
+              type="text"
+              placeholder="my-awesome-server"
+              autocomplete="off"
+              size="md"
+            />
+            <USelectMenu
+              v-model="form.domain"
+              class="col-span-1"
+              :options="domains"
+              label="Domain"
+              placeholder="Select a domain"
+              size="md"
+            />
+          </div>
         </UFormGroup>
 
         <UFormGroup
@@ -75,8 +70,13 @@ import type { FormError, FormSubmitEvent } from "#ui/types";
 
 const form = defineModel<Record<string, string>>("form");
 
-const { data: versionOptions } = useFetch("/api/minecraft/versions", {
+const { data: domains } = useFetch<string[]>("/api/domains", {
   default: () => [],
+});
+
+watch(domains, (domains) => {
+  if (!form.value) return;
+  form.value.domain = domains[0] ?? "";
 });
 
 const memoryOptions = [

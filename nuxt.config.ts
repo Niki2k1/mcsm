@@ -22,6 +22,11 @@ export default defineNuxtConfig({
         driver: "fs",
         base: "./.data/proxy",
       },
+
+      objects: {
+        driver: "fs",
+        base: "./.data/objects",
+      },
     },
 
     imports: {
