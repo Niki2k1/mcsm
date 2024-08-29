@@ -40,7 +40,7 @@ const servers = ref([
   {
     id: 3,
     name: "CubeCraft",
-    motd: "CubeCraft Games - Unique Minecraft Mini-games",
+    motd: "CubeCraft Games - Unique Minecraft §kMini-games",
     currentPlayers: 8000,
     maxPlayers: 20000,
     ping: 67,

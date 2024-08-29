@@ -3,7 +3,7 @@
     <h3 class="text-lg font-bold py-2" v-if="title">{{ title }}</h3>
     <nav class="relative">
       <ul class="flex flex-col gap-2">
-        <li v-for="player in players" :key="player.id">
+        <li v-for="player in players">
           <UserListItem :player @remove="remove" />
         </li>
         <li>

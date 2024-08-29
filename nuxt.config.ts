@@ -8,7 +8,7 @@ export default defineNuxtConfig({
 
   devtools: { enabled: true },
 
-  modules: ["@nuxt/ui", "@nuxtjs/color-mode", "@nuxt/fonts"],
+  modules: ["@nuxt/ui", "@nuxtjs/color-mode", "@nuxt/fonts", "@vueuse/nuxt"],
 
   extends: ["@nuxt/ui-pro"],
 

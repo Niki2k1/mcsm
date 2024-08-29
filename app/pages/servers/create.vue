@@ -4,7 +4,7 @@
       <UPageHeader title="Create Server">
         <template #description>
           <UProgress
-            :max="['Choose Type', 'Details', 'Settings', 'Review']"
+            :max="['Choose Type', 'Details', 'Server Properties', 'Review']"
             :value="step"
             :ui="{ step: { align: 'text-left' } }"
           />
@@ -57,7 +57,10 @@ const form = ref<Record<string, string | null>>({
   domain: null,
   version: null,
   memory: null,
+  MOTD: "",
   difficulty: "normal",
+  operators: [],
+  whitelist: [],
 });
 
 function nextStep() {

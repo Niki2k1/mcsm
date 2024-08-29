@@ -7,7 +7,7 @@ export default defineEventHandler(async (event) => {
 
   const storage = useStorage("objects");
 
-  const domains = (await storage.getItem<string[]>("domains")) ?? [];
+  const domains = (await storage.getItem<string[]>("domains.json")) ?? [];
 
   if (domains.includes(domain)) {
     throw createError({
@@ -18,7 +18,7 @@ export default defineEventHandler(async (event) => {
 
   domains.push(domain);
 
-  await storage.setItem("domains", domains);
+  await storage.setItem("domains.json", domains);
 
   return {
     message: `Domain '${domain}' successfully created`,

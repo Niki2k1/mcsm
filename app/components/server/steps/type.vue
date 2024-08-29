@@ -62,7 +62,11 @@ import fabric from "~/assets/fabric.png";
 import forge from "~/assets/forge.svg";
 
 const form = defineModel<Record<string, string>>("form", {
-  default: { type: "vanilla", flavor: "", modpackId: "" },
+  default: {
+    type: "vanilla",
+    flavor: "",
+    modpackId: "",
+  },
 });
 
 const { data: versionOptions } = useFetch("/api/minecraft/versions", {

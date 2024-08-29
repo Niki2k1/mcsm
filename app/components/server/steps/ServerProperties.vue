@@ -6,7 +6,7 @@
       :validate-on="['submit']"
       @submit="onSubmit"
     >
-      <UDashboardSection title="Server">
+      <UDashboardSection title="Server Properties">
         <UFormGroup
           v-for="field in formFields"
           :key="field.name"
@@ -25,6 +25,11 @@
             size="md"
           />
 
+          <UCheckbox
+            v-if="field.type === 'checkbox'"
+            v-model="form[field.name]"
+          />
+
           <USelectMenu
             v-if="field.type === 'select'"
             v-model="form[field.name]"
@@ -32,6 +37,13 @@
             value-attribute="value"
             option-attribute="label"
           />
+
+          <UserList
+            v-if="field.type === 'user-list'"
+            v-model="form[field.name]"
+          />
+
+          <Motd v-if="field.name === 'MOTD'" :motd="form[field.name]" />
         </UFormGroup>
       </UDashboardSection>
     </UForm>
@@ -52,6 +64,13 @@ const formFields = ref([
     placeholder: "Welcome to the §3server!",
   },
   {
+    name: "world-name",
+    label: "World Name",
+    type: "text",
+    required: true,
+    placeholder: "World",
+  },
+  {
     name: "difficulty",
     label: "Difficulty",
     type: "select",
@@ -65,11 +84,41 @@ const formFields = ref([
     required: true,
   },
   {
+    name: "hardcore",
+    label: "Hardcore",
+    type: "checkbox",
+    required: false,
+  },
+  {
     name: "maxPlayers",
     label: "Max Players",
     type: "number",
     placeholder: "20",
     required: true,
+  },
+  {
+    name: "operators",
+    label: "Operators",
+    type: "user-list",
+    required: false,
+  },
+  {
+    name: "whitelist",
+    label: "Whitelist",
+    type: "user-list",
+    required: false,
+  },
+  {
+    name: "online-mode",
+    label: "Online Mode",
+    type: "checkbox",
+    required: false,
+  },
+  {
+    name: "allow-flight",
+    label: "Allow Flight",
+    type: "checkbox",
+    required: false,
   },
 ]);
 
