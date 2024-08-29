@@ -42,10 +42,10 @@
 </template>
 
 <script lang="ts" setup>
-import Type from "../components/server/steps/Type.vue";
-import Details from "../components/server/steps/Details.vue";
-import ServerProperties from "../components/server/steps/ServerProperties.vue";
-import Review from "../components/server/steps/Review.vue";
+import Type from "../../components/server/steps/Type.vue";
+import Details from "../../components/server/steps/Details.vue";
+import ServerProperties from "../../components/server/steps/ServerProperties.vue";
+import Review from "../../components/server/steps/Review.vue";
 
 const step = ref(0);
 
