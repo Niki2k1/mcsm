@@ -10,5 +10,5 @@ export default defineEventHandler(async (event) => {
 
   await setHeader(event, "Content-Type", "image/png");
 
-  return await cachedSkins(username).catch(() => 0);
+  return Buffer.from(await cachedSkins(username));
 });
