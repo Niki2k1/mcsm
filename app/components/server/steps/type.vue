@@ -39,11 +39,9 @@
         :ui="{ container: '' }"
       >
         <USelectMenu
-          v-model="form.version"
+          v-model="form.VERSION"
           v-if="field.type === 'version'"
           :options="versionOptions"
-          value-attribute="value"
-          option-attribute="label"
         />
         <UInput v-model="form[field.name]" :type="field.type" v-else />
       </UFormGroup>
@@ -61,13 +59,7 @@ import paper from "~/assets/paper.svg";
 import fabric from "~/assets/fabric.png";
 import forge from "~/assets/forge.svg";
 
-const form = defineModel<Record<string, string>>("form", {
-  default: {
-    type: "vanilla",
-    flavor: "",
-    modpackId: "",
-  },
-});
+const form = useCreateForm();
 
 const { data: versionOptions } = useFetch("/api/minecraft/versions", {
   default: () => [],

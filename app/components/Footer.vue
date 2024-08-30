@@ -61,6 +61,11 @@ const links = [
         target: "_blank",
       },
       {
+        label: "MinecraftStatusPinger",
+        to: "https://github.com/woodendoors7/MinecraftStatusPinger",
+        target: "_blank",
+      },
+      {
         label: "Monocraft",
         to: "https://github.com/IdreesInc/Monocraft",
         target: "_blank",
@@ -78,11 +83,6 @@ const links = [
       {
         label: "Infrared",
         to: "https://infrared.dev",
-        target: "_blank",
-      },
-      {
-        label: "Nuxt Coolify",
-        to: "https://github.com/justserdar/nuxt-coolify",
         target: "_blank",
       },
     ],

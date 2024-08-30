@@ -3,39 +3,39 @@
     <UPage>
       <UPageHeader title="Create Server">
         <template #description>
-          <UProgress
-            :max="['Choose Type', 'Details', 'Server Properties', 'Review']"
-            :value="step"
-            :ui="{ step: { align: 'text-left' } }"
-          />
+          <div class="flex flex-col gap-2">
+            <UProgress
+              :max="['Choose Type', 'Details', 'Server Properties', 'Review']"
+              :value="step"
+              :ui="{ step: { align: 'text-left' } }"
+            />
+
+            <div class="flex justify-between">
+              <div>
+                <UButton
+                  icon="i-heroicons-arrow-left-20-solid"
+                  v-if="step > 0"
+                  @click="prevStep"
+                >
+                  Back
+                </UButton>
+              </div>
+
+              <div>
+                <UButton
+                  icon="i-heroicons-arrow-right-20-solid"
+                  v-if="step < 3"
+                  @click="nextStep"
+                >
+                  Next
+                </UButton>
+              </div>
+            </div>
+          </div>
         </template>
       </UPageHeader>
       <UPageBody class="flex flex-col gap-4">
-        <component :is="stepComponents[step]" v-model:form="form" />
-
-        <hr class="border-gray-200 dark:border-gray-800 my-4" />
-
-        <div class="flex justify-between">
-          <div>
-            <UButton
-              icon="i-heroicons-arrow-left-20-solid"
-              v-if="step > 0"
-              @click="prevStep"
-            >
-              Back
-            </UButton>
-          </div>
-          <div>
-            <UButton
-              icon="i-heroicons-arrow-right-20-solid"
-              v-if="step < 3"
-              @click="nextStep"
-            >
-              Next
-            </UButton>
-            <UButton v-else> Create </UButton>
-          </div>
-        </div>
+        <component :is="stepComponents[step]" />
       </UPageBody>
     </UPage>
   </UContainer>
@@ -50,20 +50,6 @@ const stepComponents = [
   resolveComponent("ServerStepsServerProperties"),
   resolveComponent("ServerStepsReview"),
 ];
-
-const form = ref<Record<string, string | null>>({
-  type: null,
-  flavor: null,
-  name: null,
-  domain: null,
-  subdomain: null,
-  version: null,
-  memory: null,
-  MOTD: "",
-  difficulty: "normal",
-  operators: [],
-  whitelist: [],
-});
 
 function nextStep() {
   if (step.value < 3) {

@@ -16,6 +16,17 @@ export default defineNuxtConfig({
     preference: "dark",
   },
 
+  runtimeConfig: {
+    coolify: {
+      instances: {
+        default: {
+          baseUrl: process.env.COOLIFY_BASE_API_URL,
+          apiToken: process.env.COOLIFY_API_TOKEN,
+        },
+      },
+    },
+  },
+
   nitro: {
     storage: {
       proxy: {

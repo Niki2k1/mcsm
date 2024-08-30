@@ -64,14 +64,14 @@ const formFields = ref([
     placeholder: "Welcome to the §3server!",
   },
   {
-    name: "world-name",
+    name: "LEVEL",
     label: "World Name",
     type: "text",
     required: true,
-    placeholder: "World",
+    placeholder: "world",
   },
   {
-    name: "difficulty",
+    name: "DIFFICULTY",
     label: "Difficulty",
     type: "select",
     options: [
@@ -84,13 +84,13 @@ const formFields = ref([
     required: true,
   },
   {
-    name: "hardcore",
+    name: "HARDCORE",
     label: "Hardcore",
     type: "checkbox",
     required: false,
   },
   {
-    name: "maxPlayers",
+    name: "MAX_PLAYERS",
     label: "Max Players",
     type: "number",
     placeholder: "20",
@@ -109,22 +109,20 @@ const formFields = ref([
     required: false,
   },
   {
-    name: "online-mode",
+    name: "ONLINE_MODE",
     label: "Online Mode",
     type: "checkbox",
     required: false,
   },
   {
-    name: "allow-flight",
+    name: "ALLOW_FLIGHT",
     label: "Allow Flight",
     type: "checkbox",
     required: false,
   },
 ]);
 
-const form = defineModel<Record<string, string>>("form", {
-  default: {},
-});
+const form = useCreateForm();
 
 function validate(state: any): FormError[] {
   const errors = [];

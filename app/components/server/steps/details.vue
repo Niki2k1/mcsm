@@ -33,7 +33,7 @@
         >
           <div class="grid grid-cols-3 gap-2">
             <UInput
-              v-model="form.subdomain"
+              v-model="subDomain"
               class="col-span-2"
               type="text"
               placeholder="my-awesome-server"
@@ -43,7 +43,9 @@
             <USelectMenu
               v-model="form.domain"
               class="col-span-1"
-              :options="domains"
+              :options="domainOptions"
+              value-attribute="value"
+              option-attribute="label"
               label="Domain"
               placeholder="Select a domain"
               size="md"
@@ -68,10 +70,17 @@
 <script setup lang="ts">
 import type { FormError, FormSubmitEvent } from "#ui/types";
 
-const form = defineModel<Record<string, string>>("form");
+const form = useCreateForm();
 
 const { data: domains } = useFetch<string[]>("/api/domains", {
   default: () => [],
+});
+
+const domainOptions = computed(() => {
+  return domains.value.map((domain) => ({
+    label: `.${domain}`,
+    value: domain,
+  }));
 });
 
 watch(domains, (domains) => {
@@ -86,6 +95,19 @@ const memoryOptions = [
 ];
 
 const toast = useToast();
+
+const subDomain = computed({
+  get() {
+    if (!form.value.subdomain || form.value.subdomain === "") {
+      return (form.value.name ?? "").toLocaleLowerCase().replaceAll(" ", "-");
+    }
+
+    return form.value.subdomain;
+  },
+  set(value) {
+    form.value.subdomain = value;
+  },
+});
 
 function validate(state: any): FormError[] {
   const errors = [];
