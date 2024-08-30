@@ -80,9 +80,9 @@ watch(domains, (domains) => {
 });
 
 const memoryOptions = [
-  { label: "2 GB", value: 2048, icon: "i-heroicons-user-16-solid" },
-  { label: "4 GB", value: 4096, icon: "i-heroicons-users-16-solid" },
-  { label: "8 GB", value: 8192, icon: "i-heroicons-user-group-16-solid" },
+  { label: "2GB", icon: "i-heroicons-user-16-solid" },
+  { label: "4GB", icon: "i-heroicons-users-16-solid" },
+  { label: "8GB", icon: "i-heroicons-user-group-16-solid" },
 ];
 
 const toast = useToast();
