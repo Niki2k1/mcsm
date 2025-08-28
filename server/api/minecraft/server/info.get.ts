@@ -14,7 +14,7 @@ export default defineEventHandler(async (event) => {
 
   try {
     return await useMinecraftServer({
-      timeout: 1000,
+      timeout: 10000,
       ...options,
     });
   } catch (error) {
