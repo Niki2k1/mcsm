@@ -65,7 +65,7 @@ watchDebounced(
 const interval = ref<NodeJS.Timeout | null>(null);
 
 onMounted(() => {
-  interval.value = setInterval(refresh, 10000);
+  interval.value = setInterval(refresh, 60000);
 });
 
 onUnmounted(() => {
