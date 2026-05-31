@@ -20,5 +20,5 @@
 </template>
 
 <script setup>
-const { data: servers } = useFetch("/api/proxy/configs");
+const { data: servers } = useFetch("/api/server");
 </script>

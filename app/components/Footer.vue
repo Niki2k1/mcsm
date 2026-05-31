@@ -76,13 +76,13 @@ const links = [
     label: "❤️ Special Thanks",
     children: [
       {
-        label: "Coolify",
-        to: "https://coolify.io",
+        label: "itzg/minecraft-server",
+        to: "https://github.com/itzg/docker-minecraft-server",
         target: "_blank",
       },
       {
-        label: "Infrared",
-        to: "https://infrared.dev",
+        label: "Infrarust",
+        to: "https://github.com/Shadowner/Infrarust",
         target: "_blank",
       },
     ],

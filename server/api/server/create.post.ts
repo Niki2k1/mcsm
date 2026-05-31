@@ -1,8 +1,34 @@
 import { z } from "zod";
 
+const MC_PORT = 25565;
+
+/** "2GB" -> { heap: "2G", limitBytes: 3 GiB } (heap + 1 GiB headroom). */
+function parseMemory(memory: string) {
+  const gb = parseInt(memory, 10) || 2;
+  return {
+    heap: `${gb}G`,
+    limitBytes: (gb + 1) * 1024 ** 3,
+  };
+}
+
+/** Make a value safe to use as a Docker container/volume name. */
+function sanitize(value: string) {
+  return value
+    .toLocaleLowerCase()
+    .replace(/[^a-z0-9-]+/g, "-")
+    .replace(/^-+|-+$/g, "");
+}
+
 export default defineEventHandler(async (event) => {
   const data = await useValidatedBody(event, {
-    type: z.enum(["VANILLA", "FTBA", "MODPACK", "FABRIC", "FORGE"]),
+    type: z.enum([
+      "VANILLA",
+      "FTBA",
+      "AUTO_CURSEFORGE",
+      "PAPER",
+      "FABRIC",
+      "FORGE",
+    ]),
     name: z.string(),
     domain: z.string(),
     subdomain: z.string().nullable(),
@@ -29,153 +55,70 @@ export default defineEventHandler(async (event) => {
     CF_FILE_ID: z.string().nullable(),
   });
 
-  const { createApplication, createEnv, start } = useCoolify();
+  const config = useRuntimeConfig();
+  const { provisionServer } = useDocker();
 
-  const subdomain =
-    data.subdomain ?? data.name.toLocaleLowerCase().replaceAll(" ", "-");
+  const subdomain = sanitize(data.subdomain ?? data.name);
+  const domain = `${subdomain}.${data.domain}`;
+  const memory = parseMemory(data.memory);
+
+  // Environment for itzg/minecraft-server. Optional values are only set when
+  // present, matching the image's "leave unset for default" convention.
+  const env: Record<string, string> = {
+    EULA: "true",
+    TYPE: data.type,
+    MEMORY: memory.heap,
+    MOTD: data.MOTD,
+    DIFFICULTY: data.DIFFICULTY,
+    MAX_PLAYERS: data.MAX_PLAYERS.toString(),
+    ONLINE_MODE: data.ONLINE_MODE.toString(),
+    ALLOW_FLIGHT: data.ALLOW_FLIGHT.toString(),
+  };
+
+  if (data.HARDCORE) env.HARDCORE = "true";
+  if (data.LEVEL !== "world") env.LEVEL = data.LEVEL;
+  if (data.FTB_MODPACK_ID) env.FTB_MODPACK_ID = data.FTB_MODPACK_ID;
+  if (data.FTB_MODPACK_VERSION_ID)
+    env.FTB_MODPACK_VERSION_ID = data.FTB_MODPACK_VERSION_ID;
+  if (data.CF_SLUG) env.CF_SLUG = data.CF_SLUG;
+  if (data.CF_API_KEY) env.CF_API_KEY = data.CF_API_KEY;
+  if (data.CF_FILE_ID) env.CF_FILE_ID = data.CF_FILE_ID;
+  if (data.operators.length > 0)
+    env.OPERATORS = data.operators.map((user) => user.uuid).join(",");
+  if (data.whitelist.length > 0)
+    env.WHITELIST = data.whitelist.map((user) => user.uuid).join(",");
+  if (data.VERSION) env.VERSION = data.VERSION.label;
+
+  // Infrarust discovers the container by these labels and routes the domain to
+  // it — no proxy config file required.
+  const labels: Record<string, string> = {
+    "infrarust.enable": "true",
+    "infrarust.domains": domain,
+    "infrarust.port": MC_PORT.toString(),
+    "infrarust.proxy_mode": "passthrough",
+  };
 
   try {
-    const { uuid } = await createApplication({
-      project_uuid: "qc488ow",
-      server_uuid: "f0ggkk8",
-      environment_name: "production",
-      docker_registry_image_name: "itzg/minecraft-server",
-      ports_exposes: "25565",
-      name: data.name,
-      health_check_enabled: false,
+    const container = await provisionServer({
+      name: `mc-${subdomain}`,
+      image: config.docker?.image || "itzg/minecraft-server",
+      env,
+      labels,
+      memoryBytes: memory.limitBytes,
+      port: MC_PORT,
+      volume: `mc-${subdomain}`,
     });
 
-    await createEnv(uuid, {
-      key: "EULA",
-      value: "true",
-    });
-
-    // await createEnv(uuid, {
-    //   key: "MEMORY",
-    //   value: data.memory,
-    // });
-
-    await createEnv(uuid, {
-      key: "TYPE",
-      value: data.type,
-    });
-
-    await createEnv(uuid, {
-      key: "MOTD",
-      value: data.MOTD,
-    });
-
-    await createEnv(uuid, {
-      key: "DIFFICULTY",
-      value: data.DIFFICULTY,
-    });
-
-    await createEnv(uuid, {
-      key: "MAX_PLAYERS",
-      value: data.MAX_PLAYERS.toString(),
-    });
-
-    await createEnv(uuid, {
-      key: "ONLINE_MODE",
-      value: data.ONLINE_MODE.toString(),
-    });
-
-    await createEnv(uuid, {
-      key: "ALLOW_FLIGHT",
-      value: data.ALLOW_FLIGHT.toString(),
-    });
-
-    data.HARDCORE &&
-      (await createEnv(uuid, {
-        key: "HARDCORE",
-        value: data.HARDCORE.toString(),
-      }));
-
-    data.LEVEL !== "world" &&
-      (await createEnv(uuid, {
-        key: "LEVEL",
-        value: data.LEVEL,
-      }));
-
-    data.FTB_MODPACK_ID &&
-      (await createEnv(uuid, {
-        key: "FTB_MODPACK_ID",
-        value: data.FTB_MODPACK_ID,
-      }));
-
-    data.FTB_MODPACK_VERSION_ID &&
-      (await createEnv(uuid, {
-        key: "FTB_MODPACK_VERSION_ID",
-        value: data.FTB_MODPACK_VERSION_ID,
-      }));
-
-    data.CF_SLUG &&
-      (await createEnv(uuid, {
-        key: "CF_SLUG",
-        value: data.CF_SLUG,
-      }));
-
-    data.CF_API_KEY &&
-      (await createEnv(uuid, {
-        key: "CF_API_KEY",
-        value: data.CF_API_KEY,
-      }));
-
-    data.CF_FILE_ID &&
-      (await createEnv(uuid, {
-        key: "CF_FILE_ID",
-        value: data.CF_FILE_ID,
-      }));
-
-    data.operators.length > 0 &&
-      (await createEnv(uuid, {
-        key: "OPERATORS",
-        value: data.operators.map((user) => user.uuid).join(","),
-      }));
-
-    data.whitelist.length > 0 &&
-      (await createEnv(uuid, {
-        key: "WHITELIST",
-        value: data.whitelist.map((user) => user.uuid).join(","),
-      }));
-
-    data.VERSION &&
-      (await createEnv(uuid, {
-        key: "VERSION",
-        value: data.VERSION.label,
-      }));
-
-    await start(uuid);
-
-    await $fetch(`/api/proxy/configs/${subdomain}.${data.domain}/upsert`, {
-      method: "POST",
-      body: {
-        domainName: `${subdomain}.${data.domain}`,
-        listenTo: ":25565",
-        proxyTo: `${uuid}:25565`,
-        proxyProtocol: false,
-        realIp: false,
-        timeout: 1000,
-        disconnectMessage:
-          "Username: {{username}}\nNow: {{now}}\nRemoteAddress: {{remoteAddress}}\nLocalAddress: {{localAddress}}\nDomain: {{domain}}\nProxyTo: {{proxyTo}}\nListenTo: {{listenTo}}",
-        onlineStatus: {
-          versionName: data.VERSION?.label,
-          protocolNumber: data.VERSION?.value,
-          maxPlayers: data.MAX_PLAYERS,
-          playersOnline: 0,
-          playerSamples: [],
-          motd: data.MOTD,
-        },
-        offlineStatus: {
-          versionName: data.VERSION?.label,
-          protocolNumber: data.VERSION?.value,
-          maxPlayers: 0,
-          playersOnline: 0,
-          motd: "Server is currently offline",
-        },
-      },
-    });
+    return {
+      id: container.id,
+      name: container.name,
+      domain,
+    };
   } catch (error) {
-    console.error((error as any).data);
+    console.error(error);
+    throw createError({
+      statusCode: 500,
+      statusMessage: "Failed to create server",
+    });
   }
 });
