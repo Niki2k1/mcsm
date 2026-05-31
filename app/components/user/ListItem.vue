@@ -1,31 +1,22 @@
 <template>
   <UButton
-    icon="i-heroicons-x-mark"
-    variant="solid"
-    color="white"
-    size="lg"
+    color="neutral"
+    variant="soft"
+    block
+    class="justify-start"
     @click="emit('remove', player)"
-    :ui="{ base: 'w-full' }"
   >
     <template #leading>
       <UAvatar
         :src="`/api/minecraft/${player.username}/skin`"
         :alt="`Minecraft Avatar of ${player.username}`"
-        size="xs"
-        :ui="{ rounded: 'rounded-sm' }"
+        size="2xs"
       />
     </template>
+
     {{ player.username }}
 
-    <template #trailing>
-      <UButton
-        class="ml-auto"
-        icon="i-heroicons-x-mark"
-        variant="link"
-        color="red"
-        :padded="false"
-      />
-    </template>
+    <UIcon name="i-heroicons-x-mark" class="ml-auto" />
   </UButton>
 </template>
 
@@ -36,5 +27,3 @@ defineProps<{
 
 const emit = defineEmits(["update", "remove"]);
 </script>
-
-<style></style>

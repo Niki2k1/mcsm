@@ -3,7 +3,7 @@
     <UBadge
       v-for="player in normalized"
       :key="player.id"
-      color="gray"
+      color="neutral"
       variant="subtle"
       class="gap-1.5 pl-1"
     >
@@ -11,12 +11,11 @@
         :src="`/api/minecraft/${player.username}/skin`"
         :alt="`Minecraft Avatar of ${player.username}`"
         size="3xs"
-        :ui="{ rounded: 'rounded-sm' }"
       />
       {{ player.username }}
     </UBadge>
   </div>
-  <span v-else class="text-gray-500 dark:text-gray-400">None</span>
+  <span v-else class="text-muted">None</span>
 </template>
 
 <script setup lang="ts">

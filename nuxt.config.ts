@@ -8,9 +8,11 @@ export default defineNuxtConfig({
 
   devtools: { enabled: true },
 
-  modules: ["@nuxt/ui", "@nuxtjs/color-mode", "@nuxt/fonts", "@vueuse/nuxt"],
+  // Nuxt UI v4 bundles Tailwind, icon, fonts and color-mode and includes the
+  // former Pro components for free (no license, no separate module).
+  modules: ["@nuxt/ui", "@vueuse/nuxt"],
 
-  extends: ["@nuxt/ui-pro"],
+  css: ["~/assets/css/main.css"],
 
   colorMode: {
     preference: "dark",

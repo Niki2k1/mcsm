@@ -1,13 +1,14 @@
 import Docker from "dockerode";
+import type { ServerConfig } from "../schema/server.schema";
 
 /**
  * Direct Docker provisioner.
  *
  * MCSM creates the Minecraft container itself (instead of going through
- * Coolify) and tags it with Infrarust labels. Infrarust's docker provider
- * watches the same daemon, discovers the container by its labels and routes
- * `infrarust.domains` to it over the shared network — so there is no proxy
- * config file to write.
+ * Coolify) and tags it with Infrarust labels plus an `mcsm.config` JSON label
+ * that holds the full wizard config. Docker is the source of truth: the list,
+ * edit and delete flows all read straight from the daemon — there is no
+ * database and no proxy config file.
  *
  * Hosts are looked up by id from `runtimeConfig.docker.hosts`, which keeps the
  * door open for managing multiple Docker daemons later. Only `default` is
@@ -24,9 +25,16 @@ type DockerHostConfig = {
   key?: string;
 };
 
+export type ServerSummary = {
+  id: string;
+  name: string;
+  domain: string;
+  type: string | null;
+  running: boolean;
+  config: ServerConfig | null;
+};
+
 function connect(host: DockerHostConfig): Docker {
-  // Prefer a TCP/TLS connection when a host is configured, otherwise fall back
-  // to the local (or socket-proxied) unix socket.
   if (host.host) {
     return new Docker({
       host: host.host,
@@ -41,17 +49,24 @@ function connect(host: DockerHostConfig): Docker {
   return new Docker({ socketPath: host.socketPath || "/var/run/docker.sock" });
 }
 
+function parseConfig(labels: Record<string, string> = {}): ServerConfig | null {
+  try {
+    return labels["mcsm.config"]
+      ? (JSON.parse(labels["mcsm.config"]) as ServerConfig)
+      : null;
+  } catch {
+    return null;
+  }
+}
+
 export type ProvisionOptions = {
   /** Container name, e.g. `mc-my-server`. Must be unique on the host. */
   name: string;
   image: string;
   env: Record<string, string>;
   labels: Record<string, string>;
-  /** Hard memory limit in bytes (cgroup). */
   memoryBytes?: number;
-  /** Minecraft port inside the container. */
   port?: number;
-  /** Shared Docker network Infrarust is attached to. */
   network?: string;
   /** Named volume mounted at /data for world persistence. */
   volume?: string;
@@ -103,8 +118,6 @@ export const useDocker = (hostId = "default") => {
         Memory: options.memoryBytes,
         RestartPolicy: { Name: "unless-stopped" },
         Binds: options.volume ? [`${options.volume}:/data`] : undefined,
-        // Attach to the shared network so Infrarust can resolve the container
-        // by name and reach it on the internal port.
         NetworkMode: network,
       },
     });
@@ -114,5 +127,82 @@ export const useDocker = (hostId = "default") => {
     return { id: container.id, name: options.name };
   }
 
-  return { docker, ensureImage, provisionServer };
+  /** All MCSM-managed servers on this host. */
+  async function listServers(): Promise<ServerSummary[]> {
+    const containers = await docker.listContainers({
+      all: true,
+      filters: { label: ["mcsm.managed=true"] },
+    });
+
+    return containers.map((container) => {
+      const labels = container.Labels ?? {};
+      const cfg = parseConfig(labels);
+      return {
+        id: container.Id,
+        name: labels["mcsm.name"] ?? cfg?.name ?? "",
+        domain: (labels["infrarust.domains"] ?? "").split(",")[0] ?? "",
+        type: cfg?.type ?? null,
+        running: container.State === "running",
+        config: cfg,
+      };
+    });
+  }
+
+  /** A single server, including the volume backing it. */
+  async function getServer(id: string) {
+    const info = await docker.getContainer(id).inspect();
+    const labels = info.Config?.Labels ?? {};
+    const cfg = parseConfig(labels);
+    const volume = (info.Mounts ?? []).find(
+      (mount) => mount.Destination === "/data"
+    )?.Name;
+
+    return {
+      id: info.Id,
+      name: labels["mcsm.name"] ?? cfg?.name ?? "",
+      domain: (labels["infrarust.domains"] ?? "").split(",")[0] ?? "",
+      running: info.State?.Running ?? false,
+      config: cfg,
+      containerName: (info.Name ?? "").replace(/^\//, ""),
+      volume,
+    };
+  }
+
+  /**
+   * Stop and remove a server. The named volume (the world) is preserved unless
+   * `removeVolume` is set.
+   */
+  async function removeServer(id: string, opts?: { removeVolume?: boolean }) {
+    const container = docker.getContainer(id);
+    const info = await container.inspect();
+
+    try {
+      await container.stop({ t: 10 });
+    } catch {
+      // Already stopped — ignore.
+    }
+    await container.remove({ force: true });
+
+    if (opts?.removeVolume) {
+      const volume = (info.Mounts ?? []).find(
+        (mount) => mount.Destination === "/data"
+      )?.Name;
+      if (volume) {
+        try {
+          await docker.getVolume(volume).remove();
+        } catch {
+          // Volume in use or already gone — ignore.
+        }
+      }
+    }
+  }
+
+  return {
+    docker,
+    ensureImage,
+    provisionServer,
+    listServers,
+    getServer,
+    removeServer,
+  };
 };

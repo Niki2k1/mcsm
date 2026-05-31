@@ -1,60 +1,53 @@
 <template>
-  <UDashboardPanelContent class="pb-24">
-    <UForm
-      :state="form"
-      :validate="validate"
-      :validate-on="['submit']"
-      @submit="onSubmit"
+  <div class="space-y-4">
+    <UFormField
+      v-for="field in formFields"
+      :key="field.name"
+      :name="field.name"
+      :label="field.label"
+      :required="field.required"
     >
-      <UDashboardSection title="Server Properties">
-        <UFormGroup
-          v-for="field in formFields"
-          :key="field.name"
-          :name="field.name"
-          :label="field.label"
-          :required="field.required"
-          class="grid grid-cols-2 gap-2"
-          :ui="{ container: '' }"
-        >
-          <UInput
-            v-if="field.type === 'text' || field.type === 'number'"
-            v-model="form[field.name]"
-            :placeholder="field.placeholder"
-            :type="field.type"
-            autocomplete="off"
-            size="md"
-          />
+      <UInput
+        v-if="field.type === 'text'"
+        v-model="form[field.name]"
+        :placeholder="field.placeholder"
+        autocomplete="off"
+        class="w-full"
+      />
 
-          <UCheckbox
-            v-if="field.type === 'checkbox'"
-            v-model="form[field.name]"
-          />
+      <UInput
+        v-else-if="field.type === 'number'"
+        v-model.number="form[field.name]"
+        type="number"
+        :placeholder="field.placeholder"
+        autocomplete="off"
+        class="w-full"
+      />
 
-          <USelectMenu
-            v-if="field.type === 'select'"
-            v-model="form[field.name]"
-            :options="field.options"
-            value-attribute="value"
-            option-attribute="label"
-          />
+      <UCheckbox
+        v-else-if="field.type === 'checkbox'"
+        v-model="form[field.name]"
+      />
 
-          <UserList
-            v-if="field.type === 'user-list'"
-            v-model="form[field.name]"
-          />
+      <USelectMenu
+        v-else-if="field.type === 'select'"
+        v-model="form[field.name]"
+        :items="field.options"
+        value-key="value"
+        class="w-full"
+      />
 
-          <Motd v-if="field.name === 'MOTD'" :motd="form[field.name]" />
-        </UFormGroup>
-      </UDashboardSection>
-    </UForm>
-  </UDashboardPanelContent>
+      <UserList
+        v-else-if="field.type === 'user-list'"
+        v-model="form[field.name]"
+      />
+
+      <Motd v-if="field.name === 'MOTD'" :motd="form[field.name]" />
+    </UFormField>
+  </div>
 </template>
 
 <script setup lang="ts">
-import type { FormError, FormSubmitEvent } from "#ui/types";
-
-const toast = useToast();
-
 const formFields = ref([
   {
     name: "MOTD",
@@ -123,28 +116,4 @@ const formFields = ref([
 ]);
 
 const form = useCreateForm();
-
-function validate(state: any): FormError[] {
-  const errors = [];
-  if (!state.name)
-    errors.push({ path: "name", message: "Please enter your name." });
-  if (!state.email)
-    errors.push({ path: "email", message: "Please enter your email." });
-  if (
-    (state.password_current && !state.password_new) ||
-    (!state.password_current && state.password_new)
-  )
-    errors.push({
-      path: "password",
-      message: "Please enter a valid password.",
-    });
-  return errors;
-}
-
-async function onSubmit(event: FormSubmitEvent<any>) {
-  // Do something with data
-  console.log(event.data);
-
-  toast.add({ title: "Profile updated", icon: "i-heroicons-check-circle" });
-}
 </script>

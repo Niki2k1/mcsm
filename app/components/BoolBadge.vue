@@ -1,6 +1,6 @@
 <template>
   <UBadge
-    :color="value ? 'green' : 'gray'"
+    :color="value ? 'success' : 'neutral'"
     variant="subtle"
     :icon="value ? 'i-heroicons-check-20-solid' : 'i-heroicons-x-mark-20-solid'"
   >

@@ -13,8 +13,12 @@ config files to manage.
 
 ## Features
 
-- **Guided creation wizard** — a 4-step flow (Type → Details → Properties →
-  Review) for configuring a new server.
+- **Guided create/edit wizard** — a 4-step flow (Type → Details → Properties →
+  Review) in a modal, shared between creating a server and editing an existing
+  one.
+- **Full CRUD from the dashboard** — list, edit and delete servers. Editing
+  recreates the container with the new config while keeping the world volume;
+  deleting removes the container but preserves the volume.
 - **Multiple server types** — Vanilla, Paper, Fabric, Forge, Feed The Beast
   and CurseForge modpacks (Modrinth is stubbed for later).
 - **Version picker** — Minecraft versions are pulled from
@@ -73,18 +77,24 @@ labels:
   infrarust.domains: "my-server.example.com"
   infrarust.port: "25565"
   infrarust.proxy_mode: "passthrough"
+  mcsm.managed: "true"
+  mcsm.name: "My Server"
+  mcsm.config: "{…full wizard config as JSON…}"
 ```
 
-The dashboard lists servers by querying Docker directly (`/api/server`) for
-containers carrying the `infrarust.enable` label, then pings each domain for
-live status.
+**Docker is the source of truth — there is no database.** The full wizard
+config is stashed in the `mcsm.config` label, so the dashboard lists servers by
+querying Docker directly (`/api/server`, filtered on `mcsm.managed=true`),
+pings each domain for live status, and prefills the edit form straight from the
+label. Editing recreates the container (reusing its name and volume) since
+Docker can't mutate env/labels in place.
 
 ## Tech stack
 
 | Area        | Technology |
 | ----------- | ---------- |
 | Framework   | [Nuxt 3](https://nuxt.com) (Vue 3, TypeScript), Nitro server |
-| UI          | [Nuxt UI](https://ui.nuxt.com) + [Nuxt UI Pro](https://ui.nuxt.com/pro), Tailwind CSS |
+| UI          | [Nuxt UI v4](https://ui.nuxt.com) (Pro components included, no license), Tailwind CSS v4 |
 | Validation  | [Zod](https://zod.dev) via `h3-zod` |
 | Storage     | [unstorage](https://unstorage.unjs.io) filesystem driver (domains list) |
 | Provisioning | [dockerode](https://github.com/apocas/dockerode) → Docker Engine API |
@@ -109,8 +119,6 @@ live status.
   ```
 - A shared **Docker network** (default name `infrarust`) that both Infrarust
   and the created Minecraft containers join.
-- A **[Nuxt UI Pro](https://ui.nuxt.com/pro) license key** to build for
-  production (not needed for `pnpm dev`).
 
 ### 1. Clone and install
 
@@ -135,7 +143,6 @@ cp .env.example .env
 | `MC_IMAGE`           | –        | Server image. Default `itzg/minecraft-server`. |
 | `DOCKER_HOST_ADDR`   | –        | Remote Docker daemon host. When set, takes precedence over the socket. |
 | `DOCKER_PORT` / `DOCKER_PROTOCOL` / `DOCKER_CA` / `DOCKER_CERT` / `DOCKER_KEY` | – | Remote daemon port and TLS material. |
-| `NUXT_UI_PRO_LICENSE`| prod     | Nuxt UI Pro license key. Required for `pnpm build`. |
 
 ### 3. Secure the Docker socket ⚠️
 
@@ -164,7 +171,7 @@ label.
 
 ### 5. Run
 
-**Development** (hot reload on `http://localhost:3000`, no license needed):
+**Development** (hot reload on `http://localhost:3000`):
 
 ```bash
 pnpm dev
@@ -173,9 +180,12 @@ pnpm dev
 **Production build & start:**
 
 ```bash
-pnpm build      # requires NUXT_UI_PRO_LICENSE
+pnpm build
 node .output/server/index.mjs
 ```
+
+> Nuxt UI v4 includes the former Pro components for free, so no
+> `NUXT_UI_PRO_LICENSE` is needed to build.
 
 MCSM persists its domains list to the `.data/` directory, so mount it as a
 volume if you containerize the app. See the
@@ -188,23 +198,29 @@ other targets.
 app/
   components/
     server/steps/      # wizard steps: type, details, ServerProperties, Review
-    server/Status.vue  # dashboard list (queries /api/server)
+    server/FormModal.vue # shared create/edit wizard modal
+    server/Status.vue  # dashboard list + delete confirm (queries /api/server)
+    server/Card.vue    # per-server card with edit / delete actions
     user/              # player lookup list (operators / whitelist)
     Motd.vue           # MOTD preview renderer
     ReviewRow / BoolBadge / PlayerPills   # review-screen building blocks
-  composables/         # create-form state, MOTD parser
+  composables/         # create-form state, server-modal state, MOTD parser
   pages/
-    index.vue          # server overview / status
-    servers/create.vue # the creation wizard
+    index.vue          # server overview / dashboard
 server/
   api/
-    server/create.post.ts   # provisions the container via Docker
-    server/index.get.ts      # lists managed containers from Docker
+    server/create.post.ts   # create: provision a container via Docker
+    server/index.get.ts      # list managed servers from Docker
+    server/[id].get.ts       # read one server (prefills edit)
+    server/[id].put.ts       # update: recreate container, keep volume
+    server/[id].delete.ts    # delete: remove container, keep volume
     domains/                 # list / create / delete domains
     minecraft/               # versions, player profile, skin, server status
   utils/
-    useDocker.ts             # dockerode provisioner (pluggable per-host)
+    useDocker.ts             # dockerode client (provision / list / get / remove)
+    serverSpec.ts            # wizard config -> env + labels + volume
     minecraft/               # skin rendering, status pinger, caching
+  schema/server.schema.ts    # shared zod config schema
 public/                      # Monocraft font, favicon
 nuxt.config.ts               # modules, runtimeConfig (docker hosts), storage
 ```
@@ -214,8 +230,8 @@ nuxt.config.ts               # modules, runtimeConfig (docker hosts), storage
 - **Single Docker host by default.** `useDocker(hostId)` resolves daemons from
   `runtimeConfig.docker.hosts`, so multiple hosts can be added later, but only
   `default` is wired up today.
-- **Lifecycle is create-only for now.** Stop/restart/delete of servers from the
-  UI isn't implemented yet.
+- **Start/stop isn't exposed yet.** Create, edit and delete are implemented;
+  pausing a server without deleting it is a natural next step.
 - **Per-server MOTD/offline status** is set as an env var on the container; the
   richer offline-status placeholder behaviour of file-based proxies isn't
   modelled through Infrarust labels.
