@@ -71,6 +71,12 @@ services:
     configs:
       - source: infrarust_config
         target: /app/config/config.toml
+    # Infrarust validates that `servers_dir` exists even when every backend is
+    # discovered via the Docker provider, so give it an empty directory. A named
+    # volume reliably materialises as a *directory* on all platforms (including
+    # Coolify, which would mangle a single-file bind mount).
+    volumes:
+      - infrarust-servers:/app/config/servers
     # Override the image's default CMD. The current binary's CLI is
     # `--config <CONFIG> --plugins-dir <PLUGINS_DIR>` and no longer accepts the
     # old `--servers-dir` flag (it crashes on startup with "unexpected argument
@@ -94,6 +100,9 @@ networks:
 
 volumes:
   mcsm-data:
+  # Empty directory for Infrarust's file provider; routing comes from Docker
+  # labels, so nothing is ever written here — it just has to exist.
+  infrarust-servers:
 
 # Infrarust proxy config (TOML — the v2 binary parses --config as TOML),
 # injected into the container at /app/config/config.toml. Inlined rather than
@@ -107,6 +116,9 @@ configs:
   infrarust_config:
     content: |
       bind = "0.0.0.0:25565"
+      # Static server-config dir. Unused (routing is label-driven) but Infrarust
+      # requires it to exist; an empty named volume is mounted here.
+      servers_dir = "/app/config/servers"
 
       [docker]
       # Talk to Docker through the socket proxy (same as MCSM).
