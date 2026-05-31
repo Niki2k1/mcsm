@@ -48,6 +48,14 @@ COPY --from=source /src/ ./
 COPY --from=frontend-builder /frontend/.output/public/ \
      ./plugins/infrarust-plugin-admin-api/frontend/.output/public/
 
+# The Docker provider isn't compiled in any upstream build, so it has a trivial
+# duplicate-import bug (E0252) that never gets caught: `labels_to_server_config`
+# and `resolve_container_address` are pulled in by both a `pub use labels::{…}`
+# and a redundant `use self::labels::{…}`. The names are already in scope via the
+# pub use, so drop the redundant import line (the compiler itself suggests it).
+RUN sed -i '/^use self::labels::{labels_to_server_config, resolve_container_address};/d' \
+    crates/infrarust-core/src/provider/docker/mod.rs
+
 ENV OPENSSL_STATIC=1
 ENV RUSTFLAGS="-C target-feature=+crt-static"
 # Use Alpine's native gcc as the musl linker. Building for the explicit musl
