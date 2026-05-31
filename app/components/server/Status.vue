@@ -41,6 +41,8 @@
             :server="server"
             @edit="serverModal.openEdit"
             @delete="confirmDelete"
+            @start="setRunning($event.id, true)"
+            @stop="setRunning($event.id, false)"
           />
         </UPageGrid>
       </UPageBody>
@@ -90,6 +92,25 @@ const pendingDelete = ref<{ id: string; name: string } | null>(null);
 function confirmDelete(server: { id: string; name: string }) {
   pendingDelete.value = server;
   deleteOpen.value = true;
+}
+
+async function setRunning(id: string, running: boolean) {
+  try {
+    await $fetch(`/api/server/${id}/${running ? "start" : "stop"}`, {
+      method: "POST",
+    });
+    toast.add({
+      title: running ? "Server starting" : "Server stopping",
+      color: "success",
+    });
+    await refreshNuxtData("servers");
+  } catch (error) {
+    toast.add({
+      title: "Error",
+      description: `Failed to ${running ? "start" : "stop"} server.`,
+      color: "error",
+    });
+  }
 }
 
 async function runDelete() {

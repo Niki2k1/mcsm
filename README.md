@@ -16,9 +16,9 @@ config files to manage.
 - **Guided create/edit wizard** — a 4-step flow (Type → Details → Properties →
   Review) in a modal, shared between creating a server and editing an existing
   one.
-- **Full CRUD from the dashboard** — list, edit and delete servers. Editing
-  recreates the container with the new config while keeping the world volume;
-  deleting removes the container but preserves the volume.
+- **Full lifecycle from the dashboard** — list, start, stop, edit and delete
+  servers. Editing recreates the container with the new config while keeping the
+  world volume; deleting removes the container but preserves the volume.
 - **Multiple server types** — Vanilla, Paper, Fabric, Forge, Feed The Beast
   and CurseForge modpacks (Modrinth is stubbed for later).
 - **Version picker** — Minecraft versions are pulled from
@@ -253,9 +253,11 @@ server/
   api/
     server/create.post.ts   # create: provision a container via Docker
     server/index.get.ts      # list managed servers from Docker
-    server/[id].get.ts       # read one server (prefills edit)
-    server/[id].put.ts       # update: recreate container, keep volume
-    server/[id].delete.ts    # delete: remove container, keep volume
+    server/[id]/index.get.ts    # read one server (prefills edit)
+    server/[id]/index.put.ts    # update: recreate container, keep volume
+    server/[id]/index.delete.ts # delete: remove container, keep volume
+    server/[id]/start.post.ts   # start the container
+    server/[id]/stop.post.ts    # stop the container
     domains/                 # list / create / delete domains
     minecraft/               # versions, player profile, skin, server status
   utils/
@@ -272,8 +274,9 @@ nuxt.config.ts               # modules, runtimeConfig (docker hosts), storage
 - **Single Docker host by default.** `useDocker(hostId)` resolves daemons from
   `runtimeConfig.docker.hosts`, so multiple hosts can be added later, but only
   `default` is wired up today.
-- **Start/stop isn't exposed yet.** Create, edit and delete are implemented;
-  pausing a server without deleting it is a natural next step.
+- **No log/console view yet.** Create, start, stop, edit and delete are
+  implemented; streaming a server's logs or an RCON console is a natural next
+  step.
 - **Per-server MOTD/offline status** is set as an env var on the container; the
   richer offline-status placeholder behaviour of file-based proxies isn't
   modelled through Infrarust labels.

@@ -27,6 +27,25 @@
           </UBadge>
 
           <UButton
+            v-if="server.running"
+            icon="i-heroicons-stop-20-solid"
+            color="warning"
+            variant="ghost"
+            size="xs"
+            aria-label="Stop server"
+            @click="emit('stop', server)"
+          />
+          <UButton
+            v-else
+            icon="i-heroicons-play-20-solid"
+            color="success"
+            variant="ghost"
+            size="xs"
+            aria-label="Start server"
+            @click="emit('start', server)"
+          />
+
+          <UButton
             icon="i-heroicons-pencil-square-20-solid"
             color="neutral"
             variant="ghost"
@@ -75,6 +94,8 @@ const props = defineProps<{
 const emit = defineEmits<{
   edit: [id: string];
   delete: [server: { id: string; name: string }];
+  start: [server: { id: string; name: string }];
+  stop: [server: { id: string; name: string }];
 }>();
 
 const {

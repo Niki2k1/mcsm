@@ -1,5 +1,5 @@
 import { z } from "zod";
-import { serverConfigSchema } from "../../schema/server.schema";
+import { serverConfigSchema } from "../../../schema/server.schema";
 
 /**
  * Editing a server means recreating its container with the new config. Docker

@@ -197,6 +197,26 @@ export const useDocker = (hostId = "default") => {
     }
   }
 
+  /** Start a stopped container (no-op if already running). */
+  async function startServer(id: string) {
+    try {
+      await docker.getContainer(id).start();
+    } catch (error) {
+      // 304 = already started.
+      if ((error as { statusCode?: number }).statusCode !== 304) throw error;
+    }
+  }
+
+  /** Stop a running container (no-op if already stopped). */
+  async function stopServer(id: string) {
+    try {
+      await docker.getContainer(id).stop({ t: 10 });
+    } catch (error) {
+      // 304 = already stopped.
+      if ((error as { statusCode?: number }).statusCode !== 304) throw error;
+    }
+  }
+
   return {
     docker,
     ensureImage,
@@ -204,5 +224,7 @@ export const useDocker = (hostId = "default") => {
     listServers,
     getServer,
     removeServer,
+    startServer,
+    stopServer,
   };
 };
