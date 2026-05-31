@@ -1,0 +1,245 @@
+<template>
+  <div class="space-y-2">
+    <!-- Header toolbar -->
+    <div
+      class="flex flex-wrap items-center gap-1 rounded-t-md border border-default bg-elevated/50 p-1"
+    >
+      <UButton
+        v-for="format in formats"
+        :key="format.code"
+        :icon="format.icon"
+        :color="isActive(format.mark) ? 'primary' : 'neutral'"
+        :variant="isActive(format.mark) ? 'soft' : 'ghost'"
+        size="xs"
+        square
+        :aria-label="format.name"
+        @click="toggle(format.mark)"
+      />
+
+      <USeparator orientation="vertical" class="mx-0.5 h-5" />
+
+      <!-- Color picker -->
+      <UPopover>
+        <UButton
+          color="neutral"
+          variant="ghost"
+          size="xs"
+          square
+          aria-label="Text color"
+        >
+          <span
+            class="size-4 rounded-sm ring-1 ring-inset ring-white/15"
+            :style="{ backgroundColor: activeColor || '#FFFFFF' }"
+          />
+        </UButton>
+
+        <template #content>
+          <div class="p-2">
+            <div class="grid grid-cols-8 gap-1">
+              <button
+                v-for="color in colors"
+                :key="color.code"
+                type="button"
+                class="size-5 rounded-sm ring-1 ring-inset ring-white/10 transition hover:scale-110"
+                :class="{ 'ring-2 ring-primary': activeColor?.toLowerCase() === color.hex.toLowerCase() }"
+                :style="{ backgroundColor: color.hex }"
+                :title="`${color.name} (§${color.code})`"
+                @click="setColor(color.hex)"
+              />
+            </div>
+          </div>
+        </template>
+      </UPopover>
+
+      <UButton
+        color="neutral"
+        variant="ghost"
+        size="xs"
+        icon="i-heroicons-arrow-uturn-left"
+        aria-label="Clear formatting"
+        square
+        @click="clearAll"
+      />
+
+      <div class="ms-auto">
+        <MotdLegend />
+      </div>
+    </div>
+
+    <!-- Inline bubble menu (shown on selection) -->
+    <div
+      ref="bubble"
+      class="flex items-center gap-0.5 rounded-md border border-default bg-default p-1 shadow-lg"
+      style="visibility: hidden"
+    >
+      <UButton
+        v-for="format in formats"
+        :key="format.code"
+        :icon="format.icon"
+        :color="isActive(format.mark) ? 'primary' : 'neutral'"
+        :variant="isActive(format.mark) ? 'soft' : 'ghost'"
+        size="xs"
+        square
+        :aria-label="format.name"
+        @click="toggle(format.mark)"
+      />
+      <USeparator orientation="vertical" class="mx-0.5 h-5" />
+      <button
+        v-for="color in colors"
+        :key="color.code"
+        type="button"
+        class="size-4 rounded-sm ring-1 ring-inset ring-white/10 transition hover:scale-110"
+        :style="{ backgroundColor: color.hex }"
+        :title="`${color.name} (§${color.code})`"
+        @click="setColor(color.hex)"
+      />
+    </div>
+
+    <!-- Editable surface -->
+    <div class="relative -mt-2">
+      <EditorContent
+        :editor="editor"
+        class="rounded-b-md border border-t-0 border-default"
+      />
+      <span
+        v-if="isEmpty"
+        class="pointer-events-none absolute left-3 top-2 text-sm text-dimmed"
+      >
+        Welcome to the server!
+      </span>
+    </div>
+
+    <!-- Live preview -->
+    <div class="rounded-md bg-black/60 px-3 py-2 ring-1 ring-inset ring-white/5">
+      <p class="mb-1 text-[11px] font-medium uppercase tracking-wide text-dimmed">
+        Preview
+      </p>
+      <Motd v-if="model" :motd="model" />
+      <p v-else class="text-sm text-dimmed italic">Nothing to preview yet</p>
+    </div>
+  </div>
+</template>
+
+<script setup lang="ts">
+import { EditorContent, useEditor } from "@tiptap/vue-3";
+import { StarterKit } from "@tiptap/starter-kit";
+import { TextStyle, Color } from "@tiptap/extension-text-style";
+import { BubbleMenuPlugin } from "@tiptap/extension-bubble-menu";
+import { Obfuscated } from "./Obfuscated";
+import {
+  MOTD_COLORS,
+  MOTD_FORMATS,
+  motdToJson,
+  jsonToMotd,
+  type TipTapDoc,
+} from "~/utils/motd";
+
+const model = defineModel<string>({ default: "" });
+
+const colors = MOTD_COLORS;
+const formats = MOTD_FORMATS;
+
+const bubble = useTemplateRef<HTMLElement>("bubble");
+
+const editor = useEditor({
+  content: motdToJson(model.value),
+  extensions: [
+    StarterKit.configure({
+      heading: false,
+      bulletList: false,
+      orderedList: false,
+      listItem: false,
+      blockquote: false,
+      codeBlock: false,
+      code: false,
+      horizontalRule: false,
+      link: false,
+    }),
+    TextStyle,
+    Color,
+    Obfuscated,
+  ],
+  editorProps: {
+    attributes: {
+      class: "motd-surface focus:outline-none",
+      spellcheck: "false",
+    },
+  },
+  onUpdate: ({ editor }) => {
+    const next = jsonToMotd(editor.getJSON() as TipTapDoc);
+    if (next !== model.value) model.value = next;
+  },
+});
+
+// Keep the editor in sync when the model is replaced externally (e.g. the edit
+// modal loading an existing server's MOTD).
+watch(model, (value) => {
+  const ed = editor.value;
+  if (!ed) return;
+  const current = jsonToMotd(ed.getJSON() as TipTapDoc);
+  if (value !== current) ed.commands.setContent(motdToJson(value));
+});
+
+// Wire up the floating bubble menu once both the editor and its element exist.
+let bubbleRegistered = false;
+watchEffect(() => {
+  const ed = editor.value;
+  if (!ed || !bubble.value || bubbleRegistered) return;
+  bubbleRegistered = true;
+  ed.registerPlugin(
+    BubbleMenuPlugin({
+      pluginKey: "motdBubbleMenu",
+      editor: ed,
+      element: bubble.value,
+      updateDelay: 0,
+      shouldShow: ({ state, from, to }) =>
+        from !== to && !state.selection.empty,
+    })
+  );
+});
+
+const isEmpty = computed(() => editor.value?.isEmpty ?? model.value === "");
+const isActive = (mark: string) => editor.value?.isActive(mark) ?? false;
+const activeColor = computed(
+  () => editor.value?.getAttributes("textStyle").color as string | undefined
+);
+
+const toggle = (mark: string) =>
+  editor.value?.chain().focus().toggleMark(mark).run();
+const setColor = (hex: string) =>
+  editor.value?.chain().focus().setColor(hex).run();
+const clearAll = () =>
+  editor.value?.chain().focus().unsetColor().unsetAllMarks().run();
+</script>
+
+<style scoped>
+:deep(.motd-surface) {
+  min-height: 2.5rem;
+  padding: 0.5rem 0.75rem;
+  font-family: "Monocraft", monospace;
+  font-size: 0.95rem;
+  line-height: 1.5;
+  color: #f4f4f5;
+  background-color: rgba(0, 0, 0, 0.35);
+  border-bottom-left-radius: calc(var(--ui-radius) * 1.5);
+  border-bottom-right-radius: calc(var(--ui-radius) * 1.5);
+}
+
+:deep(.motd-surface p) {
+  margin: 0;
+}
+
+/* The obfuscated style scrambles at runtime in-game; in the editor we just
+   flag it so the text stays readable while writing. */
+:deep(.motd-obfuscated) {
+  border-radius: 2px;
+  padding: 0 1px;
+  background-image: repeating-linear-gradient(
+    45deg,
+    rgba(255, 255, 255, 0.12),
+    rgba(255, 255, 255, 0.12) 2px,
+    transparent 2px,
+    transparent 4px
+  );
+}
+</style>

@@ -7,8 +7,10 @@
       :label="field.label"
       :required="field.required"
     >
+      <MotdEditor v-if="field.name === 'MOTD'" v-model="form.MOTD" />
+
       <UInput
-        v-if="field.type === 'text'"
+        v-else-if="field.type === 'text'"
         v-model="form[field.name]"
         :placeholder="field.placeholder"
         autocomplete="off"
@@ -41,13 +43,13 @@
         v-else-if="field.type === 'user-list'"
         v-model="form[field.name]"
       />
-
-      <Motd v-if="field.name === 'MOTD'" :motd="form[field.name]" />
     </UFormField>
   </div>
 </template>
 
 <script setup lang="ts">
+import MotdEditor from "~/components/server/motd/MotdEditor.vue";
+
 const formFields = ref([
   {
     name: "MOTD",
