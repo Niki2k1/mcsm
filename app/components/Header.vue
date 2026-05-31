@@ -24,5 +24,6 @@ const serverModal = useServerModal();
 
 const links = [
   { to: "/", label: "Overview", icon: "i-heroicons-squares-2x2-16-solid" },
+  { to: "/admin", label: "Admin", icon: "i-heroicons-cog-6-tooth-16-solid" },
 ];
 </script>

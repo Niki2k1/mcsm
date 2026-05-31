@@ -13,7 +13,7 @@ export default defineEventHandler(async (event) => {
 
   const config = useRuntimeConfig();
   const { getServer, removeServer, provisionServer } = useDocker();
-  const spec = buildServerSpec(data);
+  const spec = await buildServerSpec(data);
 
   try {
     const existing = await getServer(id);

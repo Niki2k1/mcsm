@@ -46,9 +46,6 @@
         <ReviewRow v-if="form.CF_SLUG" label="CurseForge Slug">
           {{ form.CF_SLUG }}
         </ReviewRow>
-        <ReviewRow v-if="form.CF_API_KEY" label="CurseForge API Key">
-          {{ maskedApiKey }}
-        </ReviewRow>
         <ReviewRow v-if="form.CF_FILE_ID" label="CurseForge File ID">
           {{ form.CF_FILE_ID }}
         </ReviewRow>
@@ -151,11 +148,5 @@ const versionLabel = computed(() => {
   }
 
   return null;
-});
-
-const maskedApiKey = computed(() => {
-  const key = form.value.CF_API_KEY ?? "";
-  if (key.length <= 4) return "••••";
-  return `${"•".repeat(Math.max(key.length - 4, 4))}${key.slice(-4)}`;
 });
 </script>

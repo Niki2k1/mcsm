@@ -24,9 +24,14 @@ export function sanitize(value: string) {
  * itzg image, the Infrarust routing labels, plus the full config stashed as a
  * JSON label so it can be read back for editing (Docker is the source of
  * truth — no database).
+ *
+ * Global secrets (e.g. the CurseForge API key) are pulled from the central
+ * store rather than the per-server config, so they're set once and applied to
+ * every container that needs them.
  */
-export function buildServerSpec(data: ServerConfig) {
+export async function buildServerSpec(data: ServerConfig) {
   const config = useRuntimeConfig();
+  const secrets = await useSecrets().getAll();
   const subdomain = sanitize(data.subdomain ?? data.name);
   const domain = `${subdomain}.${data.domain}`;
   const memory = parseMemory(data.memory);
@@ -53,7 +58,10 @@ export function buildServerSpec(data: ServerConfig) {
   if (data.FTB_MODPACK_VERSION_ID)
     env.FTB_MODPACK_VERSION_ID = data.FTB_MODPACK_VERSION_ID;
   if (data.CF_SLUG) env.CF_SLUG = data.CF_SLUG;
-  if (data.CF_API_KEY) env.CF_API_KEY = data.CF_API_KEY;
+  // CurseForge API key comes from the global secret store (fall back to any
+  // legacy per-server value for backwards compatibility).
+  const cfApiKey = secrets.CURSEFORGE_API_KEY || data.CF_API_KEY;
+  if (cfApiKey) env.CF_API_KEY = cfApiKey;
   if (data.CF_FILE_ID) env.CF_FILE_ID = data.CF_FILE_ID;
   if (data.operators.length > 0)
     env.OPERATORS = data.operators.map((user) => user.uuid).join(",");

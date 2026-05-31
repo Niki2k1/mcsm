@@ -105,7 +105,7 @@ const types = [
   {
     name: "CurseForge",
     value: "AUTO_CURSEFORGE",
-    description: "CurseForge modpack server.",
+    description: "CurseForge modpack server. Set the API key once in Admin → Secrets.",
     icon: curseforge,
     customFields: [
       {
@@ -114,12 +114,6 @@ const types = [
         required: true,
         type: "text",
         placeholder: "all-the-mods-8",
-      },
-      {
-        name: "CF_API_KEY",
-        label: "API Key",
-        required: true,
-        type: "password",
       },
       {
         name: "CF_FILE_ID",
