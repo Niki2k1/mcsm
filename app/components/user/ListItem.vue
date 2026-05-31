@@ -8,13 +8,13 @@
   >
     <template #leading>
       <UAvatar
-        :src="`/api/minecraft/${player.username}/skin`"
-        :alt="`Minecraft Avatar of ${player.username}`"
+        :src="`/api/minecraft/${player.name}/skin`"
+        :alt="`Minecraft Avatar of ${player.name}`"
         size="2xs"
       />
     </template>
 
-    {{ player.username }}
+    {{ player.name }}
 
     <UIcon name="i-heroicons-x-mark" class="ml-auto" />
   </UButton>
@@ -22,7 +22,7 @@
 
 <script lang="ts" setup>
 defineProps<{
-  player: { id: string; username: string };
+  player: { name: string; uuid: string };
 }>();
 
 const emit = defineEmits(["update", "remove"]);
