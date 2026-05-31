@@ -55,6 +55,15 @@
           />
 
           <UButton
+            :to="`/server/${server.id}`"
+            icon="i-heroicons-cog-6-tooth-20-solid"
+            color="neutral"
+            variant="ghost"
+            size="xs"
+            aria-label="Manage server"
+          />
+
+          <UButton
             icon="i-heroicons-pencil-square-20-solid"
             color="neutral"
             variant="ghost"

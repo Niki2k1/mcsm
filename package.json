@@ -25,12 +25,14 @@
     "@xterm/xterm": "^6.0.0",
     "defu": "^6.1.7",
     "dockerode": "^5.0.0",
+    "fflate": "^0.8.3",
     "h3-zod": "^0.5.3",
     "jimp-compact": "0.16.1-2",
     "minecraft-data": "^3.110.2",
     "nuxt": "^4.4.6",
     "rcon-client": "^4.2.5",
     "tailwindcss": "^4.3.0",
+    "tar-stream": "^3.2.0",
     "typescript": "^5.9.2",
     "unstorage": "^1.17.5",
     "vue": "^3.5.18",
@@ -41,6 +43,7 @@
     "@iconify-json/heroicons": "^1.2.3",
     "@iconify-json/tabler": "^1.2.0",
     "@types/dockerode": "^4.0.1",
+    "@types/tar-stream": "^3.1.4",
     "@vueuse/core": "^14.3.0",
     "@vueuse/nuxt": "^14.3.0"
   }

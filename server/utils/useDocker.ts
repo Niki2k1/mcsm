@@ -217,6 +217,11 @@ export const useDocker = (hostId = "default") => {
     }
   }
 
+  /** Restart a container (used to make a server pick up new plugins). */
+  async function restartServer(id: string) {
+    await docker.getContainer(id).restart({ t: 10 });
+  }
+
   return {
     docker,
     ensureImage,
@@ -226,5 +231,6 @@ export const useDocker = (hostId = "default") => {
     removeServer,
     startServer,
     stopServer,
+    restartServer,
   };
 };

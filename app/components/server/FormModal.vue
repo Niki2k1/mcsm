@@ -103,13 +103,15 @@ watch(
 async function submit() {
   loading.value = true;
   try {
+    const onSaved = state.value.onSaved;
+    let result: ServerSaved;
     if (isEdit.value && state.value.serverId) {
-      await $fetch(`/api/server/${state.value.serverId}`, {
-        method: "PUT",
-        body: form.value,
-      });
+      result = await $fetch<ServerSaved>(
+        `/api/server/${state.value.serverId}`,
+        { method: "PUT", body: form.value }
+      );
     } else {
-      await $fetch("/api/server/create", {
+      result = await $fetch<ServerSaved>("/api/server/create", {
         method: "POST",
         body: form.value,
       });
@@ -125,6 +127,7 @@ async function submit() {
 
     close();
     await refreshNuxtData("servers");
+    onSaved?.(result);
   } catch (error) {
     toast.add({
       title: "Error",
