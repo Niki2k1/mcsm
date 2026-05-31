@@ -34,6 +34,38 @@ export type ServerSummary = {
   config: ServerConfig | null;
 };
 
+/**
+ * Resolve a host's connection settings at request time.
+ *
+ * `nuxt.config.ts` reads `process.env.DOCKER_*` when building `runtimeConfig`,
+ * but those reads happen at **build time** and get baked into the published
+ * image — so the prebuilt GHCR image ships with empty Docker connection
+ * settings regardless of what the deployment sets. Nuxt only re-applies env at
+ * runtime for `NUXT_`-prefixed vars, not the friendly `DOCKER_HOST_ADDR` names
+ * this stack uses. Re-read them here so a deployment can point MCSM at the
+ * socket proxy (or any remote daemon) without rebuilding the image.
+ *
+ * Only the single `default` host maps to these flat env vars; any other host id
+ * uses its `runtimeConfig` entry as-is.
+ */
+function resolveHost(
+  hostId: string,
+  host: DockerHostConfig
+): DockerHostConfig {
+  if (hostId !== "default") return host;
+
+  const env = process.env;
+  return {
+    socketPath: env.DOCKER_SOCKET_PATH || host.socketPath,
+    host: env.DOCKER_HOST_ADDR || host.host,
+    port: env.DOCKER_PORT || host.port,
+    protocol: env.DOCKER_PROTOCOL || host.protocol,
+    ca: env.DOCKER_CA || host.ca,
+    cert: env.DOCKER_CERT || host.cert,
+    key: env.DOCKER_KEY || host.key,
+  };
+}
+
 function connect(host: DockerHostConfig): Docker {
   if (host.host) {
     return new Docker({
@@ -84,7 +116,7 @@ export const useDocker = (hostId = "default") => {
     });
   }
 
-  const docker = connect(host);
+  const docker = connect(resolveHost(hostId, host));
 
   /** Pull the image if it is not already present on the host. */
   async function ensureImage(image: string) {
