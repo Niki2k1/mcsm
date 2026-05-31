@@ -70,6 +70,8 @@ export type ProvisionOptions = {
   network?: string;
   /** Named volume mounted at /data for world persistence. */
   volume?: string;
+  /** Container ports to publish on the host (e.g. BlueMap's web UI). */
+  publishPorts?: { container: number; host: number }[];
 };
 
 export const useDocker = (hostId = "default") => {
@@ -108,17 +110,33 @@ export const useDocker = (hostId = "default") => {
     const port = options.port ?? 25565;
     const network = options.network || config.docker?.network || undefined;
 
+    // The MC port is reached via Infrarust on the shared network and is never
+    // published; only explicitly requested ports (e.g. BlueMap) are bound to
+    // the host.
+    const exposedPorts: Record<string, Record<string, never>> = {
+      [`${port}/tcp`]: {},
+    };
+    const portBindings: Record<string, { HostPort: string }[]> = {};
+    for (const mapping of options.publishPorts ?? []) {
+      exposedPorts[`${mapping.container}/tcp`] = {};
+      portBindings[`${mapping.container}/tcp`] = [
+        { HostPort: String(mapping.host) },
+      ];
+    }
+
     const container = await docker.createContainer({
       name: options.name,
       Image: options.image,
       Env: Object.entries(options.env).map(([key, value]) => `${key}=${value}`),
       Labels: options.labels,
-      ExposedPorts: { [`${port}/tcp`]: {} },
+      ExposedPorts: exposedPorts,
       HostConfig: {
         Memory: options.memoryBytes,
         RestartPolicy: { Name: "unless-stopped" },
         Binds: options.volume ? [`${options.volume}:/data`] : undefined,
         NetworkMode: network,
+        PortBindings:
+          Object.keys(portBindings).length > 0 ? portBindings : undefined,
       },
     });
 

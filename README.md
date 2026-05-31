@@ -28,6 +28,10 @@ config files to manage.
   [`minecraft-data`](https://github.com/PrismarineJS/minecraft-data).
 - **Live MOTD preview** — write your MOTD with `§` color/format codes and see
   it rendered in the Minecraft font, including obfuscated-text animation.
+- **BlueMap integration** — toggle a 3D web map for Paper/Fabric/Forge servers.
+  MCSM lets the itzg image auto-install [BlueMap](https://bluemap.bluecolored.de/)
+  from Modrinth and publishes its webserver to a host port, with a **Map** link
+  on each server card.
 - **Operators & whitelist** — look players up by username; their UUID and skin
   avatar are resolved from Mojang automatically.
 - **Review screen** — a formatted overview of every setting before you commit
@@ -292,6 +296,14 @@ nuxt.config.ts               # modules, runtimeConfig (docker hosts), storage
 - **Per-server MOTD/offline status** is set as an env var on the container; the
   richer offline-status placeholder behaviour of file-based proxies isn't
   modelled through Infrarust labels.
+- **BlueMap needs a one-time opt-in and a free host port.** Because BlueMap
+  serves over HTTP (not the Minecraft protocol Infrarust proxies), MCSM
+  publishes its webserver — port `8100` in the container — to the host port you
+  pick in the wizard, so each BlueMap-enabled server needs a *unique* port that
+  the host firewall allows. BlueMap also won't render until you accept Mojang's
+  asset download: after the server's first start, set `accept-download: true` in
+  `bluemap/core.conf` (in the world volume) and restart. Only available for
+  Paper/Fabric/Forge — BlueMap can't run on a vanilla server.
 - This is an early-stage project and APIs/structure may change.
 
 ## License

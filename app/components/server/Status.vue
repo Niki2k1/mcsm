@@ -76,6 +76,7 @@ type Server = {
   domain: string;
   type: string | null;
   running: boolean;
+  config?: { BLUEMAP?: boolean; BLUEMAP_PORT?: number } | null;
 };
 
 const serverModal = useServerModal();

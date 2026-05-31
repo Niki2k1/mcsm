@@ -14,6 +14,8 @@ export type CreateForm = {
   operators: { name: string; uuid: string }[];
   whitelist: { name: string; uuid: string }[];
   LEVEL: string;
+  BLUEMAP: boolean;
+  BLUEMAP_PORT: number;
   FTB_MODPACK_ID: string | null;
   FTB_MODPACK_VERSION_ID: string | null;
   CF_SLUG: string | null;
@@ -37,6 +39,8 @@ export const defaultCreateForm = (): CreateForm => ({
   whitelist: [],
   HARDCORE: false,
   LEVEL: "world",
+  BLUEMAP: false,
+  BLUEMAP_PORT: 8100,
   FTB_MODPACK_ID: null,
   FTB_MODPACK_VERSION_ID: null,
   CF_SLUG: null,

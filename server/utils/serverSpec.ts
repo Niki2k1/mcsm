@@ -1,6 +1,10 @@
 import type { ServerConfig } from "../schema/server.schema";
 
 export const MC_PORT = 25565;
+/** Port BlueMap's integrated webserver listens on inside the container. */
+export const BLUEMAP_WEB_PORT = 8100;
+/** Server types BlueMap can be installed on (plugin/mod loaders). */
+export const BLUEMAP_TYPES = ["PAPER", "FABRIC", "FORGE"] as const;
 
 /** "2GB" -> { heap: "2G", limitBytes: 3 GiB } (heap + 1 GiB headroom). */
 export function parseMemory(memory: string) {
@@ -73,6 +77,27 @@ export function buildServerSpec(data: ServerConfig) {
     "infrarust.proxy_mode": "passthrough",
   };
 
+  // BlueMap: let the itzg image auto-install the right jar for the loader from
+  // Modrinth, then publish its webserver to the host so the 3D map is reachable
+  // (Infrarust only proxies the Minecraft protocol, not HTTP).
+  const bluemapEnabled =
+    data.BLUEMAP && (BLUEMAP_TYPES as readonly string[]).includes(data.type);
+  let bluemap: { hostPort: number; containerPort: number } | undefined;
+
+  if (bluemapEnabled) {
+    const projects = (env.MODRINTH_PROJECTS ?? "")
+      .split(",")
+      .map((slug) => slug.trim())
+      .filter(Boolean);
+    if (!projects.includes("bluemap")) projects.push("bluemap");
+    env.MODRINTH_PROJECTS = projects.join(",");
+
+    const hostPort = data.BLUEMAP_PORT || BLUEMAP_WEB_PORT;
+    bluemap = { hostPort, containerPort: BLUEMAP_WEB_PORT };
+    labels["mcsm.bluemap"] = "true";
+    labels["mcsm.bluemap.port"] = String(hostPort);
+  }
+
   return {
     name: `mc-${subdomain}`,
     volume: `mc-${subdomain}`,
@@ -81,5 +106,6 @@ export function buildServerSpec(data: ServerConfig) {
     labels,
     memoryBytes: memory.limitBytes,
     port: MC_PORT,
+    bluemap,
   };
 }

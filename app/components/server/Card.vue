@@ -46,6 +46,17 @@
           />
 
           <UButton
+            v-if="bluemapUrl"
+            :to="bluemapUrl"
+            target="_blank"
+            icon="i-heroicons-map-20-solid"
+            color="neutral"
+            variant="ghost"
+            size="xs"
+            aria-label="Open BlueMap"
+          />
+
+          <UButton
             icon="i-heroicons-command-line-20-solid"
             color="neutral"
             variant="ghost"
@@ -100,8 +111,17 @@ const props = defineProps<{
     domain: string;
     type: string | null;
     running: boolean;
+    config?: { BLUEMAP?: boolean; BLUEMAP_PORT?: number } | null;
   };
 }>();
+
+// BlueMap serves over HTTP on a host port (not via Infrarust), so link to it on
+// the same host that's serving the dashboard.
+const bluemapUrl = computed(() => {
+  if (!import.meta.client || !props.server.config?.BLUEMAP) return null;
+  const port = props.server.config.BLUEMAP_PORT || 8100;
+  return `${window.location.protocol}//${window.location.hostname}:${port}/`;
+});
 
 const emit = defineEmits<{
   edit: [id: string];

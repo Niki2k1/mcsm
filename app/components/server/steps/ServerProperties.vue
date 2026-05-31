@@ -44,6 +44,34 @@
         v-model="form[field.name]"
       />
     </UFormField>
+
+    <!-- BlueMap is a plugin/mod, so it only applies to mod-capable types. -->
+    <template v-if="bluemapSupported">
+      <UFormField name="BLUEMAP" label="BlueMap (3D web map)">
+        <div class="flex items-center gap-2">
+          <UCheckbox v-model="form.BLUEMAP" />
+          <span class="text-sm text-muted">
+            Auto-install the BlueMap mod/plugin and serve a 3D web map of the
+            world.
+          </span>
+        </div>
+      </UFormField>
+
+      <UFormField
+        v-if="form.BLUEMAP"
+        name="BLUEMAP_PORT"
+        label="BlueMap Web Port"
+        help="Host port the map is published on (must be unique per server). After the first start, set accept-download: true in bluemap/core.conf so BlueMap can fetch Mojang assets."
+      >
+        <UInput
+          v-model.number="form.BLUEMAP_PORT"
+          type="number"
+          placeholder="8100"
+          autocomplete="off"
+          class="w-full"
+        />
+      </UFormField>
+    </template>
   </div>
 </template>
 
@@ -118,4 +146,8 @@ const formFields = ref([
 ]);
 
 const form = useCreateForm();
+
+const bluemapSupported = computed(() =>
+  ["PAPER", "FABRIC", "FORGE"].includes(form.value.type ?? "")
+);
 </script>

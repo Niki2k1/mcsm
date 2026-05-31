@@ -33,6 +33,9 @@ export default defineEventHandler(async (event) => {
       memoryBytes: spec.memoryBytes,
       port: spec.port,
       volume,
+      publishPorts: spec.bluemap
+        ? [{ container: spec.bluemap.containerPort, host: spec.bluemap.hostPort }]
+        : undefined,
     });
 
     return { id: container.id, name: container.name, domain: spec.domain };

@@ -22,6 +22,10 @@ export const serverConfigSchema = z.object({
   whitelist: z.array(z.object({ name: z.string(), uuid: z.string() })),
   HARDCORE: z.boolean(),
   LEVEL: z.string(),
+  // BlueMap 3D web map. Only applies to plugin/mod-capable types
+  // (Paper/Fabric/Forge); BLUEMAP_PORT is the host port the map is served on.
+  BLUEMAP: z.boolean().default(false),
+  BLUEMAP_PORT: z.number().default(8100),
   FTB_MODPACK_ID: z.string().nullable(),
   FTB_MODPACK_VERSION_ID: z.string().nullable(),
   CF_SLUG: z.string().nullable(),
