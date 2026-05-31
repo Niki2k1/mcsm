@@ -8,7 +8,7 @@ RUN corepack enable
 
 # Install dependencies first for better layer caching. Skip lifecycle scripts
 # so `nuxt prepare` (postinstall) doesn't run before the source is present.
-COPY package.json pnpm-lock.yaml ./
+COPY package.json pnpm-lock.yaml pnpm-workspace.yaml ./
 RUN pnpm install --frozen-lockfile --ignore-scripts
 
 COPY . .
