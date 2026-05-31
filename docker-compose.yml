@@ -48,6 +48,15 @@ services:
       MC_IMAGE: itzg/minecraft-server
       # Coolify: generates a domain and routes HTTPS to port 3000.
       SERVICE_FQDN_MCSM_3000: ""
+    # mcsm is multi-homed (dockerproxy for the Docker API, infrarust for RCON
+    # and server pings). When a container is on several networks, Coolify's
+    # Traefik proxy picks one non-deterministically to route through — and if it
+    # picks one it can't reach (e.g. the `internal` dockerproxy network), every
+    # request hangs until it times out (504 Gateway Timeout). Pin routing to
+    # Coolify's proxy network so Traefik always uses the network it shares with
+    # the app. Harmless for plain `docker compose up` (no Traefik reads it).
+    labels:
+      traefik.docker.network: coolify
     volumes:
       - mcsm-data:/app/.data
     networks:
