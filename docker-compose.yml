@@ -94,6 +94,13 @@ services:
     restart: unless-stopped
     depends_on:
       - docker-socket-proxy
+    environment:
+      # Infrarust's docker provider selects the connection method from the
+      # endpoint scheme (tcp:// -> bollard connect_with_http_defaults), but that
+      # bollard helper reads DOCKER_HOST and ignores the endpoint's host:port.
+      # So point it at the socket proxy here; the [docker] endpoint below only
+      # needs the tcp:// scheme to trigger the HTTP path.
+      DOCKER_HOST: tcp://docker-socket-proxy:2375
     # The Infrarust config is injected via the top-level `configs` block below
     # rather than a `volumes:` bind mount. A single-file bind mount is fragile
     # (Docker turns a missing source into a *directory*, and Coolify always
