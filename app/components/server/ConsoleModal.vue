@@ -2,14 +2,14 @@
   <UModal
     v-model:open="state.open"
     :title="`Console — ${state.server?.name ?? ''}`"
-    :ui="{ content: 'max-w-4xl' }"
+    :ui="{ content: 'max-w-4xl h-[80dvh]', body: 'flex flex-col gap-2 min-h-0' }"
   >
     <template #body>
       <div
         ref="termEl"
-        class="h-[60vh] w-full rounded-md overflow-hidden bg-black p-2"
+        class="flex-1 min-h-0 w-full rounded-md overflow-hidden bg-black p-2"
       />
-      <p class="mt-2 text-xs text-muted">
+      <p class="shrink-0 text-xs text-muted">
         Streaming the server console. Type a command and press Enter to run it
         via RCON (the server must be running).
       </p>
@@ -27,6 +27,7 @@ const termEl = ref<HTMLElement | null>(null);
 let term: Terminal | null = null;
 let fitAddon: { fit: () => void } | null = null;
 let source: EventSource | null = null;
+let resizeObserver: ResizeObserver | null = null;
 let inputBuffer = "";
 
 const PROMPT = "\x1b[32m>\x1b[0m ";
@@ -78,10 +79,6 @@ function handleInput(data: string) {
   }
 }
 
-function onResize() {
-  fitAddon?.fit();
-}
-
 async function start() {
   if (!import.meta.client) return;
   await nextTick();
@@ -101,8 +98,16 @@ async function start() {
   term.loadAddon(fitAddon as never);
   term.open(termEl.value);
   fitAddon.fit();
-  setTimeout(() => fitAddon?.fit(), 100);
   term.onData(handleInput);
+
+  // Keep the terminal sized to its (flex) container. The observer fires on the
+  // initial layout, when the modal finishes animating open, and on any resize —
+  // so xterm's row count always matches the visible height and the input line
+  // is never clipped.
+  resizeObserver = new ResizeObserver(() => {
+    requestAnimationFrame(() => fitAddon?.fit());
+  });
+  resizeObserver.observe(termEl.value);
 
   const server = state.value.server!;
   source = new EventSource(`/api/server/${server.id}/logs`);
@@ -114,12 +119,12 @@ async function start() {
   };
 
   writePrompt();
-  window.addEventListener("resize", onResize);
 }
 
 function stop() {
   if (!import.meta.client) return;
-  window.removeEventListener("resize", onResize);
+  resizeObserver?.disconnect();
+  resizeObserver = null;
   source?.close();
   source = null;
   term?.dispose();
