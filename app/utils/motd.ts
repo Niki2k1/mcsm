@@ -94,11 +94,12 @@ interface MotdState {
 
 /**
  * Parse a `§`-coded string into a TipTap document. Accepts both `§` and the
- * common `&` shorthand on input; newlines become hard breaks. Returns a single
- * paragraph so the editor stays a tidy one/two-line field.
+ * common `&` shorthand on input. Each line becomes its own paragraph (the
+ * editor caps this at the two lines Minecraft actually shows), and formatting
+ * carries across the line break just like it does in-game.
  */
 export function motdToJson(motd: string): TipTapDoc {
-  const paragraph: TipTapNode = { type: "paragraph", content: [] };
+  let paragraph: TipTapNode = { type: "paragraph", content: [] };
   const doc: TipTapDoc = { type: "doc", content: [paragraph] };
 
   let color = "";
@@ -135,8 +136,10 @@ export function motdToJson(motd: string): TipTapDoc {
     }
 
     if (ch === "\n") {
+      // Start a new line. Active colour/styles carry over, matching Minecraft.
       flush();
-      paragraph.content!.push({ type: "hardBreak" });
+      paragraph = { type: "paragraph", content: [] };
+      doc.content.push(paragraph);
       continue;
     }
 

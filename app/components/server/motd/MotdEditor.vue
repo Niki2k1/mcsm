@@ -61,6 +61,27 @@
         @click="clearAll"
       />
 
+      <USeparator orientation="vertical" class="mx-0.5 h-5" />
+
+      <UButton
+        v-if="lineCount < 2"
+        color="neutral"
+        variant="ghost"
+        size="xs"
+        icon="i-heroicons-bars-2"
+        label="Add line 2"
+        @click="addSecondLine"
+      />
+      <UButton
+        v-else
+        color="neutral"
+        variant="ghost"
+        size="xs"
+        icon="i-heroicons-minus"
+        label="Remove line 2"
+        @click="removeSecondLine"
+      />
+
       <div class="ms-auto">
         <MotdLegend />
       </div>
@@ -164,6 +185,13 @@ const editor = useEditor({
       class: "motd-surface focus:outline-none",
       spellcheck: "false",
     },
+    // Minecraft only renders two MOTD lines, so cap the editor at two
+    // paragraphs and keep line breaks to real paragraph splits (no hard breaks).
+    handleKeyDown: (view, event) => {
+      if (event.key !== "Enter") return false;
+      if (event.shiftKey) return true;
+      return view.state.doc.childCount >= 2;
+    },
   },
   onUpdate: ({ editor }) => {
     const next = jsonToMotd(editor.getJSON() as TipTapDoc);
@@ -199,7 +227,17 @@ watchEffect(() => {
 });
 
 const isEmpty = computed(() => editor.value?.isEmpty ?? model.value === "");
+const lineCount = computed(() => editor.value?.state.doc.childCount ?? 1);
 const isActive = (mark: string) => editor.value?.isActive(mark) ?? false;
+
+// Split the single line into two, or collapse back to one. Minecraft shows at
+// most two MOTD lines, so this toggles between them.
+const addSecondLine = () =>
+  editor.value?.chain().focus("end").splitBlock().run();
+const removeSecondLine = () => {
+  model.value = (model.value ?? "").split("\n")[0] ?? "";
+  nextTick(() => editor.value?.commands.focus("end"));
+};
 const activeColor = computed(
   () => editor.value?.getAttributes("textStyle").color as string | undefined
 );
@@ -227,6 +265,14 @@ const clearAll = () =>
 
 :deep(.motd-surface p) {
   margin: 0;
+  min-height: 1.4em;
+}
+
+/* Minecraft shows up to two MOTD lines; make the split between them explicit. */
+:deep(.motd-surface p + p) {
+  margin-top: 0.375rem;
+  padding-top: 0.375rem;
+  border-top: 1px dashed var(--ui-border-accented);
 }
 
 /* The obfuscated style scrambles at runtime in-game; in the editor we just
