@@ -212,8 +212,10 @@ The repo ships a turnkey stack so you don't have to wire the pieces yourself:
     through the socket proxy over TCP, restricted to the endpoints they need.
   - The `infrarust` network is shared with the Minecraft containers MCSM
     creates; `dockerproxy` is internal (Docker API only).
-- **`infrarust/config.yaml`** — enables Infrarust's docker provider against the
-  socket proxy.
+- **Infrarust config** — defined inline in `docker-compose.yml`'s top-level
+  `configs:` block and injected at `/app/config/config.yaml`; it enables
+  Infrarust's docker provider against the socket proxy. (Inlined rather than
+  bind-mounted because Coolify mishandles single-file bind mounts.)
 
 ### Coolify
 
