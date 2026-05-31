@@ -1,3 +1,4 @@
+import type { H3Event } from "h3";
 import type { ServerConfig } from "../schema/server.schema";
 
 export const MC_PORT = 25565;
@@ -29,8 +30,8 @@ export function sanitize(value: string) {
  * store rather than the per-server config, so they're set once and applied to
  * every container that needs them.
  */
-export async function buildServerSpec(data: ServerConfig) {
-  const config = useRuntimeConfig();
+export async function buildServerSpec(data: ServerConfig, event?: H3Event) {
+  const config = useRuntimeConfig(event);
   const secrets = await useSecrets().getAll();
   const subdomain = sanitize(data.subdomain ?? data.name);
   const domain = `${subdomain}.${data.domain}`;

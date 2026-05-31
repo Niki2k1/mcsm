@@ -2,8 +2,8 @@
  * Lightweight health snapshot for the admin dashboard: whether MCSM can reach
  * the Docker daemon (via the socket proxy) and how many managed servers exist.
  */
-export default defineEventHandler(async () => {
-  const { docker, listServers } = useDocker();
+export default defineEventHandler(async (event) => {
+  const { docker, listServers } = useDocker(event);
 
   let dockerOk = false;
   let version: string | undefined;

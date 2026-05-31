@@ -5,7 +5,7 @@ export default defineEventHandler(async (event) => {
   const { id } = await useValidatedParams(event, { id: z.string() });
 
   try {
-    const { getServer } = useDocker();
+    const { getServer } = useDocker(event);
     return await getServer(id);
   } catch (error) {
     console.error(error);

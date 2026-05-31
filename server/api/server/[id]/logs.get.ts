@@ -8,7 +8,7 @@ import { PassThrough } from "node:stream";
 export default defineEventHandler(async (event) => {
   const { id } = await useValidatedParams(event, { id: z.string() });
 
-  const { docker } = useDocker();
+  const { docker } = useDocker(event);
   const container = docker.getContainer(id);
 
   let logStream: NodeJS.ReadableStream & { destroy?: () => void };

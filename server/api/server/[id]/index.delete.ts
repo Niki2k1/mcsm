@@ -8,7 +8,7 @@ export default defineEventHandler(async (event) => {
   const { id } = await useValidatedParams(event, { id: z.string() });
 
   try {
-    const { removeServer } = useDocker();
+    const { removeServer } = useDocker(event);
     await removeServer(id, { removeVolume: false });
     return { ok: true };
   } catch (error) {
