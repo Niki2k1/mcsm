@@ -192,6 +192,48 @@ volume if you containerize the app. See the
 [Nuxt deployment docs](https://nuxt.com/docs/getting-started/deployment) for
 other targets.
 
+## Deploy with Docker Compose (Coolify)
+
+The repo ships a turnkey stack so you don't have to wire the pieces yourself:
+
+- **`Dockerfile`** — builds the MCSM image.
+- **`.github/workflows/docker-publish.yml`** — builds a multi-arch image and
+  pushes it to **GHCR** (`ghcr.io/<owner>/mcsm`) on push to `main`, on `v*`
+  tags, or via manual dispatch.
+- **`docker-compose.yml`** — runs three services on two networks:
+  - `mcsm` (the app), `infrarust` (the proxy) and `docker-socket-proxy`.
+  - **Neither MCSM nor Infrarust mounts the raw Docker socket** — both reach it
+    through the socket proxy over TCP, restricted to the endpoints they need.
+  - The `infrarust` network is shared with the Minecraft containers MCSM
+    creates; `dockerproxy` is internal (Docker API only).
+- **`infrarust/config.yaml`** — enables Infrarust's docker provider against the
+  socket proxy.
+
+### Coolify
+
+1. Push to `main` (or run the workflow manually) so the image publishes to
+   GHCR, then make the GHCR package **public** — or add registry credentials in
+   Coolify so it can pull.
+2. In Coolify: **New Resource → Docker Compose**, point it at this repo (or
+   paste `docker-compose.yml`).
+3. Assign a domain to the **`mcsm`** service on port `3000` (Coolify fills the
+   `SERVICE_FQDN_MCSM_3000` magic variable and routes HTTPS to it).
+4. Point the DNS for your Minecraft domain (e.g. a wildcard `*.mc.example.com`)
+   at the host — Infrarust listens on `25565`.
+5. Deploy, then **seed at least one domain** (the wizard needs it): add it in
+   the UI, or write `.data/objects/domains.json` in the `mcsm-data` volume.
+
+### Plain Docker
+
+```bash
+git clone https://github.com/Niki2k1/mcsm.git
+cd mcsm
+# uncomment the mcsm `ports:` block in docker-compose.yml to expose the UI
+docker compose up -d
+```
+
+The MCSM UI is then on `http://localhost:3000` and Minecraft on `:25565`.
+
 ## Project structure
 
 ```

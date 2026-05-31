@@ -1,0 +1,83 @@
+# MCSM stack — deployable on Coolify or with plain `docker compose up`.
+#
+#   mcsm                — the web app (image published to GHCR by CI)
+#   infrarust           — the Minecraft proxy (label-based discovery)
+#   docker-socket-proxy — mediates Docker access; no service mounts the raw socket
+#
+# MCSM creates Minecraft server containers at runtime and attaches them to the
+# `infrarust` network, where Infrarust discovers and routes them by their
+# `infrarust.*` labels.
+
+services:
+  # Restricts Docker API access. Both MCSM and Infrarust talk to this over TCP
+  # instead of mounting /var/run/docker.sock directly.
+  docker-socket-proxy:
+    image: tecnativa/docker-socket-proxy:latest
+    restart: unless-stopped
+    environment:
+      CONTAINERS: "1" # list / inspect / create / start / stop / remove
+      IMAGES: "1" # pull the Minecraft image
+      NETWORKS: "1" # attach containers to the shared network
+      VOLUMES: "1" # world volumes
+      EVENTS: "1" # Infrarust watches container events
+      INFO: "1"
+      VERSION: "1"
+      PING: "1"
+      POST: "1" # allow write operations on the resources enabled above
+    volumes:
+      - /var/run/docker.sock:/var/run/docker.sock:ro
+    networks:
+      - dockerproxy
+
+  mcsm:
+    image: ghcr.io/niki2k1/mcsm:latest
+    # For a local build instead of the published image, comment `image` above
+    # and uncomment:
+    # build: .
+    restart: unless-stopped
+    depends_on:
+      - docker-socket-proxy
+    environment:
+      # Reach Docker through the socket proxy (no raw socket here).
+      DOCKER_HOST_ADDR: docker-socket-proxy
+      DOCKER_PORT: "2375"
+      DOCKER_PROTOCOL: http
+      # Network new Minecraft containers join (matches the `infrarust` network
+      # below) so Infrarust can reach them.
+      DOCKER_MC_NETWORK: infrarust
+      MC_IMAGE: itzg/minecraft-server
+      # Coolify: generates a domain and routes HTTPS to port 3000.
+      SERVICE_FQDN_MCSM_3000: ""
+    volumes:
+      - mcsm-data:/app/.data
+    networks:
+      - infrarust
+      - dockerproxy
+    # Plain `docker compose up` (non-Coolify): expose the UI on the host.
+    # ports:
+    #   - "3000:3000"
+
+  infrarust:
+    image: ghcr.io/shadowner/infrarust:latest
+    restart: unless-stopped
+    depends_on:
+      - docker-socket-proxy
+    volumes:
+      - ./infrarust/config.yaml:/app/config/config.yaml:ro
+    ports:
+      - "25565:25565"
+    networks:
+      - infrarust
+      - dockerproxy
+
+networks:
+  # Shared with the Minecraft containers MCSM creates. The explicit name keeps
+  # it stable so DOCKER_MC_NETWORK matches.
+  infrarust:
+    name: infrarust
+  # Docker API only; isolated from the internet.
+  dockerproxy:
+    internal: true
+
+volumes:
+  mcsm-data:

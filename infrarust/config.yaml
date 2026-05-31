@@ -1,0 +1,16 @@
+# Infrarust proxy configuration.
+# Docs: https://infrarust.dev/features/docker.html
+#
+# Routing is driven entirely by Docker labels — MCSM sets `infrarust.enable`,
+# `infrarust.domains` and `infrarust.port` on each container it creates, and the
+# docker provider below discovers them. No per-server config files needed.
+
+bind: "0.0.0.0:25565"
+
+docker_provider:
+  # Talk to Docker through the socket proxy (same as MCSM).
+  docker_host: "tcp://docker-socket-proxy:2375"
+  label_prefix: "infrarust"
+  # Real-time discovery via the Docker event stream, with a polling fallback.
+  watch: true
+  polling_interval: 10
