@@ -55,6 +55,14 @@ export default defineNuxtConfig({
     },
   },
 
+  // modern-monaco is ESM-first and ships its own workers/wasm; pre-bundling it
+  // breaks those dynamic imports, so leave it to be loaded as-is on demand.
+  vite: {
+    optimizeDeps: {
+      exclude: ["modern-monaco"],
+    },
+  },
+
   nitro: {
     storage: {
       objects: {

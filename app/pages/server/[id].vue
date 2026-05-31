@@ -94,6 +94,17 @@
                 </UButton>
 
                 <UButton
+                  v-if="server.running"
+                  icon="i-heroicons-arrow-path-20-solid"
+                  color="neutral"
+                  variant="soft"
+                  :loading="restarting"
+                  @click="restart"
+                >
+                  Restart
+                </UButton>
+
+                <UButton
                   icon="i-heroicons-pencil-square-20-solid"
                   color="neutral"
                   variant="soft"
@@ -187,6 +198,73 @@
               </li>
             </ul>
           </UCard>
+
+          <!-- Config files -->
+          <UCard v-if="isPaper" class="mt-6">
+            <template #header>
+              <div class="flex items-center justify-between gap-2">
+                <div>
+                  <h2 class="text-lg font-semibold">Config files</h2>
+                  <p class="text-sm text-muted">
+                    Edit plugin config files in <code>/plugins</code>. Restart
+                    the server to apply changes.
+                  </p>
+                </div>
+                <UButton
+                  icon="i-heroicons-arrow-path-20-solid"
+                  color="neutral"
+                  variant="ghost"
+                  size="xs"
+                  :loading="filesPending"
+                  aria-label="Refresh files"
+                  @click="refreshFiles()"
+                />
+              </div>
+            </template>
+
+            <div
+              v-if="!fileGroups.length"
+              class="text-center py-10 text-muted space-y-2"
+            >
+              <UIcon
+                name="i-heroicons-document-text"
+                class="size-8 mx-auto opacity-60"
+              />
+              <p>No config files yet. They appear once a plugin first runs.</p>
+            </div>
+
+            <div v-else class="space-y-4">
+              <div v-for="group in fileGroups" :key="group.name">
+                <p class="text-xs font-semibold uppercase text-muted mb-1">
+                  {{ group.name }}
+                </p>
+                <ul class="divide-y divide-default">
+                  <li
+                    v-for="file in group.files"
+                    :key="file.path"
+                    class="flex items-center justify-between gap-2 py-2"
+                  >
+                    <button
+                      type="button"
+                      class="flex items-center gap-2 min-w-0 text-left hover:text-primary"
+                      @click="openFile(file.path)"
+                    >
+                      <UIcon
+                        name="i-heroicons-document-text-20-solid"
+                        class="shrink-0 text-muted"
+                      />
+                      <span class="truncate font-mono text-sm">{{
+                        file.label
+                      }}</span>
+                    </button>
+                    <span class="text-xs text-muted shrink-0">{{
+                      formatBytes(file.size)
+                    }}</span>
+                  </li>
+                </ul>
+              </div>
+            </div>
+          </UCard>
         </UPageBody>
       </template>
 
@@ -215,6 +293,44 @@
           </UButton>
           <UButton color="error" :loading="deleting" @click="runDelete">
             Delete
+          </UButton>
+        </div>
+      </template>
+    </UModal>
+
+    <!-- Config file editor -->
+    <UModal
+      v-model:open="editorOpen"
+      :title="editorPath ? editorPath.replace(/^plugins\//, '') : 'Edit file'"
+      :ui="{ content: 'max-w-5xl' }"
+    >
+      <template #body>
+        <div
+          v-if="editorLoading"
+          class="h-[60vh] flex items-center justify-center text-muted"
+        >
+          <UIcon
+            name="i-heroicons-arrow-path-20-solid"
+            class="animate-spin size-6"
+          />
+        </div>
+        <ClientOnly v-else>
+          <CodeEditor
+            v-model="editorContent"
+            :language="editorLanguage"
+            :theme="editorTheme"
+            class="h-[60vh] rounded-md overflow-hidden ring-1 ring-default"
+          />
+        </ClientOnly>
+      </template>
+
+      <template #footer>
+        <div class="flex justify-end gap-2 w-full">
+          <UButton color="neutral" variant="ghost" @click="editorOpen = false">
+            Cancel
+          </UButton>
+          <UButton :loading="saving" :disabled="editorLoading" @click="saveFile">
+            Save
           </UButton>
         </div>
       </template>
@@ -439,6 +555,140 @@ async function removePlugin(name: string) {
     });
   } finally {
     deletingPlugin.value = null;
+  }
+}
+
+// Restart -----------------------------------------------------------------
+const restarting = ref(false);
+async function restart() {
+  restarting.value = true;
+  try {
+    await $fetch(`/api/server/${server.value!.id}/restart`, { method: "POST" });
+    toast.add({ title: "Server restarting", color: "success" });
+    await refreshServer();
+  } catch {
+    toast.add({
+      title: "Error",
+      description: "Failed to restart server.",
+      color: "error",
+    });
+  } finally {
+    restarting.value = false;
+  }
+}
+
+// Config files -------------------------------------------------------------
+const {
+  data: files,
+  refresh: refreshFiles,
+  status: filesStatus,
+} = await useFetch<{ path: string; size: number }[]>(
+  () => `/api/server/${route.params.id}/files`,
+  {
+    key: () => `files-${route.params.id}`,
+    default: () => [],
+    immediate: isPaper.value,
+  }
+);
+const filesPending = computed(() => filesStatus.value === "pending");
+
+// Group flat paths ("plugins/Foo/config.yml") by their plugin folder.
+const fileGroups = computed(() => {
+  const groups: Record<
+    string,
+    { path: string; label: string; size: number }[]
+  > = {};
+  for (const file of files.value) {
+    const rel = file.path.replace(/^plugins\//, "");
+    const slash = rel.indexOf("/");
+    const name = slash === -1 ? "plugins" : rel.slice(0, slash);
+    const label = slash === -1 ? rel : rel.slice(slash + 1);
+    (groups[name] ??= []).push({ path: file.path, label, size: file.size });
+  }
+  return Object.entries(groups)
+    .map(([name, entries]) => ({ name, files: entries }))
+    .sort((a, b) => a.name.localeCompare(b.name));
+});
+
+const colorMode = useColorMode();
+const editorTheme = computed(() =>
+  colorMode.value === "light" ? "vitesse-light" : "vitesse-dark"
+);
+
+const editorOpen = ref(false);
+const editorPath = ref<string | null>(null);
+const editorContent = ref("");
+const editorLanguage = ref("plaintext");
+const editorLoading = ref(false);
+const saving = ref(false);
+
+function languageFromPath(path: string): string {
+  const ext = path.split(".").pop()?.toLowerCase() ?? "";
+  switch (ext) {
+    case "yml":
+    case "yaml":
+      return "yaml";
+    case "json":
+      return "json";
+    case "toml":
+      return "toml";
+    case "properties":
+    case "conf":
+    case "cfg":
+    case "ini":
+      return "ini";
+    default:
+      return "plaintext";
+  }
+}
+
+async function openFile(path: string) {
+  editorPath.value = path;
+  editorLanguage.value = languageFromPath(path);
+  editorContent.value = "";
+  editorLoading.value = true;
+  editorOpen.value = true;
+  try {
+    const result = await $fetch<{ path: string; content: string }>(
+      `/api/server/${server.value!.id}/files/content`,
+      { query: { path } }
+    );
+    editorContent.value = result.content;
+  } catch (error) {
+    toast.add({
+      title: "Could not open file",
+      description: uploadError(error),
+      color: "error",
+    });
+    editorOpen.value = false;
+  } finally {
+    editorLoading.value = false;
+  }
+}
+
+async function saveFile() {
+  if (!editorPath.value) return;
+  saving.value = true;
+  try {
+    await $fetch(`/api/server/${server.value!.id}/files/content`, {
+      method: "PUT",
+      body: { path: editorPath.value, content: editorContent.value },
+    });
+    toast.add({
+      title: "Saved",
+      description: "Restart the server to apply.",
+      color: "success",
+    });
+    editorOpen.value = false;
+    await refreshFiles();
+  } catch (error) {
+    toast.add({
+      title: "Save failed",
+      description: uploadError(error),
+      color: "error",
+    });
+  } finally {
+    saving.value = false;
   }
 }
 
