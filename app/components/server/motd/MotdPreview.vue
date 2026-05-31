@@ -57,9 +57,14 @@ const lines = computed<Run[][]>(() => {
   );
 });
 
-// Scramble obfuscated runs, matching the in-game effect. Mirrors Motd.vue.
+// Scramble obfuscated runs, matching the in-game effect. Mirrors Motd.vue, but
+// only runs while there's actually obfuscated text (the server list mounts many
+// of these, so we don't want idle animation loops).
 const root = useTemplateRef<HTMLElement>("root");
 const prefersReducedMotion = useMediaQuery("(prefers-reduced-motion: reduce)");
+const hasObfuscated = computed(() =>
+  lines.value.some((line) => line.some((run) => run.obf))
+);
 let frame: number | null = null;
 
 const animate = () => {
@@ -77,10 +82,19 @@ const animate = () => {
   }
 };
 
+const stop = () => {
+  if (frame !== null) {
+    window.cancelAnimationFrame(frame);
+    frame = null;
+  }
+};
+const start = () => {
+  if (frame === null && !prefersReducedMotion.value) animate();
+};
+
+watch(hasObfuscated, (on) => (on ? start() : stop()));
 onMounted(() => {
-  if (!prefersReducedMotion.value) animate();
+  if (hasObfuscated.value) start();
 });
-onBeforeUnmount(() => {
-  if (frame !== null) window.cancelAnimationFrame(frame);
-});
+onBeforeUnmount(stop);
 </script>

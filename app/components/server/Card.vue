@@ -73,7 +73,7 @@
         </div>
       </div>
 
-      <Motd :motd="info?.status.description.text ?? ''" />
+      <MotdPreview :motd="motd" class="mb-2 min-h-[1.2em]" />
 
       <div class="flex justify-between text-sm" v-if="status === 'success'">
         <span class="flex gap-2 items-center">
@@ -90,6 +90,9 @@
 </template>
 
 <script lang="ts" setup>
+import { chatToMotd } from "~/utils/motd";
+import MotdPreview from "~/components/server/motd/MotdPreview.vue";
+
 const props = defineProps<{
   server: {
     id: string;
@@ -116,6 +119,10 @@ const {
   query: { host: props.server.domain },
   retry: false,
 });
+
+// The ping description may be a legacy string or a chat component (modern
+// servers send truecolour MOTDs this way); flatten either into codes we render.
+const motd = computed(() => chatToMotd(info.value?.status?.description));
 
 const status = ref<"success" | "error" | "pending" | "idle">("idle");
 

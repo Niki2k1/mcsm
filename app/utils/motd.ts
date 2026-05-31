@@ -65,6 +65,28 @@ const colorByHex = new Map(MOTD_COLORS.map((c) => [c.hex.toLowerCase(), c]));
 const formatByCode = new Map(MOTD_FORMATS.map((f) => [f.code, f]));
 const formatByMark = new Map(MOTD_FORMATS.map((f) => [f.mark, f]));
 
+/** Vanilla colour names (as used in chat components) to their legacy code. */
+const NAMED_COLORS: Record<string, string> = {
+  black: "0",
+  dark_blue: "1",
+  dark_green: "2",
+  dark_aqua: "3",
+  dark_red: "4",
+  dark_purple: "5",
+  gold: "6",
+  gray: "7",
+  grey: "7",
+  dark_gray: "8",
+  dark_grey: "8",
+  blue: "9",
+  green: "a",
+  aqua: "b",
+  red: "c",
+  light_purple: "d",
+  yellow: "e",
+  white: "f",
+};
+
 /** Look up the legacy code for a TipTap colour value (hex), if it's a vanilla colour. */
 export const motdCodeForHex = (hex: string): string | undefined =>
   colorByHex.get(hex.toLowerCase())?.code;
@@ -287,4 +309,93 @@ function readMarks(marks: TipTapMark[] | undefined): { color: string; formats: S
   }
 
   return { color, formats };
+}
+
+// --- Chat component → legacy string -----------------------------------------
+
+/** A Minecraft text/chat component, as returned in a status ping description. */
+interface ChatComponent {
+  text?: string;
+  color?: string;
+  bold?: boolean;
+  italic?: boolean;
+  underlined?: boolean;
+  strikethrough?: boolean;
+  obfuscated?: boolean;
+  extra?: Array<ChatComponent | string>;
+}
+
+interface ChatStyle {
+  colorHex?: string;
+  bold?: boolean;
+  italic?: boolean;
+  underline?: boolean;
+  strike?: boolean;
+  obf?: boolean;
+}
+
+function resolveChatColor(color?: string): string | undefined {
+  if (!color) return undefined;
+  const code = NAMED_COLORS[color.toLowerCase()];
+  if (code) return colorByCode.get(code)!.hex;
+  return normalizeHex(color) || undefined;
+}
+
+function mergeChatStyle(parent: ChatStyle, node: ChatComponent): ChatStyle {
+  const style: ChatStyle = { ...parent };
+  if (node.color === "reset") style.colorHex = undefined;
+  else {
+    const hex = resolveChatColor(node.color);
+    if (hex) style.colorHex = hex;
+  }
+  if (typeof node.bold === "boolean") style.bold = node.bold;
+  if (typeof node.italic === "boolean") style.italic = node.italic;
+  if (typeof node.underlined === "boolean") style.underline = node.underlined;
+  if (typeof node.strikethrough === "boolean") style.strike = node.strikethrough;
+  if (typeof node.obfuscated === "boolean") style.obf = node.obfuscated;
+  return style;
+}
+
+/** Emit a reset followed by the codes for an absolute chat style. */
+function emitChatStyle(style: ChatStyle): string {
+  let out = "§r";
+  if (style.colorHex) out += emitColor(style.colorHex);
+  if (style.bold) out += "§l";
+  if (style.italic) out += "§o";
+  if (style.underline) out += "§n";
+  if (style.strike) out += "§m";
+  if (style.obf) out += "§k";
+  return out;
+}
+
+/**
+ * Flatten a status-ping description — a plain legacy string, a chat component,
+ * or an array of them — into a legacy `§`-coded string our renderer reads.
+ * Hex colours (1.16+) become `§x` runs, so truecolour survives. A plain string
+ * is assumed to already be legacy-coded and returned as-is.
+ */
+export function chatToMotd(desc: unknown): string {
+  if (desc == null) return "";
+  if (typeof desc === "string") return desc;
+
+  let out = "";
+  const walk = (node: ChatComponent | string, inherited: ChatStyle) => {
+    if (node == null) return;
+    if (typeof node === "string") {
+      out += emitChatStyle(inherited) + node;
+      return;
+    }
+    const style = mergeChatStyle(inherited, node);
+    if (typeof node.text === "string" && node.text.length) {
+      out += emitChatStyle(style) + node.text;
+    }
+    if (Array.isArray(node.extra)) {
+      for (const child of node.extra) walk(child, style);
+    }
+  };
+
+  if (Array.isArray(desc)) for (const node of desc) walk(node, {});
+  else walk(desc as ChatComponent, {});
+
+  return out;
 }

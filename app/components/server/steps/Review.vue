@@ -72,7 +72,7 @@
       </template>
       <dl class="divide-y divide-default">
         <ReviewRow label="MOTD">
-          <Motd v-if="form.MOTD" :motd="form.MOTD" />
+          <MotdPreview v-if="form.MOTD" :motd="form.MOTD" />
           <span v-else class="text-muted">—</span>
         </ReviewRow>
         <ReviewRow label="World Name">{{ form.LEVEL || "world" }}</ReviewRow>
@@ -106,6 +106,7 @@
 </template>
 
 <script setup lang="ts">
+import MotdPreview from "~/components/server/motd/MotdPreview.vue";
 import vanilla from "~/assets/vanilla.webp";
 import ftb from "~/assets/ftb.svg";
 import curseforge from "~/assets/curseforge.svg";
