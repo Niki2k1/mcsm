@@ -299,6 +299,31 @@ nuxt.config.ts               # modules, runtimeConfig (docker hosts), storage
   modelled through Infrarust labels.
 - This is an early-stage project and APIs/structure may change.
 
-## License
+## License & attribution
 
-No license has been specified for this project yet.
+MCSM is licensed under the [MIT License](LICENSE).
+
+The MIT license covers the code in this repository — including the
+[`infrarust/Dockerfile`](infrarust/Dockerfile) build recipe — but **not** the
+Infrarust binary that the published `mcsm-infrarust` image redistributes,
+which remains AGPL-3.0 (see below).
+
+### Infrarust
+
+The proxy image this stack runs (`ghcr.io/niki2k1/mcsm-infrarust`) is a rebuild
+of [Infrarust](https://github.com/Shadowner/Infrarust) by
+[Shadowner](https://github.com/Shadowner), licensed under the
+[GNU AGPL-3.0](https://github.com/Shadowner/Infrarust/blob/master/LICENSE).
+
+Changes from upstream (both in [`infrarust/Dockerfile`](infrarust/Dockerfile)):
+
+- the optional `infrarust-core/docker` cargo feature is compiled in, so
+  Docker-label discovery works (upstream images ship without it);
+- a one-line duplicate-import fix that feature needs to compile.
+
+The corresponding source for the published image is the upstream repository at
+the ref pinned in the Dockerfile, plus the Dockerfile itself. The image ships
+the upstream license text at `/licenses/Infrarust-LICENSE`.
+
+MCSM itself only talks to Infrarust over Docker labels and runs it as a
+separate container — it doesn't link against or derive from Infrarust code.

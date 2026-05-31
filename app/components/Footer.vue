@@ -10,7 +10,7 @@
       </p>
     </template>
 
-    <template #center>
+    <template #default>
       <UColorModeButton size="sm" />
     </template>
 

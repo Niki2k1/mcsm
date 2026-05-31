@@ -80,6 +80,20 @@ RUN rustup target add x86_64-unknown-linux-musl && \
 
 # Stage 3: minimal runtime (matches upstream).
 FROM scratch AS runtime
+ARG INFRARUST_REF
+
+# Attribution: this image redistributes Infrarust by Shadowner (AGPL-3.0).
+# Changes from upstream: the `infrarust-core/docker` cargo feature is enabled
+# and a duplicate import is dropped (see builder stage). Corresponding source =
+# the upstream repo at INFRARUST_REF + this Dockerfile.
+LABEL org.opencontainers.image.title="Infrarust (MCSM build, Docker provider enabled)" \
+      org.opencontainers.image.description="Infrarust by Shadowner, rebuilt with the Docker provider compiled in. Upstream: https://github.com/Shadowner/Infrarust" \
+      org.opencontainers.image.licenses="AGPL-3.0-only" \
+      org.opencontainers.image.version="${INFRARUST_REF}" \
+      org.opencontainers.image.url="https://github.com/Shadowner/Infrarust"
+
+# Ship the upstream license text inside the image (AGPL §4/§5 notice).
+COPY --from=source /src/LICENSE /licenses/Infrarust-LICENSE
 
 COPY --from=builder /etc/ssl/certs/ca-certificates.crt /etc/ssl/certs/
 COPY --from=builder /usr/local/bin/infrarust /sbin/infrarust

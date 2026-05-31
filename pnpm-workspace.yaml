@@ -1,3 +1,10 @@
+allowBuilds:
+  '@parcel/watcher': true
+  cpu-features: true
+  esbuild: true
+  protobufjs: true
+  ssh2: true
+  vue-demi: true
 # Packages allowed to bypass the minimumReleaseAge supply-chain policy.
 # These were published within the release-age cutoff but are trusted upgrades.
 minimumReleaseAgeExclude:
