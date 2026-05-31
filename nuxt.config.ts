@@ -8,6 +8,11 @@ export default defineNuxtConfig({
 
   devtools: { enabled: true },
 
+  // MCSM is an internal, fully dynamic dashboard (live Docker state, pings,
+  // log streams) with no SEO needs — render as a SPA. The Nitro server still
+  // runs, so all /api routes keep working.
+  ssr: false,
+
   // Nuxt UI v4 bundles Tailwind, icon, fonts and color-mode and includes the
   // former Pro components for free (no license, no separate module).
   modules: ["@nuxt/ui", "@vueuse/nuxt"],
