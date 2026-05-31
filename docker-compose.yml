@@ -50,16 +50,31 @@ services:
       SERVICE_FQDN_MCSM_3000: ""
     # mcsm is multi-homed (dockerproxy for the Docker API, infrarust for RCON
     # and server pings). When a container is on several networks, Coolify's
-    # Traefik proxy picks one non-deterministically to route through — and if it
-    # picks one it can't reach (e.g. the `internal` dockerproxy network), every
-    # request hangs until it times out (504 Gateway Timeout). Pin routing to
-    # Coolify's proxy network so Traefik always uses the network it shares with
-    # the app. Harmless for plain `docker compose up` (no Traefik reads it).
+    # Traefik picks one non-deterministically to route through — and if it picks
+    # one it can't reach (e.g. the `internal` dockerproxy network), every request
+    # hangs until it times out (504). The label below pins Traefik to Coolify's
+    # proxy network, but that only works if mcsm is actually *attached* to it —
+    # and declaring explicit `networks:` stops Coolify from auto-attaching it.
+    # So we attach `coolify` (declared external below) ourselves, which makes
+    # routing deterministic.
     labels:
       traefik.docker.network: coolify
+    # Let Coolify/Traefik route only once Nitro is actually listening (also
+    # avoids 504s during a redeploy before the new container is up).
+    healthcheck:
+      test:
+        - CMD
+        - node
+        - -e
+        - "fetch('http://127.0.0.1:3000/').then(r=>process.exit(r.ok?0:1)).catch(()=>process.exit(1))"
+      interval: 10s
+      timeout: 5s
+      retries: 5
+      start_period: 30s
     volumes:
       - mcsm-data:/app/.data
     networks:
+      - coolify
       - infrarust
       - dockerproxy
     # Plain `docker compose up` (non-Coolify): expose the UI on the host.
@@ -99,6 +114,13 @@ services:
       - dockerproxy
 
 networks:
+  # Coolify's Traefik proxy network. Declared external so mcsm is deterministically
+  # attached and Traefik can always reach it (fixes intermittent 504s on this
+  # multi-homed service). On a plain `docker compose up` (no Coolify) this network
+  # won't exist — either run `docker network create coolify` once, or remove the
+  # `coolify` network from this file along with the mcsm reference above.
+  coolify:
+    external: true
   # Shared with the Minecraft containers MCSM creates. The explicit name keeps
   # it stable so DOCKER_MC_NETWORK matches.
   infrarust:
