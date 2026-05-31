@@ -8,20 +8,37 @@ export default defineNuxtConfig({
 
   devtools: { enabled: true },
 
-  modules: ["@nuxt/ui", "@nuxtjs/color-mode", "@nuxt/fonts", "@vueuse/nuxt"],
+  // Nuxt UI v4 bundles Tailwind, icon, fonts and color-mode and includes the
+  // former Pro components for free (no license, no separate module).
+  modules: ["@nuxt/ui", "@vueuse/nuxt"],
 
-  extends: ["@nuxt/ui-pro"],
+  css: ["~/assets/css/main.css"],
 
   colorMode: {
     preference: "dark",
   },
 
   runtimeConfig: {
-    coolify: {
-      instances: {
+    docker: {
+      // Image used for every Minecraft server container.
+      image: process.env.MC_IMAGE || "itzg/minecraft-server",
+      // Shared Docker network that Infrarust is attached to, so it can resolve
+      // and reach the created containers.
+      network: process.env.DOCKER_MC_NETWORK || "infrarust",
+      // Docker daemons MCSM can provision on, keyed by id. Only `default` is
+      // wired up today; add more entries for multi-host later.
+      hosts: {
         default: {
-          baseUrl: process.env.COOLIFY_BASE_API_URL,
-          apiToken: process.env.COOLIFY_API_TOKEN,
+          // Local (or socket-proxied) unix socket. Used when `host` is empty.
+          socketPath: process.env.DOCKER_SOCKET_PATH || "/var/run/docker.sock",
+          // Optional remote TCP/TLS daemon. When `host` is set it takes
+          // precedence over `socketPath`.
+          host: process.env.DOCKER_HOST_ADDR || "",
+          port: process.env.DOCKER_PORT || "",
+          protocol: process.env.DOCKER_PROTOCOL || "",
+          ca: process.env.DOCKER_CA || "",
+          cert: process.env.DOCKER_CERT || "",
+          key: process.env.DOCKER_KEY || "",
         },
       },
     },
@@ -29,11 +46,6 @@ export default defineNuxtConfig({
 
   nitro: {
     storage: {
-      proxy: {
-        driver: "fs",
-        base: "./.data/proxy",
-      },
-
       objects: {
         driver: "fs",
         base: "./.data/objects",

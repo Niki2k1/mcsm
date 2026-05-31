@@ -1,0 +1,16 @@
+node_modules
+.output
+.nuxt
+.nitro
+.cache
+.data
+.git
+.github
+*.log
+node-compile-cache
+.env
+.env.*
+!.env.example
+Dockerfile
+.dockerignore
+README.md

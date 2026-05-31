@@ -1,12 +1,16 @@
 <template>
-  <Header />
+  <UApp>
+    <Header />
 
-  <UMain>
-    <NuxtPage />
-  </UMain>
+    <UMain>
+      <NuxtPage />
+    </UMain>
 
-  <Footer />
-  <UNotifications />
+    <Footer />
+
+    <!-- Shared create/edit wizard, opened from the header and the dashboard. -->
+    <ServerFormModal />
+  </UApp>
 </template>
 
 <script setup lang="ts">

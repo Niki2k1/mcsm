@@ -2,6 +2,9 @@
   "name": "nuxt-app",
   "private": true,
   "type": "module",
+  "engines": {
+    "node": ">=22"
+  },
   "scripts": {
     "build": "nuxt build",
     "dev": "nuxt dev",
@@ -11,27 +14,26 @@
   },
   "dependencies": {
     "@ahdg/minecraftstatuspinger": "^1.1.5",
-    "@nuxt/fonts": "^0.7.2",
-    "@nuxt/ui": "^2.18.4",
-    "@nuxt/ui-pro": "^1.4.1",
-    "@nuxtjs/color-mode": "^3.4.4",
-    "@sfirew/minecraft-motd-parser": "^1.1.3",
-    "defu": "^6.1.4",
+    "@nuxt/ui": "^4.8.1",
+    "@sfirew/minecraft-motd-parser": "^1.1.6",
+    "defu": "^6.1.7",
+    "dockerode": "^5.0.0",
     "h3-zod": "^0.5.3",
     "jimp-compact": "0.16.1-2",
-    "minecraft-data": "^3.68.0",
-    "nuxt": "^3.13.0",
-    "tailwindcss": "^3.4.10",
-    "typescript": "^5.5.4",
-    "unstorage": "^1.10.2",
-    "vue": "latest",
-    "zod": "^3.23.8"
+    "minecraft-data": "^3.110.2",
+    "nuxt": "^4.4.6",
+    "tailwindcss": "^4.3.0",
+    "typescript": "^5.9.2",
+    "unstorage": "^1.17.5",
+    "vue": "^3.5.18",
+    "zod": "^3.25.76"
   },
   "packageManager": "pnpm@9.9.0+sha512.60c18acd138bff695d339be6ad13f7e936eea6745660d4cc4a776d5247c540d0edee1a563695c183a66eb917ef88f2b4feb1fc25f32a7adcadc7aaf3438e99c1",
   "devDependencies": {
-    "@iconify-json/heroicons": "^1.1.24",
-    "@vueuse/core": "^11.0.3",
-    "@vueuse/nuxt": "^11.0.3",
-    "jimp": "^0.22.12"
+    "@iconify-json/heroicons": "^1.2.3",
+    "@iconify-json/tabler": "^1.2.0",
+    "@types/dockerode": "^4.0.1",
+    "@vueuse/core": "^14.3.0",
+    "@vueuse/nuxt": "^14.3.0"
   }
 }

@@ -1,37 +1,60 @@
 <template>
   <div
-    class="rounded-lg shadow-md overflow-hidden flex dark:text-white relative ring-1 ring-gray-200 dark:ring-gray-800"
+    class="rounded-lg shadow-md overflow-hidden flex text-highlighted relative ring-1 ring-default"
     :class="borderClass"
   >
     <div
       class="absolute inset-y-0 left-0 w-36 bg-gradient-to-r to-transparent"
       :class="gradientColor"
     ></div>
-    <div class="flex-grow p-4 relative z-10">
-      <div class="flex justify-between items-center mb-2">
-        <h2 class="text-lg font-semibold flex items-center gap-2">
-          {{ host }}
-        </h2>
-        <UBadge :color="statusColor" variant="soft">
-          <div class="flex items-center gap-1">
+    <div class="grow p-4 relative z-10">
+      <div class="flex justify-between items-start mb-2 gap-2">
+        <div class="min-w-0">
+          <h2 class="text-lg font-semibold truncate">{{ server.name }}</h2>
+          <p class="text-xs text-muted font-mono truncate">
+            {{ server.domain }}
+          </p>
+        </div>
+
+        <div class="flex items-center gap-1 shrink-0">
+          <UBadge :color="statusColor" variant="soft">
             <UIcon
               v-if="status === 'pending'"
               name="i-heroicons-arrow-path-20-solid"
               class="animate-spin"
             />
             {{ statusText }}
-          </div>
-        </UBadge>
+          </UBadge>
+
+          <UButton
+            icon="i-heroicons-pencil-square-20-solid"
+            color="neutral"
+            variant="ghost"
+            size="xs"
+            aria-label="Edit server"
+            @click="emit('edit', server.id)"
+          />
+          <UButton
+            icon="i-heroicons-trash-20-solid"
+            color="error"
+            variant="ghost"
+            size="xs"
+            aria-label="Delete server"
+            @click="emit('delete', server)"
+          />
+        </div>
       </div>
-      <Motd :motd="server?.status.description.text ?? ''" />
+
+      <Motd :motd="info?.status.description.text ?? ''" />
+
       <div class="flex justify-between text-sm" v-if="status === 'success'">
         <span class="flex gap-2 items-center">
           <UIcon name="i-heroicons-users-20-solid" />
-          {{ server?.status.players.online }}/{{ server?.status.players.max }}
+          {{ info?.status.players.online }}/{{ info?.status.players.max }}
         </span>
         <span class="flex gap-2 items-center">
           <UIcon name="i-tabler-wave-saw-tool" />
-          {{ server?.latency }}ms
+          {{ info?.latency }}ms
         </span>
       </div>
     </div>
@@ -40,15 +63,26 @@
 
 <script lang="ts" setup>
 const props = defineProps<{
-  host: string;
+  server: {
+    id: string;
+    name: string;
+    domain: string;
+    type: string | null;
+    running: boolean;
+  };
+}>();
+
+const emit = defineEmits<{
+  edit: [id: string];
+  delete: [server: { id: string; name: string }];
 }>();
 
 const {
-  data: server,
+  data: info,
   refresh,
   status: _status,
 } = useFetch("/api/minecraft/server/info", {
-  query: props,
+  query: { host: props.server.domain },
   retry: false,
 });
 
@@ -69,19 +103,19 @@ onMounted(() => {
 });
 
 onUnmounted(() => {
-  if (interval.value) {
-    clearInterval(interval.value);
-  }
+  if (interval.value) clearInterval(interval.value);
 });
 
 const statusColor = computed(() => {
   switch (status.value) {
     case "success":
-      return "green";
+      return "success";
     case "error":
-      return "red";
+      return "error";
     case "pending":
-      return "yellow";
+      return "warning";
+    default:
+      return "neutral";
   }
 });
 
@@ -93,7 +127,6 @@ const gradientColor = computed(() => {
       return "from-red-500/15";
     case "pending":
       return "from-yellow-500/15";
-
     default:
       return "from-gray-500/15";
   }

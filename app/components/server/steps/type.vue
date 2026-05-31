@@ -1,52 +1,54 @@
 <template>
-  <UPageGrid>
-    <UPageCard
-      v-for="type in types"
-      class="transition-all duration-200 cursor-pointer"
-      :class="{
-        'ring-2 ring-primary-500 dark:ring-primary-400':
-          form.type === type.value,
-        'hover:ring-2 hover:ring-primary-500 dark:hover:ring-primary-400 hover:bg-gray-100/50 dark:hover:bg-gray-800/50':
-          !type.disabled,
-        'opacity-50': type.disabled,
-        'cursor-not-allowed': type.disabled,
-      }"
-      @click="!type.disabled && (form.type = type.value)"
-      :key="type.name"
-      :title="type.name"
-      :description="type.description"
-    >
-      <template #icon>
-        <img :src="type.icon" :alt="type.name" class="size-14" />
-      </template>
-    </UPageCard>
-  </UPageGrid>
+  <div class="space-y-4">
+    <div class="grid grid-cols-1 sm:grid-cols-2 gap-3">
+      <button
+        v-for="type in types"
+        :key="type.value"
+        type="button"
+        :disabled="type.disabled"
+        class="text-left rounded-lg ring-1 ring-default p-4 flex gap-3 items-start transition-all"
+        :class="{
+          'ring-2 ring-primary': form.type === type.value,
+          'hover:ring-primary cursor-pointer': !type.disabled,
+          'opacity-50 cursor-not-allowed': type.disabled,
+        }"
+        @click="!type.disabled && (form.type = type.value)"
+      >
+        <img :src="type.icon" :alt="type.name" class="size-12 shrink-0" />
+        <div>
+          <p class="font-semibold">{{ type.name }}</p>
+          <p class="text-sm text-muted">{{ type.description }}</p>
+        </div>
+      </button>
+    </div>
 
-  <template v-if="choosenType?.customFields?.length">
-    <UDashboardSection>
-      <template #title>
-        <h1 class="text-md font-bold mt-4">
-          Settings for <span class="text-primary">{{ choosenType?.name }}</span>
-        </h1>
-      </template>
-      <UFormGroup
+    <div v-if="choosenType?.customFields?.length" class="space-y-3">
+      <h3 class="text-md font-bold">
+        Settings for <span class="text-primary">{{ choosenType?.name }}</span>
+      </h3>
+
+      <UFormField
         v-for="field in choosenType?.customFields"
         :key="field.name"
         :name="field.name"
         :label="field.label"
         :required="field.required"
-        class="grid grid-cols-2 gap-2"
-        :ui="{ container: '' }"
       >
         <USelectMenu
-          v-model="form.VERSION"
           v-if="field.type === 'version'"
-          :options="versionOptions"
+          v-model="form.VERSION"
+          :items="versionOptions"
+          class="w-full"
         />
-        <UInput v-model="form[field.name]" :type="field.type" v-else />
-      </UFormGroup>
-    </UDashboardSection>
-  </template>
+        <UInput
+          v-else
+          v-model="form[field.name]"
+          :type="field.type"
+          class="w-full"
+        />
+      </UFormField>
+    </div>
+  </div>
 </template>
 
 <script lang="ts" setup>

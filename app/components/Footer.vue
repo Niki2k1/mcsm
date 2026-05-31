@@ -17,21 +17,21 @@
     <template #right>
       <UButton
         icon="i-simple-icons-x"
-        color="gray"
+        color="neutral"
         variant="ghost"
         to="https://x.com/niki2k1"
         target="_blank"
       />
       <UButton
         icon="i-simple-icons-instagram"
-        color="gray"
+        color="neutral"
         variant="ghost"
         to="https://instagram.com/niki2k1"
         target="_blank"
       />
       <UButton
         icon="i-simple-icons-github"
-        color="gray"
+        color="neutral"
         variant="ghost"
         to="https://github.com/Niki2k1"
         target="_blank"
@@ -76,13 +76,13 @@ const links = [
     label: "❤️ Special Thanks",
     children: [
       {
-        label: "Coolify",
-        to: "https://coolify.io",
+        label: "itzg/minecraft-server",
+        to: "https://github.com/itzg/docker-minecraft-server",
         target: "_blank",
       },
       {
-        label: "Infrared",
-        to: "https://infrared.dev",
+        label: "Infrarust",
+        to: "https://github.com/Shadowner/Infrarust",
         target: "_blank",
       },
     ],
