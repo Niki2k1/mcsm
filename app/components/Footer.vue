@@ -1,7 +1,7 @@
 <template>
   <UFooter>
     <template #top>
-      <UFooterColumns :links="links" />
+      <UFooterColumns :columns="columns" />
     </template>
 
     <template #left>
@@ -41,7 +41,7 @@
 </template>
 
 <script setup lang="ts">
-const links = [
+const columns = [
   {
     label: "📚 Libraries",
     children: [
