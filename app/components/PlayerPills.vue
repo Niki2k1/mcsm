@@ -1,34 +1,25 @@
 <template>
-  <div v-if="normalized.length" class="flex flex-wrap gap-2">
+  <div v-if="players.length" class="flex flex-wrap gap-2">
     <UBadge
-      v-for="player in normalized"
-      :key="player.id"
+      v-for="player in players"
+      :key="player.uuid"
       color="neutral"
       variant="subtle"
       class="gap-1.5 pl-1"
     >
       <UAvatar
-        :src="`/api/minecraft/${player.username}/skin`"
-        :alt="`Minecraft Avatar of ${player.username}`"
+        :src="`/api/minecraft/${player.name}/skin`"
+        :alt="`Minecraft Avatar of ${player.name}`"
         size="3xs"
       />
-      {{ player.username }}
+      {{ player.name }}
     </UBadge>
   </div>
   <span v-else class="text-muted">None</span>
 </template>
 
 <script setup lang="ts">
-const props = defineProps<{
-  players: { id?: string; username?: string; name?: string; uuid?: string }[];
+defineProps<{
+  players: { name: string; uuid: string }[];
 }>();
-
-// The player list stores items as { id, username }, while the create-form type
-// describes them as { name, uuid }. Normalize so either shape renders.
-const normalized = computed(() =>
-  (props.players ?? []).map((player) => ({
-    id: player.id ?? player.uuid ?? player.username ?? player.name ?? "",
-    username: player.username ?? player.name ?? "",
-  }))
-);
 </script>

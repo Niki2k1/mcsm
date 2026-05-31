@@ -2,7 +2,7 @@
   <div class="w-full max-w-sm">
     <h3 class="text-lg font-bold py-2" v-if="title">{{ title }}</h3>
     <ul class="flex flex-col gap-2">
-      <li v-for="player in players" :key="player.id">
+      <li v-for="player in players" :key="player.uuid">
         <UserListItem :player="player" @remove="remove" />
       </li>
       <li>
@@ -34,7 +34,7 @@ defineProps<{
   title?: string;
 }>();
 
-const players = defineModel<{ id: string; username: string }[]>({
+const players = defineModel<{ name: string; uuid: string }[]>({
   default: () => [],
 });
 
@@ -48,7 +48,7 @@ async function addPlayer() {
       `/api/minecraft/${newPlayer.value}/profile`
     );
 
-    players.value.push({ id: profile.id, username: profile.name });
+    players.value.push({ name: profile.name, uuid: profile.id });
     newPlayer.value = "";
   } catch (error) {
     toast.add({
@@ -59,7 +59,7 @@ async function addPlayer() {
   }
 }
 
-async function remove({ id }: { id: string }) {
-  players.value = players.value.filter((player) => player.id !== id);
+async function remove({ uuid }: { uuid: string }) {
+  players.value = players.value.filter((player) => player.uuid !== uuid);
 }
 </script>
