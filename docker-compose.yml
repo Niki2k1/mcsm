@@ -64,6 +64,12 @@ services:
       - docker-socket-proxy
     volumes:
       - ./infrarust/config.yaml:/app/config/config.yaml:ro
+    # Override the image's default CMD. The current binary's CLI is
+    # `--config <CONFIG> --plugins-dir <PLUGINS_DIR>` and no longer accepts the
+    # old `--servers-dir` flag (it crashes on startup with "unexpected argument
+    # '--servers-dir'"). Also point `--config` at our mounted YAML rather than
+    # the image's default `infrarust.toml`, which we don't ship.
+    command: ["--config", "/app/config/config.yaml", "--plugins-dir", "/app/config/plugins"]
     ports:
       - "25565:25565"
     networks:
