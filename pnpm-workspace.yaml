@@ -1,0 +1,7 @@
+# Packages allowed to bypass the minimumReleaseAge supply-chain policy.
+# These were published within the release-age cutoff but are trusted upgrades.
+minimumReleaseAgeExclude:
+  - fuse.js
+  - protobufjs
+  - tinyexec
+  - tinyglobby
