@@ -6,6 +6,12 @@ on:
     tags: ["v*"]
   workflow_dispatch:
 
+# Don't let rapid pushes pile up — cancel an in-progress build when a newer
+# commit on the same ref arrives.
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
 env:
   REGISTRY: ghcr.io
   IMAGE_NAME: ${{ github.repository }}
@@ -19,9 +25,6 @@ jobs:
     steps:
       - name: Checkout
         uses: actions/checkout@v4
-
-      - name: Set up QEMU
-        uses: docker/setup-qemu-action@v3
 
       - name: Set up Buildx
         uses: docker/setup-buildx-action@v3
@@ -44,11 +47,14 @@ jobs:
             type=sha
             type=raw,value=latest,enable={{is_default_branch}}
 
+      # amd64 only. arm64 was dropped because building it under QEMU emulation
+      # is extremely slow for this app (large minecraft-data dep) and tends to
+      # hang. To support arm64, build it on a native arm64 runner instead.
       - name: Build and push
         uses: docker/build-push-action@v6
         with:
           context: .
-          platforms: linux/amd64,linux/arm64
+          platforms: linux/amd64
           push: true
           tags: ${{ steps.meta.outputs.tags }}
           labels: ${{ steps.meta.outputs.labels }}
