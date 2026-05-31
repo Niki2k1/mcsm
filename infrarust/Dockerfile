@@ -51,20 +51,17 @@ COPY --from=frontend-builder /frontend/.output/public/ \
 ENV OPENSSL_STATIC=1
 ENV RUSTFLAGS="-C target-feature=+crt-static"
 
+# Build natively. On rust:alpine the host target is already
+# x86_64-unknown-linux-musl, so we don't pass --target — doing so would put
+# cargo in cross-compile mode and make it look for a `musl-gcc` linker wrapper
+# that doesn't exist on Alpine (here plain `gcc`/`cc` already targets musl).
+# crt-static still produces the fully static binary the scratch stage needs.
+#
 # The only change from upstream: `--features infrarust-core/docker`, which pulls
 # in bollard/futures-util and compiles the Docker provider into the binary.
-RUN ARCH=$(uname -m) && \
-    case "$ARCH" in \
-        x86_64) TARGET="x86_64-unknown-linux-musl" ;; \
-        aarch64) TARGET="aarch64-unknown-linux-musl" ;; \
-        armv7l) TARGET="armv7-unknown-linux-musleabihf" ;; \
-        *) echo "Unsupported architecture: $ARCH" && exit 1 ;; \
-    esac && \
-    echo "Building infrarust ($INFRARUST_REF) for $TARGET with docker feature" && \
-    rustup target add "$TARGET" && \
-    cargo build --release --target "$TARGET" -p infrarust \
-        --features infrarust-core/docker && \
-    cp "target/$TARGET/release/infrarust" /usr/local/bin/infrarust && \
+RUN echo "Building infrarust ($INFRARUST_REF) with docker feature" && \
+    cargo build --release -p infrarust --features infrarust-core/docker && \
+    cp target/release/infrarust /usr/local/bin/infrarust && \
     strip /usr/local/bin/infrarust
 
 # Stage 3: minimal runtime (matches upstream).
