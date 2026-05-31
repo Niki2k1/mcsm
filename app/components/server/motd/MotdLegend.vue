@@ -53,6 +53,20 @@
           </div>
         </div>
 
+        <USeparator />
+
+        <div class="flex items-start gap-2 text-xs">
+          <span
+            class="mt-0.5 size-4 shrink-0 rounded-sm ring-1 ring-inset ring-white/10"
+            style="background: linear-gradient(135deg, #ff5733, #33a1ff)"
+          />
+          <span class="text-default">
+            Custom hex colors
+            <span class="text-muted">(1.16+)</span>
+            <span class="block text-dimmed font-mono">§x§R§R§G§G§B§B</span>
+          </span>
+        </div>
+
         <p class="text-[11px] leading-snug text-dimmed">
           Use the toolbar or select text to format. Codes are saved as
           <span class="font-mono">§</span>-sequences automatically.

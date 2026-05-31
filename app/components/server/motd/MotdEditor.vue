@@ -34,7 +34,7 @@
         </UButton>
 
         <template #content>
-          <div class="p-2">
+          <div class="w-56 p-2">
             <div class="grid grid-cols-8 gap-1">
               <button
                 v-for="color in colors"
@@ -47,6 +47,26 @@
                 @click="setColor(color.hex)"
               />
             </div>
+
+            <USeparator class="my-2" />
+
+            <div class="flex items-center gap-2">
+              <input
+                type="color"
+                :value="activeColor || '#ffffff'"
+                aria-label="Custom hex color"
+                class="size-7 shrink-0 cursor-pointer rounded border border-default bg-transparent p-0"
+                @input="setColor(($event.target as HTMLInputElement).value)"
+              />
+              <UInput
+                :model-value="activeColor ?? ''"
+                size="xs"
+                placeholder="#rrggbb"
+                class="flex-1 font-mono"
+                @update:model-value="onHexInput"
+              />
+            </div>
+            <p class="mt-1 text-[11px] text-dimmed">Custom color (1.16+)</p>
           </div>
         </template>
       </UPopover>
@@ -114,6 +134,14 @@
         :title="`${color.name} (§${color.code})`"
         @click="setColor(color.hex)"
       />
+      <input
+        type="color"
+        :value="activeColor || '#ffffff'"
+        aria-label="Custom hex color"
+        title="Custom color (1.16+)"
+        class="size-4 shrink-0 cursor-pointer rounded-sm bg-transparent p-0"
+        @input="setColor(($event.target as HTMLInputElement).value)"
+      />
     </div>
 
     <!-- Editable surface -->
@@ -135,7 +163,7 @@
       <p class="mb-1 text-[11px] font-medium uppercase tracking-wide text-dimmed">
         Preview
       </p>
-      <Motd v-if="model" :motd="model" />
+      <MotdPreview v-if="model" :motd="model" />
       <p v-else class="text-sm text-dimmed italic">Nothing to preview yet</p>
     </div>
   </div>
@@ -147,11 +175,14 @@ import { StarterKit } from "@tiptap/starter-kit";
 import { TextStyle, Color } from "@tiptap/extension-text-style";
 import { BubbleMenuPlugin } from "@tiptap/extension-bubble-menu";
 import { Obfuscated } from "./Obfuscated";
+import MotdLegend from "./MotdLegend.vue";
+import MotdPreview from "./MotdPreview.vue";
 import {
   MOTD_COLORS,
   MOTD_FORMATS,
   motdToJson,
   jsonToMotd,
+  normalizeHex,
   type TipTapDoc,
 } from "~/utils/motd";
 
@@ -246,6 +277,10 @@ const toggle = (mark: string) =>
   editor.value?.chain().focus().toggleMark(mark).run();
 const setColor = (hex: string) =>
   editor.value?.chain().focus().setColor(hex).run();
+const onHexInput = (value: string) => {
+  const hex = normalizeHex(value);
+  if (hex) setColor(hex);
+};
 const clearAll = () =>
   editor.value?.chain().focus().unsetColor().unsetAllMarks().run();
 </script>

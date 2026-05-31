@@ -69,6 +69,12 @@ const formatByMark = new Map(MOTD_FORMATS.map((f) => [f.mark, f]));
 export const motdCodeForHex = (hex: string): string | undefined =>
   colorByHex.get(hex.toLowerCase())?.code;
 
+/** Normalise a hex colour to `#rrggbb` (lowercase), or "" if it isn't valid. */
+export function normalizeHex(value: string): string {
+  const m = value.trim().match(/^#?([0-9a-fA-F]{6})$/);
+  return m ? "#" + m[1]!.toLowerCase() : "";
+}
+
 // --- Minimal TipTap document shapes (we only touch text/hardBreak nodes). ---
 
 interface TipTapMark {
@@ -94,14 +100,16 @@ interface MotdState {
 
 /**
  * Parse a `§`-coded string into a TipTap document. Accepts both `§` and the
- * common `&` shorthand on input. Each line becomes its own paragraph (the
- * editor caps this at the two lines Minecraft actually shows), and formatting
- * carries across the line break just like it does in-game.
+ * common `&` shorthand on input, including 1.16+ truecolour sequences
+ * (`§x§R§R§G§G§B§B`). Each line becomes its own paragraph (the editor caps this
+ * at the two lines Minecraft actually shows), and formatting carries across the
+ * line break just like it does in-game.
  */
 export function motdToJson(motd: string): TipTapDoc {
   let paragraph: TipTapNode = { type: "paragraph", content: [] };
   const doc: TipTapDoc = { type: "doc", content: [paragraph] };
 
+  // Active colour as a hex string ("" for default), plus active styles.
   let color = "";
   const formats = new Set<string>();
   let buffer = "";
@@ -115,8 +123,21 @@ export function motdToJson(motd: string): TipTapDoc {
   const chars = [...(motd ?? "")];
   for (let i = 0; i < chars.length; i++) {
     const ch = chars[i];
+    const isMarker = ch === "§" || ch === "&";
 
-    if ((ch === "§" || ch === "&") && i + 1 < chars.length) {
+    // Truecolour: §x followed by six §H pairs (1.16+ hex). A colour resets styles.
+    if (isMarker && (chars[i + 1] === "x" || chars[i + 1] === "X")) {
+      const hex = readHexSequence(chars, i);
+      if (hex) {
+        flush();
+        color = hex;
+        formats.clear();
+        i += 13; // §x + six §H pairs = 14 chars
+        continue;
+      }
+    }
+
+    if (isMarker && i + 1 < chars.length) {
       const code = chars[i + 1]!.toLowerCase();
       if (code === "r" || colorByCode.has(code) || formatByCode.has(code)) {
         flush();
@@ -126,7 +147,7 @@ export function motdToJson(motd: string): TipTapDoc {
           formats.clear();
         } else if (colorByCode.has(code)) {
           // A colour resets active styles in Minecraft.
-          color = code;
+          color = colorByCode.get(code)!.hex;
           formats.clear();
         } else {
           formats.add(code);
@@ -150,10 +171,27 @@ export function motdToJson(motd: string): TipTapDoc {
   return doc;
 }
 
-function textNode(text: string, color: string, formats: Set<string>): TipTapNode {
+/** Read a `§x§R§R§G§G§B§B` truecolour run starting at `i`, or null if malformed. */
+function readHexSequence(chars: string[], i: number): string | null {
+  let hex = "#";
+  for (let k = 0; k < 6; k++) {
+    const marker = chars[i + 2 + k * 2];
+    const digit = chars[i + 3 + k * 2];
+    if (
+      (marker !== "§" && marker !== "&") ||
+      !digit ||
+      !/[0-9a-fA-F]/.test(digit)
+    ) {
+      return null;
+    }
+    hex += digit.toLowerCase();
+  }
+  return hex;
+}
+
+function textNode(text: string, colorHex: string, formats: Set<string>): TipTapNode {
   const marks: TipTapMark[] = [];
-  const c = colorByCode.get(color);
-  if (c) marks.push({ type: "textStyle", attrs: { color: c.hex } });
+  if (colorHex) marks.push({ type: "textStyle", attrs: { color: colorHex } });
   for (const f of formats) {
     const fmt = formatByCode.get(f);
     if (fmt) marks.push({ type: fmt.mark });
@@ -204,7 +242,7 @@ function serializeInline(nodes: TipTapNode[], state: MotdState): string {
     }
 
     if (color && color !== state.color) {
-      out += "§" + color;
+      out += emitColor(color);
       state.color = color;
       state.formats.clear(); // applying a colour clears styles in Minecraft
     }
@@ -222,6 +260,15 @@ function serializeInline(nodes: TipTapNode[], state: MotdState): string {
   return out;
 }
 
+/** Emit the codes for a hex colour: a single legacy code if it's a vanilla
+ *  colour, otherwise a `§x§R§R§G§G§B§B` truecolour run. */
+function emitColor(hex: string): string {
+  const code = motdCodeForHex(hex);
+  if (code) return "§" + code;
+  const digits = hex.replace(/^#/, "");
+  return "§x" + [...digits].map((d) => "§" + d).join("");
+}
+
 function readMarks(marks: TipTapMark[] | undefined): { color: string; formats: Set<string> } {
   let color = "";
   const formats = new Set<string>();
@@ -230,8 +277,8 @@ function readMarks(marks: TipTapMark[] | undefined): { color: string; formats: S
     if (m.type === "textStyle") {
       const hex = m.attrs?.color;
       if (typeof hex === "string") {
-        const code = motdCodeForHex(hex);
-        if (code) color = code;
+        const norm = normalizeHex(hex);
+        if (norm) color = norm;
       }
       continue;
     }
