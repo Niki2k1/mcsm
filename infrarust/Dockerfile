@@ -50,18 +50,24 @@ COPY --from=frontend-builder /frontend/.output/public/ \
 
 ENV OPENSSL_STATIC=1
 ENV RUSTFLAGS="-C target-feature=+crt-static"
+# Use Alpine's native gcc as the musl linker. Building for the explicit musl
+# target otherwise looks for a `musl-gcc` wrapper that Alpine doesn't ship (its
+# plain gcc already targets musl).
+ENV CARGO_TARGET_X86_64_UNKNOWN_LINUX_MUSL_LINKER=gcc
 
-# Build natively. On rust:alpine the host target is already
-# x86_64-unknown-linux-musl, so we don't pass --target — doing so would put
-# cargo in cross-compile mode and make it look for a `musl-gcc` linker wrapper
-# that doesn't exist on Alpine (here plain `gcc`/`cc` already targets musl).
-# crt-static still produces the fully static binary the scratch stage needs.
+# Build for the explicit musl target (amd64 — matches the deploy target and CI).
+# Passing --target is important: it makes crt-static apply only to the final
+# binary, while host proc-macros/build scripts (which must stay dynamic) are
+# built without it — a global crt-static breaks proc-macro crates like
+# async-stream-impl.
 #
 # The only change from upstream: `--features infrarust-core/docker`, which pulls
 # in bollard/futures-util and compiles the Docker provider into the binary.
-RUN echo "Building infrarust ($INFRARUST_REF) with docker feature" && \
-    cargo build --release -p infrarust --features infrarust-core/docker && \
-    cp target/release/infrarust /usr/local/bin/infrarust && \
+RUN rustup target add x86_64-unknown-linux-musl && \
+    echo "Building infrarust ($INFRARUST_REF) with docker feature" && \
+    cargo build --release --target x86_64-unknown-linux-musl -p infrarust \
+        --features infrarust-core/docker && \
+    cp target/x86_64-unknown-linux-musl/release/infrarust /usr/local/bin/infrarust && \
     strip /usr/local/bin/infrarust
 
 # Stage 3: minimal runtime (matches upstream).
