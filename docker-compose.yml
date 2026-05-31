@@ -87,7 +87,10 @@ services:
     #   - "3000:3000"
 
   infrarust:
-    image: ghcr.io/shadowner/infrarust:latest
+    # Our own build of Infrarust WITH the Docker provider compiled in. The
+    # upstream image ships without the `docker` cargo feature, so it ignores the
+    # [docker] config and discovers no backends (see infrarust/Dockerfile).
+    image: ghcr.io/niki2k1/mcsm-infrarust:latest
     restart: unless-stopped
     depends_on:
       - docker-socket-proxy

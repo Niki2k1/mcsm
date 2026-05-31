@@ -1,0 +1,64 @@
+name: Build and publish Infrarust image
+
+# A fork-free, docker-provider-enabled build of Infrarust (see infrarust/Dockerfile).
+# Only runs when the Infrarust build changes — the Rust compile is slow and the
+# image rarely changes, so we don't tie it to every app commit.
+on:
+  push:
+    branches: [main]
+    paths:
+      - "infrarust/Dockerfile"
+      - ".github/workflows/infrarust-publish.yml"
+  workflow_dispatch:
+
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
+env:
+  REGISTRY: ghcr.io
+  IMAGE_NAME: ${{ github.repository_owner }}/mcsm-infrarust
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+      packages: write
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Set up Buildx
+        uses: docker/setup-buildx-action@v3
+
+      - name: Log in to GHCR
+        uses: docker/login-action@v3
+        with:
+          registry: ${{ env.REGISTRY }}
+          username: ${{ github.actor }}
+          password: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Extract metadata
+        id: meta
+        uses: docker/metadata-action@v5
+        with:
+          images: ${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}
+          tags: |
+            type=ref,event=branch
+            type=sha
+            type=raw,value=latest,enable={{is_default_branch}}
+
+      # amd64 only — matches the deploy target. The Dockerfile clones the
+      # upstream source itself, so the build context is just the Dockerfile.
+      - name: Build and push
+        uses: docker/build-push-action@v6
+        with:
+          context: infrarust
+          file: infrarust/Dockerfile
+          platforms: linux/amd64
+          push: true
+          tags: ${{ steps.meta.outputs.tags }}
+          labels: ${{ steps.meta.outputs.labels }}
+          cache-from: type=gha
+          cache-to: type=gha,mode=max
