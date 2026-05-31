@@ -13,6 +13,9 @@
 
     <!-- Server console (log stream + RCON), opened from a server card. -->
     <ServerConsoleModal />
+
+    <!-- Server icon upload, opened from a server card. -->
+    <ServerIconModal />
   </UApp>
 </template>
 

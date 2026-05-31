@@ -9,11 +9,22 @@
     ></div>
     <div class="grow p-4 relative z-10">
       <div class="flex justify-between items-start mb-2 gap-2">
-        <div class="min-w-0">
-          <h2 class="text-lg font-semibold truncate">{{ server.name }}</h2>
-          <p class="text-xs text-muted font-mono truncate">
-            {{ server.domain }}
-          </p>
+        <div class="flex items-center gap-2 min-w-0">
+          <img
+            v-show="iconLoaded"
+            :src="iconUrl"
+            alt=""
+            class="size-9 shrink-0 rounded-md border border-default"
+            style="image-rendering: pixelated"
+            @load="iconLoaded = true"
+            @error="iconLoaded = false"
+          />
+          <div class="min-w-0">
+            <h2 class="text-lg font-semibold truncate">{{ server.name }}</h2>
+            <p class="text-xs text-muted font-mono truncate">
+              {{ server.domain }}
+            </p>
+          </div>
         </div>
 
         <div class="flex items-center gap-1 shrink-0">
@@ -52,6 +63,15 @@
             size="xs"
             aria-label="Open console"
             @click="emit('console', server)"
+          />
+
+          <UButton
+            icon="i-heroicons-photo-20-solid"
+            color="neutral"
+            variant="ghost"
+            size="xs"
+            aria-label="Set server icon"
+            @click="emit('icon', server)"
           />
 
           <UButton
@@ -109,7 +129,12 @@ const emit = defineEmits<{
   start: [server: { id: string; name: string }];
   stop: [server: { id: string; name: string }];
   console: [server: { id: string; name: string; running: boolean }];
+  icon: [server: { id: string; name: string }];
 }>();
+
+// Cache-busted thumbnail of the current icon; hidden until it loads (404 = none).
+const iconLoaded = ref(false);
+const iconUrl = computed(() => `/api/server/${props.server.id}/icon`);
 
 const {
   data: info,

@@ -44,6 +44,7 @@
             @start="setRunning($event.id, true)"
             @stop="setRunning($event.id, false)"
             @console="consoleModal.open"
+            @icon="iconModal.open"
           />
         </UPageGrid>
       </UPageBody>
@@ -80,6 +81,7 @@ type Server = {
 
 const serverModal = useServerModal();
 const consoleModal = useConsoleModal();
+const iconModal = useIconModal();
 const toast = useToast();
 
 const { data: servers } = await useFetch<Server[]>("/api/server", {
