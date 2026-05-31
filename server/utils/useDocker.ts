@@ -1,4 +1,5 @@
 import Docker from "dockerode";
+import type { H3Event } from "h3";
 import type { ServerConfig } from "../schema/server.schema";
 
 /**
@@ -72,8 +73,13 @@ export type ProvisionOptions = {
   volume?: string;
 };
 
-export const useDocker = (hostId = "default") => {
-  const config = useRuntimeConfig();
+// `event` is threaded through to `useRuntimeConfig(event)` so the Docker
+// connection settings (host/port/protocol/socket) pick up their `NUXT_`-prefixed
+// runtime env overrides per request. Without the event, server routes read the
+// build-time-baked config and ignore the deployment's env — see the runtime
+// config docs: https://nuxt.com/docs/guide/going-further/runtime-config
+export const useDocker = (event?: H3Event, hostId = "default") => {
+  const config = useRuntimeConfig(event);
   const hosts = (config.docker?.hosts ?? {}) as Record<string, DockerHostConfig>;
   const host = hosts[hostId];
 

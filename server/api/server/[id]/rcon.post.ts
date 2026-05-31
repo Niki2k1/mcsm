@@ -9,8 +9,8 @@ export default defineEventHandler(async (event) => {
   const { id } = await useValidatedParams(event, { id: z.string() });
   const { command } = await useValidatedBody(event, { command: z.string() });
 
-  const config = useRuntimeConfig();
-  const { getServer } = useDocker();
+  const config = useRuntimeConfig(event);
+  const { getServer } = useDocker(event);
 
   let server: Awaited<ReturnType<typeof getServer>>;
   try {

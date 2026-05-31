@@ -3,9 +3,9 @@ import { serverConfigSchema } from "../../schema/server.schema";
 export default defineEventHandler(async (event) => {
   const data = await useValidatedBody(event, serverConfigSchema);
 
-  const config = useRuntimeConfig();
-  const { provisionServer } = useDocker();
-  const spec = await buildServerSpec(data);
+  const config = useRuntimeConfig(event);
+  const { provisionServer } = useDocker(event);
+  const spec = await buildServerSpec(data, event);
 
   try {
     const container = await provisionServer({

@@ -23,33 +23,40 @@ export default defineNuxtConfig({
     preference: "dark",
   },
 
+  // These are defaults only. Override them at runtime with `NUXT_`-prefixed env
+  // vars whose names mirror this structure (e.g. `NUXT_DOCKER_HOSTS_DEFAULT_HOST`,
+  // `NUXT_DOCKER_NETWORK`, `NUXT_RCON_PASSWORD`). Nuxt bakes `runtimeConfig` at
+  // build time and only re-applies matching `NUXT_` env at runtime, so binding
+  // defaults to differently-named vars (e.g. `process.env.DOCKER_HOST_ADDR`)
+  // would work in dev but silently break in the prebuilt image.
+  // https://nuxt.com/docs/guide/going-further/runtime-config
   runtimeConfig: {
     // RCON credentials MCSM uses to run console commands against servers.
     // The RCON port is never published — only reachable on the shared network.
     rcon: {
-      port: process.env.RCON_PORT || "25575",
-      password: process.env.RCON_PASSWORD || "minecraft",
+      port: "25575", // NUXT_RCON_PORT
+      password: "minecraft", // NUXT_RCON_PASSWORD
     },
     docker: {
       // Image used for every Minecraft server container.
-      image: process.env.MC_IMAGE || "itzg/minecraft-server",
+      image: "itzg/minecraft-server", // NUXT_DOCKER_IMAGE
       // Shared Docker network that Infrarust is attached to, so it can resolve
       // and reach the created containers.
-      network: process.env.DOCKER_MC_NETWORK || "infrarust",
+      network: "infrarust", // NUXT_DOCKER_NETWORK
       // Docker daemons MCSM can provision on, keyed by id. Only `default` is
       // wired up today; add more entries for multi-host later.
       hosts: {
         default: {
           // Local (or socket-proxied) unix socket. Used when `host` is empty.
-          socketPath: process.env.DOCKER_SOCKET_PATH || "/var/run/docker.sock",
+          socketPath: "/var/run/docker.sock", // NUXT_DOCKER_HOSTS_DEFAULT_SOCKET_PATH
           // Optional remote TCP/TLS daemon. When `host` is set it takes
           // precedence over `socketPath`.
-          host: process.env.DOCKER_HOST_ADDR || "",
-          port: process.env.DOCKER_PORT || "",
-          protocol: process.env.DOCKER_PROTOCOL || "",
-          ca: process.env.DOCKER_CA || "",
-          cert: process.env.DOCKER_CERT || "",
-          key: process.env.DOCKER_KEY || "",
+          host: "", // NUXT_DOCKER_HOSTS_DEFAULT_HOST
+          port: "", // NUXT_DOCKER_HOSTS_DEFAULT_PORT
+          protocol: "", // NUXT_DOCKER_HOSTS_DEFAULT_PROTOCOL
+          ca: "", // NUXT_DOCKER_HOSTS_DEFAULT_CA
+          cert: "", // NUXT_DOCKER_HOSTS_DEFAULT_CERT
+          key: "", // NUXT_DOCKER_HOSTS_DEFAULT_KEY
         },
       },
     },

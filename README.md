@@ -140,15 +140,20 @@ Copy the example file and adjust as needed:
 cp .env.example .env
 ```
 
-| Variable             | Required | Description |
-| -------------------- | -------- | ----------- |
-| `DOCKER_SOCKET_PATH` | ✅       | Path to the Docker socket MCSM provisions on. Defaults to `/var/run/docker.sock`. |
-| `DOCKER_MC_NETWORK`  | ✅       | Shared Docker network Infrarust and the MC containers join. Default `infrarust`. |
-| `MC_IMAGE`           | –        | Server image. Default `itzg/minecraft-server`. |
-| `RCON_PASSWORD`      | –        | RCON password set on every server for the console. Default `minecraft`. Change it. |
-| `RCON_PORT`          | –        | RCON port inside the container. Default `25575` (never published). |
-| `DOCKER_HOST_ADDR`   | –        | Remote Docker daemon host. When set, takes precedence over the socket. |
-| `DOCKER_PORT` / `DOCKER_PROTOCOL` / `DOCKER_CA` / `DOCKER_CERT` / `DOCKER_KEY` | – | Remote daemon port and TLS material. |
+Config is supplied through Nuxt `runtimeConfig`, so overrides must use
+`NUXT_`-prefixed environment variables that mirror its structure (plain names
+like `DOCKER_HOST_ADDR` are only read at build time and are ignored by the
+built server — see [Nuxt runtime config](https://nuxt.com/docs/guide/going-further/runtime-config)).
+
+| Variable                              | Required | Description |
+| ------------------------------------- | -------- | ----------- |
+| `NUXT_DOCKER_HOSTS_DEFAULT_SOCKET_PATH` | ✅     | Path to the Docker socket MCSM provisions on. Defaults to `/var/run/docker.sock`. |
+| `NUXT_DOCKER_NETWORK`                 | ✅       | Shared Docker network Infrarust and the MC containers join. Default `infrarust`. |
+| `NUXT_DOCKER_IMAGE`                   | –        | Server image. Default `itzg/minecraft-server`. |
+| `NUXT_RCON_PASSWORD`                  | –        | RCON password set on every server for the console. Default `minecraft`. Change it. |
+| `NUXT_RCON_PORT`                      | –        | RCON port inside the container. Default `25575` (never published). |
+| `NUXT_DOCKER_HOSTS_DEFAULT_HOST`      | –        | Remote Docker daemon host. When set, takes precedence over the socket. |
+| `NUXT_DOCKER_HOSTS_DEFAULT_PORT` / `..._PROTOCOL` / `..._CA` / `..._CERT` / `..._KEY` | – | Remote daemon port and TLS material. |
 
 ### 3. Secure the Docker socket ⚠️
 
@@ -157,8 +162,8 @@ socket access is effectively **root on the host**. In production, do **not**
 mount the bare socket — put a restricted proxy such as
 [`tecnativa/docker-socket-proxy`](https://github.com/Tecnativa/docker-socket-proxy)
 in front of it, allow only the endpoints MCSM needs (containers, images,
-networks, volumes), and point `DOCKER_SOCKET_PATH` / `DOCKER_HOST_ADDR` at the
-proxy.
+networks, volumes), and point `NUXT_DOCKER_HOSTS_DEFAULT_SOCKET_PATH` /
+`NUXT_DOCKER_HOSTS_DEFAULT_HOST` at the proxy.
 
 ### 4. Seed domains
 

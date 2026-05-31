@@ -6,9 +6,9 @@
  *
  * Volumes (worlds) are always preserved.
  */
-export default defineEventHandler(async () => {
-  const config = useRuntimeConfig();
-  const { listServers, getServer, removeServer, provisionServer } = useDocker();
+export default defineEventHandler(async (event) => {
+  const config = useRuntimeConfig(event);
+  const { listServers, getServer, removeServer, provisionServer } = useDocker(event);
   const image = config.docker?.image || "itzg/minecraft-server";
 
   const servers = await listServers();
@@ -21,7 +21,7 @@ export default defineEventHandler(async () => {
 
     try {
       const existing = await getServer(server.id);
-      const spec = await buildServerSpec(server.config);
+      const spec = await buildServerSpec(server.config, event);
 
       const name = existing.containerName || spec.name;
       const volume = existing.volume || spec.volume;

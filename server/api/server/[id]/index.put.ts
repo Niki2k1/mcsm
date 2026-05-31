@@ -11,9 +11,9 @@ export default defineEventHandler(async (event) => {
   const { id } = await useValidatedParams(event, { id: z.string() });
   const data = await useValidatedBody(event, serverConfigSchema);
 
-  const config = useRuntimeConfig();
-  const { getServer, removeServer, provisionServer } = useDocker();
-  const spec = await buildServerSpec(data);
+  const config = useRuntimeConfig(event);
+  const { getServer, removeServer, provisionServer } = useDocker(event);
+  const spec = await buildServerSpec(data, event);
 
   try {
     const existing = await getServer(id);
