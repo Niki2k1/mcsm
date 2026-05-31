@@ -12,13 +12,19 @@ export default defineNuxtConfig({
   // former Pro components for free (no license, no separate module).
   modules: ["@nuxt/ui", "@vueuse/nuxt"],
 
-  css: ["~/assets/css/main.css"],
+  css: ["~/assets/css/main.css", "@xterm/xterm/css/xterm.css"],
 
   colorMode: {
     preference: "dark",
   },
 
   runtimeConfig: {
+    // RCON credentials MCSM uses to run console commands against servers.
+    // The RCON port is never published — only reachable on the shared network.
+    rcon: {
+      port: process.env.RCON_PORT || "25575",
+      password: process.env.RCON_PASSWORD || "minecraft",
+    },
     docker: {
       // Image used for every Minecraft server container.
       image: process.env.MC_IMAGE || "itzg/minecraft-server",

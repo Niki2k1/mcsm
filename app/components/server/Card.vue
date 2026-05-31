@@ -46,6 +46,15 @@
           />
 
           <UButton
+            icon="i-heroicons-command-line-20-solid"
+            color="neutral"
+            variant="ghost"
+            size="xs"
+            aria-label="Open console"
+            @click="emit('console', server)"
+          />
+
+          <UButton
             icon="i-heroicons-pencil-square-20-solid"
             color="neutral"
             variant="ghost"
@@ -96,6 +105,7 @@ const emit = defineEmits<{
   delete: [server: { id: string; name: string }];
   start: [server: { id: string; name: string }];
   stop: [server: { id: string; name: string }];
+  console: [server: { id: string; name: string; running: boolean }];
 }>();
 
 const {

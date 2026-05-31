@@ -26,6 +26,7 @@ export function sanitize(value: string) {
  * truth — no database).
  */
 export function buildServerSpec(data: ServerConfig) {
+  const config = useRuntimeConfig();
   const subdomain = sanitize(data.subdomain ?? data.name);
   const domain = `${subdomain}.${data.domain}`;
   const memory = parseMemory(data.memory);
@@ -39,6 +40,11 @@ export function buildServerSpec(data: ServerConfig) {
     MAX_PLAYERS: data.MAX_PLAYERS.toString(),
     ONLINE_MODE: data.ONLINE_MODE.toString(),
     ALLOW_FLIGHT: data.ALLOW_FLIGHT.toString(),
+    // RCON for the in-app console. Only reachable on the internal Docker
+    // network (the port is never published), so MCSM can run commands.
+    ENABLE_RCON: "true",
+    RCON_PORT: String(config.rcon?.port ?? 25575),
+    RCON_PASSWORD: config.rcon?.password ?? "minecraft",
   };
 
   if (data.HARDCORE) env.HARDCORE = "true";

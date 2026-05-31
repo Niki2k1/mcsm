@@ -19,6 +19,9 @@ config files to manage.
 - **Full lifecycle from the dashboard** — list, start, stop, edit and delete
   servers. Editing recreates the container with the new config while keeping the
   world volume; deleting removes the container but preserves the volume.
+- **In-app console** — an [xterm.js](https://xtermjs.org) terminal streams the
+  server console live (over SSE) and runs commands via RCON, right from the
+  dashboard.
 - **Multiple server types** — Vanilla, Paper, Fabric, Forge, Feed The Beast
   and CurseForge modpacks (Modrinth is stubbed for later).
 - **Version picker** — Minecraft versions are pulled from
@@ -98,6 +101,7 @@ Docker can't mutate env/labels in place.
 | Validation  | [Zod](https://zod.dev) via `h3-zod` |
 | Storage     | [unstorage](https://unstorage.unjs.io) filesystem driver (domains list) |
 | Provisioning | [dockerode](https://github.com/apocas/dockerode) → Docker Engine API |
+| Console     | [xterm.js](https://xtermjs.org) + SSE (logs), [rcon-client](https://github.com/janispritzkau/rcon-client) (commands) |
 | MC proxy    | [Infrarust](https://github.com/Shadowner/Infrarust) (Docker-label discovery) |
 | MC data     | `minecraft-data`, `@sfirew/minecraft-motd-parser`, `@ahdg/minecraftstatuspinger`, `jimp` (skin rendering) |
 
@@ -141,6 +145,8 @@ cp .env.example .env
 | `DOCKER_SOCKET_PATH` | ✅       | Path to the Docker socket MCSM provisions on. Defaults to `/var/run/docker.sock`. |
 | `DOCKER_MC_NETWORK`  | ✅       | Shared Docker network Infrarust and the MC containers join. Default `infrarust`. |
 | `MC_IMAGE`           | –        | Server image. Default `itzg/minecraft-server`. |
+| `RCON_PASSWORD`      | –        | RCON password set on every server for the console. Default `minecraft`. Change it. |
+| `RCON_PORT`          | –        | RCON port inside the container. Default `25575` (never published). |
 | `DOCKER_HOST_ADDR`   | –        | Remote Docker daemon host. When set, takes precedence over the socket. |
 | `DOCKER_PORT` / `DOCKER_PROTOCOL` / `DOCKER_CA` / `DOCKER_CERT` / `DOCKER_KEY` | – | Remote daemon port and TLS material. |
 
@@ -242,7 +248,8 @@ app/
     server/steps/      # wizard steps: type, details, ServerProperties, Review
     server/FormModal.vue # shared create/edit wizard modal
     server/Status.vue  # dashboard list + delete confirm (queries /api/server)
-    server/Card.vue    # per-server card with edit / delete actions
+    server/Card.vue    # per-server card with start/stop/console/edit/delete
+    server/ConsoleModal.vue # xterm console (SSE logs + RCON)
     user/              # player lookup list (operators / whitelist)
     Motd.vue           # MOTD preview renderer
     ReviewRow / BoolBadge / PlayerPills   # review-screen building blocks
@@ -258,6 +265,8 @@ server/
     server/[id]/index.delete.ts # delete: remove container, keep volume
     server/[id]/start.post.ts   # start the container
     server/[id]/stop.post.ts    # stop the container
+    server/[id]/logs.get.ts     # stream the console (SSE)
+    server/[id]/rcon.post.ts    # run a command over RCON
     domains/                 # list / create / delete domains
     minecraft/               # versions, player profile, skin, server status
   utils/
@@ -274,9 +283,10 @@ nuxt.config.ts               # modules, runtimeConfig (docker hosts), storage
 - **Single Docker host by default.** `useDocker(hostId)` resolves daemons from
   `runtimeConfig.docker.hosts`, so multiple hosts can be added later, but only
   `default` is wired up today.
-- **No log/console view yet.** Create, start, stop, edit and delete are
-  implemented; streaming a server's logs or an RCON console is a natural next
-  step.
+- **RCON is shared-secret and internal.** Every server gets RCON enabled with
+  the `RCON_PASSWORD` MCSM knows; the port is never published, so it's only
+  reachable on the internal Docker network. Existing servers gain RCON the next
+  time they're recreated (an edit).
 - **Per-server MOTD/offline status** is set as an env var on the container; the
   richer offline-status placeholder behaviour of file-based proxies isn't
   modelled through Infrarust labels.

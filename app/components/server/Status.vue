@@ -43,6 +43,7 @@
             @delete="confirmDelete"
             @start="setRunning($event.id, true)"
             @stop="setRunning($event.id, false)"
+            @console="consoleModal.open"
           />
         </UPageGrid>
       </UPageBody>
@@ -78,6 +79,7 @@ type Server = {
 };
 
 const serverModal = useServerModal();
+const consoleModal = useConsoleModal();
 const toast = useToast();
 
 const { data: servers } = await useFetch<Server[]>("/api/server", {
