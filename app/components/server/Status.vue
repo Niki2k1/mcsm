@@ -39,6 +39,7 @@
             v-for="server in servers"
             :key="server.id"
             :server="server"
+            :bluemap-host="bluemapHost"
             @edit="serverModal.openEdit"
             @delete="confirmDelete"
             @start="setRunning($event.id, true)"
@@ -87,6 +88,13 @@ const { data: servers } = await useFetch<Server[]>("/api/server", {
   key: "servers",
   default: () => [],
 });
+
+// Global BlueMap map-link host (overrides the dashboard origin when set).
+const { data: settings } = useFetch<{ bluemap?: { publicHost?: string } }>(
+  "/api/admin/settings",
+  { key: "admin-settings", default: () => ({}) }
+);
+const bluemapHost = computed(() => settings.value?.bluemap?.publicHost ?? "");
 
 const deleteOpen = ref(false);
 const deleting = ref(false);

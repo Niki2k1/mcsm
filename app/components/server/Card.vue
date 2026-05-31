@@ -113,14 +113,20 @@ const props = defineProps<{
     running: boolean;
     config?: { BLUEMAP?: boolean; BLUEMAP_PORT?: number } | null;
   };
+  /** Global override for the host BlueMap links point at (admin setting). */
+  bluemapHost?: string;
 }>();
 
-// BlueMap serves over HTTP on a host port (not via Infrarust), so link to it on
-// the same host that's serving the dashboard.
+// BlueMap serves over HTTP on a host port (not via Infrarust). Use the admin's
+// configured map host when set, otherwise the host serving the dashboard.
 const bluemapUrl = computed(() => {
   if (!import.meta.client || !props.server.config?.BLUEMAP) return null;
   const port = props.server.config.BLUEMAP_PORT || 8100;
-  return `${window.location.protocol}//${window.location.hostname}:${port}/`;
+  const host = props.bluemapHost || window.location.hostname;
+  // BlueMap's built-in webserver is plain HTTP; only mirror the dashboard's
+  // scheme when we're falling back to its origin.
+  const protocol = props.bluemapHost ? "http:" : window.location.protocol;
+  return `${protocol}//${host}:${port}/`;
 });
 
 const emit = defineEmits<{

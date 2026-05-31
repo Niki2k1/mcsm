@@ -15,8 +15,24 @@ export const useServerModal = () => {
     serverId: null,
   }));
 
-  function openCreate() {
-    setCreateForm();
+  async function openCreate() {
+    // Seed BlueMap defaults from the global settings so new servers start with
+    // the admin's preferred toggle/port.
+    let seed: Partial<CreateForm> = {};
+    try {
+      const settings = await $fetch<{
+        bluemap?: { defaultEnabled?: boolean; defaultPort?: number };
+      }>("/api/admin/settings");
+      if (settings?.bluemap) {
+        seed = {
+          BLUEMAP: settings.bluemap.defaultEnabled ?? false,
+          BLUEMAP_PORT: settings.bluemap.defaultPort ?? 8100,
+        };
+      }
+    } catch {
+      // Settings unavailable — fall back to the form defaults.
+    }
+    setCreateForm(seed);
     state.value = { open: true, mode: "create", serverId: null };
   }
 

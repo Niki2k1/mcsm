@@ -9,6 +9,7 @@
 
     <AdminStatusPanel />
     <AdminSecretsPanel />
+    <AdminBluemapPanel />
     <AdminDomainsPanel />
     <AdminMaintenancePanel />
   </UContainer>

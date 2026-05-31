@@ -31,7 +31,9 @@ config files to manage.
 - **BlueMap integration** — toggle a 3D web map for Paper/Fabric/Forge servers.
   MCSM lets the itzg image auto-install [BlueMap](https://bluemap.bluecolored.de/)
   from Modrinth and publishes its webserver to a host port, with a **Map** link
-  on each server card.
+  on each server card. A BlueMap section in the Admin page sets the global
+  defaults (enabled-by-default, default port) the wizard seeds new servers with,
+  plus the host the map links point at.
 - **Operators & whitelist** — look players up by username; their UUID and skin
   avatar are resolved from Mojang automatically.
 - **Review screen** — a formatted overview of every setting before you commit
