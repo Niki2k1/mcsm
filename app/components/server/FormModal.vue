@@ -10,25 +10,20 @@
     :ui="{ content: 'max-w-3xl' }"
   >
     <template #body>
-      <div class="space-y-6">
-        <!-- Step indicator -->
-        <div class="flex flex-wrap items-center gap-2">
-          <UBadge
-            v-for="(label, index) in steps"
-            :key="label"
-            :color="
-              index === step ? 'primary' : index < step ? 'success' : 'neutral'
-            "
-            :variant="index === step ? 'solid' : 'subtle'"
-            class="cursor-pointer"
-            @click="index < step && (step = index)"
-          >
-            {{ index + 1 }}. {{ label }}
-          </UBadge>
-        </div>
-
-        <component :is="stepComponents[step]" />
-      </div>
+      <UStepper v-model="step" :items="steps">
+        <template #type>
+          <ServerStepsType />
+        </template>
+        <template #details>
+          <ServerStepsDetails />
+        </template>
+        <template #properties>
+          <ServerStepsServerProperties />
+        </template>
+        <template #review>
+          <ServerStepsReview />
+        </template>
+      </UStepper>
     </template>
 
     <template #footer>
@@ -69,12 +64,27 @@ const { state, close } = useServerModal();
 const form = useCreateForm();
 const toast = useToast();
 
-const steps = ["Choose Type", "Details", "Server Properties", "Review"];
-const stepComponents = [
-  resolveComponent("ServerStepsType"),
-  resolveComponent("ServerStepsDetails"),
-  resolveComponent("ServerStepsServerProperties"),
-  resolveComponent("ServerStepsReview"),
+const steps = [
+  {
+    title: "Choose Type",
+    icon: "i-heroicons-server-20-solid",
+    slot: "type" as const,
+  },
+  {
+    title: "Details",
+    icon: "i-heroicons-document-text-20-solid",
+    slot: "details" as const,
+  },
+  {
+    title: "Server Properties",
+    icon: "i-heroicons-cog-6-tooth-20-solid",
+    slot: "properties" as const,
+  },
+  {
+    title: "Review",
+    icon: "i-heroicons-clipboard-document-check-20-solid",
+    slot: "review" as const,
+  },
 ];
 
 const step = ref(0);
