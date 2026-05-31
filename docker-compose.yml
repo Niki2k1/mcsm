@@ -70,13 +70,13 @@ services:
     # `configs` content sidesteps the host filesystem entirely.
     configs:
       - source: infrarust_config
-        target: /app/config/config.yaml
+        target: /app/config/config.toml
     # Override the image's default CMD. The current binary's CLI is
     # `--config <CONFIG> --plugins-dir <PLUGINS_DIR>` and no longer accepts the
     # old `--servers-dir` flag (it crashes on startup with "unexpected argument
-    # '--servers-dir'"). Also point `--config` at our config rather than the
-    # image's default `infrarust.toml`, which we don't ship.
-    command: ["--config", "/app/config/config.yaml", "--plugins-dir", "/app/config/plugins"]
+    # '--servers-dir'"). The config is parsed as TOML, so we ship it as
+    # config.toml rather than the image default path it can't find.
+    command: ["--config", "/app/config/config.toml", "--plugins-dir", "/app/config/plugins"]
     ports:
       - "25565:25565"
     networks:
@@ -95,22 +95,24 @@ networks:
 volumes:
   mcsm-data:
 
-# Infrarust proxy config, injected into the container at
-# /app/config/config.yaml. Inlined (rather than a bind mount) so it works
-# reliably on Coolify, which mishandles single-file bind mounts.
+# Infrarust proxy config (TOML — the v2 binary parses --config as TOML),
+# injected into the container at /app/config/config.toml. Inlined rather than
+# bind-mounted so it works reliably on Coolify, which mishandles single-file
+# bind mounts.
 #
 # Routing is driven entirely by Docker labels — MCSM sets `infrarust.enable`,
 # `infrarust.domains` and `infrarust.port` on each container it creates, and the
-# docker provider below discovers them. No per-server config files needed.
+# [docker] provider below discovers them. No per-server config files needed.
 configs:
   infrarust_config:
     content: |
-      bind: "0.0.0.0:25565"
+      bind = "0.0.0.0:25565"
 
-      docker_provider:
-        # Talk to Docker through the socket proxy (same as MCSM).
-        docker_host: "tcp://docker-socket-proxy:2375"
-        label_prefix: "infrarust"
-        # Real-time discovery via the Docker event stream, with a polling fallback.
-        watch: true
-        polling_interval: 10
+      [docker]
+      # Talk to Docker through the socket proxy (same as MCSM).
+      endpoint = "tcp://docker-socket-proxy:2375"
+      # Prefer the shared network MCSM attaches Minecraft containers to when
+      # resolving their backend addresses.
+      network = "infrarust"
+      # Fallback polling interval; real-time updates come from the event stream.
+      poll_interval = "10s"
