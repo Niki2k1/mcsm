@@ -25,6 +25,22 @@
             >
               Create backup
             </UButton>
+            <UButton
+              icon="i-heroicons-arrow-up-tray-20-solid"
+              variant="soft"
+              color="neutral"
+              :loading="uploading"
+              @click="fileInput?.click()"
+            >
+              Upload
+            </UButton>
+            <input
+              ref="fileInput"
+              type="file"
+              accept=".tar.gz,.tgz,application/gzip"
+              class="hidden"
+              @change="onUpload"
+            />
           </div>
         </div>
       </template>
@@ -201,6 +217,47 @@ async function create() {
   }
 }
 
+// --- Upload ----------------------------------------------------------------
+
+const fileInput = useTemplateRef<HTMLInputElement>("fileInput");
+const uploading = ref(false);
+
+async function onUpload(event: Event) {
+  const input = event.target as HTMLInputElement;
+  const file = input.files?.[0];
+  if (!file) return;
+
+  uploading.value = true;
+  try {
+    await $fetch(`/api/server/${id.value}/backups/upload`, {
+      method: "POST",
+      // Strip the extension for the label; the file itself is the raw body.
+      query: { label: file.name.replace(/\.(tar\.gz|tgz)$/i, "") },
+      body: file,
+    });
+    toast.add({
+      title: "Backup uploaded",
+      description: "The backup was validated and is ready to restore.",
+      color: "success",
+    });
+    await refresh();
+  } catch (error) {
+    const statusCode = (error as { statusCode?: number })?.statusCode;
+    toast.add({
+      title: "Upload failed",
+      description:
+        statusCode === 400
+          ? "The file is not a valid .tar.gz world backup."
+          : "Could not upload the backup.",
+      color: "error",
+    });
+  } finally {
+    uploading.value = false;
+    // Allow re-selecting the same file.
+    input.value = "";
+  }
+}
+
 // --- Restore / delete ----------------------------------------------------------
 
 const pending = ref<Backup | null>(null);
@@ -209,7 +266,9 @@ const deleteOpen = ref(false);
 const restoring = ref(false);
 const deleting = ref(false);
 
-const busy = computed(() => creating.value || restoring.value || deleting.value);
+const busy = computed(
+  () => creating.value || uploading.value || restoring.value || deleting.value
+);
 
 function confirmRestore(backup: Backup) {
   pending.value = backup;

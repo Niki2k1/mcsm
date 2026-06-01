@@ -296,6 +296,109 @@ export async function openBackupDownload(
   }
 }
 
+/**
+ * Store an uploaded backup tarball on the backup volume.
+ *
+ * The upload stream is piped into a helper container's stdin, which writes it
+ * to the volume and then validates it really is a readable .tar.gz before the
+ * metadata row is created — a corrupt or aborted upload never becomes a
+ * restorable backup.
+ */
+export async function uploadBackup(
+  event: H3Event,
+  serverId: string,
+  body: NodeJS.ReadableStream,
+  label?: string
+) {
+  const { getServer, docker, ensureImage } = useDocker(event);
+  const server = await getServer(serverId);
+  if (!server.volume) {
+    throw createError({ statusCode: 400, statusMessage: "Server has no volume" });
+  }
+
+  await docker.createVolume({ Name: BACKUP_VOLUME });
+  await ensureImage(HELPER_IMAGE);
+
+  const filename = `${server.volume}/${Date.now()}.tar.gz`;
+  if (!SAFE_FILENAME.test(filename)) {
+    throw createError({ statusCode: 400, statusMessage: "Invalid volume name" });
+  }
+  const target = `/backups/${filename}`;
+
+  const container = await docker.createContainer({
+    Image: HELPER_IMAGE,
+    Cmd: [
+      "sh",
+      "-c",
+      // Write stdin to the target, verify it is a valid gzip'd tar, then print
+      // its size. Any failure removes the partial file and exits non-zero.
+      `mkdir -p "/backups/${server.volume}" && cat > "${target}" && ` +
+        `tar tzf "${target}" > /dev/null 2>&1 && stat -c %s "${target}" || ` +
+        `{ rm -f "${target}"; exit 1; }`,
+    ],
+    OpenStdin: true,
+    StdinOnce: true,
+    HostConfig: {
+      Binds: [`${BACKUP_VOLUME}:/backups`],
+      NetworkMode: "none",
+    },
+    Labels: { "mcsm.helper": "true" },
+  });
+
+  try {
+    const attachStream = (await container.attach({
+      stream: true,
+      stdin: true,
+      stdout: true,
+      stderr: true,
+      hijack: true,
+    })) as unknown as NodeJS.ReadWriteStream;
+
+    // Collect stdout (the stat size) while the upload streams in.
+    const stdout = new PassThrough();
+    const stderr = new PassThrough();
+    stderr.resume();
+    container.modem.demuxStream(attachStream, stdout, stderr);
+    let output = "";
+    stdout.on("data", (chunk: Buffer) => {
+      output += chunk.toString("utf8");
+    });
+
+    await container.start();
+
+    // Pipe the upload into the container's stdin; ending the write side
+    // half-closes the hijacked connection so `cat` sees EOF.
+    body.pipe(attachStream);
+
+    const result = await container.wait();
+    if (result.StatusCode !== 0) {
+      throw createError({
+        statusCode: 400,
+        statusMessage: "Uploaded file is not a valid .tar.gz backup",
+      });
+    }
+
+    const sizeBytes = parseInt(output.trim().split("\n").pop() ?? "", 10) || null;
+
+    const [row] = await db
+      .insert(backups)
+      .values({
+        volume: server.volume,
+        filename,
+        sizeBytes,
+        createdAt: Date.now(),
+        label: label ?? null,
+        state: "done",
+      })
+      .returning();
+
+    await recordActivity(server.volume, "backup-created", label ?? "Uploaded");
+    return row;
+  } finally {
+    await container.remove({ force: true }).catch(() => {});
+  }
+}
+
 /** Delete a backup tarball and its metadata. */
 export async function deleteBackup(
   event: H3Event,
