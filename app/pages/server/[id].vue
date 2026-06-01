@@ -162,11 +162,10 @@ onUnmounted(() => {
 
 // --- Shared context for the tab pages ---------------------------------------
 
-// Icon uploaded during this session — previews show it right away even though
-// the server itself only reports it after a restart.
-const localFavicon = ref<string>();
+// Icon to display: the running server's live favicon wins; the ICON URL from
+// the saved config covers stopped servers and not-yet-applied changes.
 const displayFavicon = computed(
-  () => localFavicon.value ?? ping.value?.status?.favicon
+  () => ping.value?.status?.favicon || server.value?.config?.ICON || undefined
 );
 
 provideServerDetail({
@@ -182,7 +181,6 @@ provideServerDetail({
   refreshPing: async () => {
     await refreshPing();
   },
-  localFavicon,
   displayFavicon,
 });
 

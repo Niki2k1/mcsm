@@ -112,7 +112,12 @@ export async function buildServerSpec(data: ServerConfig, event?: H3Event) {
   }
 
   // --- Presentation & QoL -------------------------------------------------------
-  if (data.ICON) env.ICON = data.ICON;
+  if (data.ICON) {
+    env.ICON = data.ICON;
+    // Without this, itzg only applies ICON when the volume has no
+    // server-icon.png yet — icon changes would never take effect.
+    env.OVERRIDE_ICON = "TRUE";
+  }
   if (data.RESOURCE_PACK) {
     env.RESOURCE_PACK = data.RESOURCE_PACK;
     if (data.RESOURCE_PACK_SHA1)

@@ -55,6 +55,8 @@ type Server = {
   domain: string;
   type: string | null;
   running: boolean;
+  /** Stored config — the card uses ICON for its icon fallback. */
+  config?: { ICON?: string | null } | null;
 };
 
 const serverModal = useServerModal();

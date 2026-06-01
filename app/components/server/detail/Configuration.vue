@@ -549,7 +549,7 @@
 <script setup lang="ts">
 import MotdEditor from "~/components/server/motd/MotdEditor.vue";
 
-const { id, server, ping, localFavicon, displayFavicon } = useServerDetail();
+const { id, server, ping } = useServerDetail();
 const router = useRouter();
 const toast = useToast();
 
@@ -786,8 +786,13 @@ const packInput = useTemplateRef<HTMLInputElement>("packInput");
 const uploadingIcon = ref(false);
 const uploadingPack = ref(false);
 
-/** Icon for previews: a just-uploaded one wins over what the server reports. */
-const currentFavicon = displayFavicon;
+/**
+ * Icon for previews: the ICON URL in the form drives it (uploaded or typed),
+ * falling back to whatever the running server currently reports.
+ */
+const currentFavicon = computed(
+  () => form.value?.ICON || ping.value?.status?.favicon
+);
 
 /**
  * Decode the chosen image in the browser and resize it to the 64x64 PNG
@@ -829,26 +834,18 @@ async function onIconUpload(event: Event) {
   uploadingIcon.value = true;
   try {
     const png = await fileToIconPng(file);
-    await $fetch(`/api/server/${id.value}/icon`, {
-      method: "POST",
-      body: png,
-    });
+    const result = await $fetch<{ url: string }>(
+      `/api/server/${id.value}/icon`,
+      { method: "POST", body: png }
+    );
 
-    // Show the new icon in all previews immediately — the server itself only
-    // reports it after a restart.
-    localFavicon.value = await new Promise<string>((resolve, reject) => {
-      const reader = new FileReader();
-      reader.onload = () => resolve(reader.result as string);
-      reader.onerror = () => reject(reader.error);
-      reader.readAsDataURL(png);
-    });
+    // The stored icon's URL goes into the config (applied on save) and is
+    // what every preview renders from.
+    if (form.value) form.value.ICON = result.url;
 
-    // The uploaded file lives in the world volume; a URL-based icon would
-    // overwrite it at startup, so clear it.
-    if (form.value) form.value.ICON = null;
     toast.add({
       title: "Icon uploaded",
-      description: "Restart the server to apply the new icon.",
+      description: "Save the configuration to apply it to the server.",
       color: "success",
     });
   } catch (error) {

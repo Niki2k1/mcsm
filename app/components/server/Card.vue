@@ -11,10 +11,10 @@
     <div class="grow p-4 relative z-10">
       <div class="flex justify-between items-start mb-2 gap-2">
         <div class="flex items-center gap-3 min-w-0">
-          <!-- Server icon as reported by the live ping -->
+          <!-- Server icon: live ping first, then the configured icon URL -->
           <img
-            v-if="info?.status?.favicon"
-            :src="info.status.favicon"
+            v-if="cardIcon"
+            :src="cardIcon"
             alt=""
             class="size-10 shrink-0 rounded [image-rendering:pixelated] ring-1 ring-default"
           />
@@ -86,6 +86,7 @@ const props = defineProps<{
     domain: string;
     type: string | null;
     running: boolean;
+    config?: { ICON?: string | null } | null;
   };
 }>();
 
@@ -106,6 +107,11 @@ const {
 // The ping description may be a legacy string or a chat component (modern
 // servers send truecolour MOTDs this way); flatten either into codes we render.
 const motd = computed(() => chatToMotd(info.value?.status?.description));
+
+// Live favicon from the ping, falling back to the configured icon URL.
+const cardIcon = computed(
+  () => info.value?.status?.favicon || props.server.config?.ICON || undefined
+);
 
 const status = ref<"success" | "error" | "pending" | "idle">("idle");
 

@@ -1,11 +1,18 @@
 import { z } from "zod";
 import Jimp from "jimp-compact";
+import { mkdir, readdir, unlink, writeFile } from "node:fs/promises";
+import { join } from "node:path";
 
 /**
- * Upload a server icon. The image is resized to the 64x64 PNG Minecraft
- * requires and written into the world volume as /data/server-icon.png —
- * no external hosting needed. Takes effect on the next server restart.
+ * Upload a server icon.
+ *
+ * The image (already converted to 64x64 PNG by the browser) is stored in
+ * .data and served at a public URL. That URL goes into the config's ICON
+ * field — itzg downloads it whenever the container is (re)created — and the
+ * same URL drives every preview in the UI.
  */
+
+const ICONS_DIR = ".data/icons";
 const MAX_ICON_BYTES = 5 * 1024 * 1024;
 
 export default defineEventHandler(async (event) => {
@@ -33,7 +40,8 @@ export default defineEventHandler(async (event) => {
     });
   }
 
-  // Convert whatever was uploaded (PNG/JPG/...) into the required 64x64 PNG.
+  // Whatever arrives, re-encode to a guaranteed 64x64 PNG (defense in depth —
+  // the browser already does this conversion for UI uploads).
   let png: Buffer;
   try {
     const image = await Jimp.read(body);
@@ -45,11 +53,23 @@ export default defineEventHandler(async (event) => {
     });
   }
 
-  await writeVolumeFile(event, server.volume, "server-icon.png", png);
+  await mkdir(ICONS_DIR, { recursive: true });
+
+  const filename = `${server.volume}-${Date.now()}.png`;
+  // (Cast: Jimp's Buffer type and node:fs's expected type disagree on the
+  // underlying ArrayBuffer generic — same bytes either way.)
+  await writeFile(join(ICONS_DIR, filename), new Uint8Array(png));
+
+  // Replace older icons for this server — only the newest is referenced.
+  for (const existing of await readdir(ICONS_DIR)) {
+    if (existing.startsWith(`${server.volume}-`) && existing !== filename) {
+      await unlink(join(ICONS_DIR, existing)).catch(() => {});
+    }
+  }
+
   await recordActivity(server.volume, "edited", "Server icon uploaded");
 
-  return {
-    ok: true,
-    note: "The icon takes effect after the next server restart.",
-  };
+  // Public URL: itzg downloads it at container start, the UI previews it.
+  const origin = getRequestURL(event).origin;
+  return { url: `${origin}/api/icons/${filename}` };
 });
