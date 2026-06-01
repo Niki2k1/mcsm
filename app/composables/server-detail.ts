@@ -29,6 +29,8 @@ export type ServerPing = {
     players?: { online: number; max: number };
     description?: unknown;
     version?: { name?: string };
+    /** Base64 data URI of the 64x64 server icon. */
+    favicon?: string;
   };
   latency?: number;
 };

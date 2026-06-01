@@ -34,6 +34,8 @@ export type CreateForm = {
     | "minecraft:single_biome_surface";
   SPAWN_PROTECTION: number;
   ENABLE_COMMAND_BLOCK: boolean;
+  /** null = automatic (itzg enables whitelisting when the list has entries). */
+  ENABLE_WHITELIST: boolean | null;
   ENFORCE_WHITELIST: boolean;
 
   // Performance & cost
@@ -47,6 +49,7 @@ export type CreateForm = {
   // Presentation & QoL
   ICON: string | null;
   RESOURCE_PACK: string | null;
+  RESOURCE_PACK_SHA1: string | null;
   RESOURCE_PACK_ENFORCE: boolean;
   HIDE_ONLINE_PLAYERS: boolean;
   TZ: string | null;
@@ -93,6 +96,7 @@ export const defaultCreateForm = (): CreateForm => ({
   LEVEL_TYPE: "minecraft:normal",
   SPAWN_PROTECTION: 16,
   ENABLE_COMMAND_BLOCK: false,
+  ENABLE_WHITELIST: null,
   ENFORCE_WHITELIST: false,
 
   // Performance & cost
@@ -106,6 +110,7 @@ export const defaultCreateForm = (): CreateForm => ({
   // Presentation & QoL
   ICON: null,
   RESOURCE_PACK: null,
+  RESOURCE_PACK_SHA1: null,
   RESOURCE_PACK_ENFORCE: false,
   HIDE_ONLINE_PLAYERS: false,
   TZ: null,

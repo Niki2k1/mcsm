@@ -209,6 +209,11 @@ const tabs = computed(() => [
     to: `/server/${id.value}/configuration`,
   },
   {
+    label: "Environment",
+    icon: "i-heroicons-variable-20-solid",
+    to: `/server/${id.value}/environment`,
+  },
+  {
     label: "Players",
     icon: "i-heroicons-users-20-solid",
     to: `/server/${id.value}/players`,

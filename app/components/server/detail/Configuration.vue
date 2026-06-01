@@ -115,12 +115,29 @@
           name="memory"
           help="Heap size for the Minecraft server. The container gets 1 GB extra headroom."
         >
-          <UTabs
-            v-model="memory"
-            :items="memoryOptions"
-            :content="false"
-            class="max-w-xs"
-          />
+          <div class="flex items-center gap-3 flex-wrap">
+            <UButtonGroup size="sm">
+              <UButton
+                v-for="preset in memoryPresets"
+                :key="preset"
+                :variant="memoryGb === preset ? 'solid' : 'outline'"
+                :color="memoryGb === preset ? 'primary' : 'neutral'"
+                @click="memoryGb = preset"
+              >
+                {{ preset }}GB
+              </UButton>
+            </UButtonGroup>
+            <div class="flex items-center gap-1.5">
+              <UInput
+                v-model.number="memoryGb"
+                type="number"
+                :min="1"
+                :max="64"
+                class="w-20"
+              />
+              <span class="text-sm text-muted">GB</span>
+            </div>
+          </div>
         </UFormField>
       </div>
     </UCard>
@@ -312,6 +329,11 @@
 
         <div class="grid sm:grid-cols-2 gap-x-8 gap-y-3">
           <ServerDetailToggleRow
+            v-model="whitelistEnabled"
+            label="Whitelist Enabled"
+            description="Only whitelisted players can join the server."
+          />
+          <ServerDetailToggleRow
             v-model="form.ENFORCE_WHITELIST"
             label="Enforce Whitelist"
             description="Kick connected players that get removed from the whitelist."
@@ -336,27 +358,81 @@
 
       <div class="space-y-4">
         <UFormField
-          label="Server Icon URL"
+          label="Server Icon"
           name="ICON"
-          help="Image is converted to the required 64x64 PNG automatically."
+          help="Shown in players' server lists. Upload an image (resized to 64x64 automatically, applied on next restart) or provide a URL that is downloaded at startup."
         >
-          <UInput
-            v-model="icon"
-            placeholder="https://example.com/icon.png"
-            class="w-full max-w-lg"
-          />
+          <div class="flex items-start gap-3 w-full max-w-lg">
+            <img
+              v-if="currentFavicon"
+              :src="currentFavicon"
+              alt="Current server icon"
+              class="size-12 shrink-0 rounded ring-1 ring-default [image-rendering:pixelated]"
+            />
+            <div
+              v-else
+              class="size-12 shrink-0 rounded ring-1 ring-default bg-elevated flex items-center justify-center"
+            >
+              <UIcon name="i-heroicons-photo" class="size-5 text-dimmed" />
+            </div>
+
+            <div class="space-y-2 flex-1 min-w-0">
+              <UButton
+                size="sm"
+                variant="soft"
+                color="neutral"
+                icon="i-heroicons-arrow-up-tray-20-solid"
+                :loading="uploadingIcon"
+                @click="iconInput?.click()"
+              >
+                Upload image
+              </UButton>
+              <input
+                ref="iconInput"
+                type="file"
+                accept="image/*"
+                class="hidden"
+                @change="onIconUpload"
+              />
+              <UInput
+                v-model="icon"
+                placeholder="…or an icon URL"
+                class="w-full"
+              />
+            </div>
+          </div>
         </UFormField>
 
+        <USeparator />
+
         <UFormField
-          label="Resource Pack URL"
+          label="Resource Pack"
           name="RESOURCE_PACK"
-          help="Direct download link to a resource pack .zip."
+          help="Players download this when joining. Upload a .zip (hosted by MCSM) or link an external URL."
         >
-          <UInput
-            v-model="resourcePack"
-            placeholder="https://example.com/pack.zip"
-            class="w-full max-w-lg"
-          />
+          <div class="flex gap-2 w-full max-w-lg">
+            <UInput
+              v-model="resourcePack"
+              placeholder="https://example.com/pack.zip"
+              class="flex-1"
+            />
+            <UButton
+              variant="soft"
+              color="neutral"
+              icon="i-heroicons-arrow-up-tray-20-solid"
+              :loading="uploadingPack"
+              @click="packInput?.click()"
+            >
+              Upload
+            </UButton>
+            <input
+              ref="packInput"
+              type="file"
+              accept=".zip,application/zip"
+              class="hidden"
+              @change="onPackUpload"
+            />
+          </div>
         </UFormField>
 
         <ServerDetailToggleRow
@@ -432,72 +508,6 @@
       </div>
     </UCard>
 
-    <!-- Environment variables -->
-    <UCard>
-      <template #header>
-        <div>
-          <h3 class="font-semibold">Environment Variables</h3>
-          <p class="text-sm text-muted">
-            Anything the
-            <NuxtLink
-              to="https://docker-minecraft-server.readthedocs.io/en/latest/variables/"
-              target="_blank"
-              external
-              class="text-primary hover:underline"
-              >itzg/minecraft-server image</NuxtLink
-            >
-            supports can be set here. Variables managed by MCSM (EULA, RCON,
-            type, and the fields above) always take precedence.
-          </p>
-        </div>
-      </template>
-
-      <div class="space-y-2">
-        <div
-          v-for="(envVar, index) in form.customEnv"
-          :key="index"
-          class="flex gap-2 items-start"
-        >
-          <UInput
-            v-model="envVar.key"
-            placeholder="VARIABLE_NAME"
-            class="w-56 font-mono"
-            :color="envVar.key && !isValidEnvKey(envVar.key) ? 'error' : undefined"
-          />
-          <UInput
-            v-model="envVar.value"
-            placeholder="value"
-            class="flex-1 font-mono"
-          />
-          <UButton
-            icon="i-heroicons-x-mark-20-solid"
-            variant="ghost"
-            color="error"
-            aria-label="Remove variable"
-            @click="form.customEnv.splice(index, 1)"
-          />
-        </div>
-
-        <p
-          v-if="form.customEnv.some((envVar) => envVar.key && !isValidEnvKey(envVar.key))"
-          class="text-xs text-error"
-        >
-          Variable names may only contain letters, digits and underscores, and
-          can't start with a digit.
-        </p>
-
-        <UButton
-          icon="i-heroicons-plus-20-solid"
-          variant="soft"
-          color="neutral"
-          size="sm"
-          @click="form.customEnv.push({ key: '', value: '' })"
-        >
-          Add variable
-        </UButton>
-      </div>
-    </UCard>
-
     <!-- Sticky save bar -->
     <Transition
       enter-active-class="transition duration-200"
@@ -542,7 +552,7 @@
 <script setup lang="ts">
 import MotdEditor from "~/components/server/motd/MotdEditor.vue";
 
-const { id, server } = useServerDetail();
+const { id, server, ping, refreshPing } = useServerDetail();
 const router = useRouter();
 const toast = useToast();
 
@@ -583,12 +593,6 @@ const { data: versionOptions } = useFetch<{ label: string; value: number }[]>(
   "/api/minecraft/versions",
   { default: () => [] }
 );
-
-const memoryOptions = [
-  { label: "2GB", value: "2GB", icon: "i-heroicons-user-16-solid" },
-  { label: "4GB", value: "4GB", icon: "i-heroicons-users-16-solid" },
-  { label: "8GB", value: "8GB", icon: "i-heroicons-user-group-16-solid" },
-];
 
 const difficultyOptions = [
   { label: "Peaceful", value: "peaceful" },
@@ -697,7 +701,6 @@ type NullableKey =
   | "CF_FILE_ID"
   | "SEED"
   | "ICON"
-  | "RESOURCE_PACK"
   | "TZ"
   | "MODRINTH_PROJECTS"
   | "SPIGET_RESOURCES"
@@ -718,8 +721,17 @@ const cfSlug = nullableField("CF_SLUG");
 const cfFileId = nullableField("CF_FILE_ID");
 const seed = nullableField("SEED");
 const icon = nullableField("ICON");
-const resourcePack = nullableField("RESOURCE_PACK");
 const timezone = nullableField("TZ");
+
+// Manual URL edits invalidate the SHA1 a previous upload may have set.
+const resourcePack = computed({
+  get: () => form.value?.RESOURCE_PACK ?? undefined,
+  set: (value: string | undefined) => {
+    if (!form.value) return;
+    form.value.RESOURCE_PACK = value || null;
+    form.value.RESOURCE_PACK_SHA1 = null;
+  },
+});
 const modrinthProjects = nullableField("MODRINTH_PROJECTS");
 const spigetResources = nullableField("SPIGET_RESOURCES");
 const customProperties = nullableField("CUSTOM_SERVER_PROPERTIES");
@@ -731,19 +743,103 @@ const version = computed({
   },
 });
 
-const memory = computed({
-  get: () => form.value?.memory ?? "2GB",
-  set: (value) => {
-    if (form.value) form.value.memory = value;
+// Memory is stored as "<n>GB"; expose it as a number with quick presets so
+// any size works, not just the presets.
+const memoryPresets = [2, 4, 8, 12, 16];
+
+const memoryGb = computed({
+  get: () => parseInt(form.value?.memory ?? "2", 10) || 2,
+  set: (value: number) => {
+    if (!form.value) return;
+    const clamped = Math.min(64, Math.max(1, Math.round(value || 1)));
+    form.value.memory = `${clamped}GB`;
   },
 });
 
-// --- Custom env vars ---------------------------------------------------------------
+// Whitelist toggle: null in the config means "automatic" (itzg enables the
+// whitelist when it has entries) — reflect that until the user decides.
+const whitelistEnabled = computed({
+  get: () => {
+    if (!form.value) return false;
+    return form.value.ENABLE_WHITELIST ?? form.value.whitelist.length > 0;
+  },
+  set: (value: boolean) => {
+    if (form.value) form.value.ENABLE_WHITELIST = value;
+  },
+});
 
-const ENV_KEY_PATTERN = /^[A-Za-z_][A-Za-z0-9_]*$/;
+// --- Icon & resource pack uploads -----------------------------------------------------
 
-function isValidEnvKey(key: string) {
-  return ENV_KEY_PATTERN.test(key);
+const iconInput = useTemplateRef<HTMLInputElement>("iconInput");
+const packInput = useTemplateRef<HTMLInputElement>("packInput");
+const uploadingIcon = ref(false);
+const uploadingPack = ref(false);
+
+/** Live icon as reported by the server itself (base64 data URI from the ping). */
+const currentFavicon = computed(() => ping.value?.status?.favicon);
+
+async function onIconUpload(event: Event) {
+  const input = event.target as HTMLInputElement;
+  const file = input.files?.[0];
+  if (!file) return;
+
+  uploadingIcon.value = true;
+  try {
+    await $fetch(`/api/server/${id.value}/icon`, {
+      method: "POST",
+      body: file,
+    });
+    // The uploaded file lives in the world volume; a URL-based icon would
+    // overwrite it at startup, so clear it.
+    if (form.value) form.value.ICON = null;
+    toast.add({
+      title: "Icon uploaded",
+      description: "Restart the server to apply the new icon.",
+      color: "success",
+    });
+    await refreshPing();
+  } catch {
+    toast.add({
+      title: "Upload failed",
+      description: "The file could not be processed as an image.",
+      color: "error",
+    });
+  } finally {
+    uploadingIcon.value = false;
+    input.value = "";
+  }
+}
+
+async function onPackUpload(event: Event) {
+  const input = event.target as HTMLInputElement;
+  const file = input.files?.[0];
+  if (!file) return;
+
+  uploadingPack.value = true;
+  try {
+    const result = await $fetch<{ url: string; sha1: string }>(
+      `/api/server/${id.value}/resource-pack`,
+      { method: "POST", body: file }
+    );
+    if (form.value) {
+      form.value.RESOURCE_PACK = result.url;
+      form.value.RESOURCE_PACK_SHA1 = result.sha1;
+    }
+    toast.add({
+      title: "Resource pack uploaded",
+      description: "Save the configuration to apply it.",
+      color: "success",
+    });
+  } catch {
+    toast.add({
+      title: "Upload failed",
+      description: "The file is not a valid .zip resource pack.",
+      color: "error",
+    });
+  } finally {
+    uploadingPack.value = false;
+    input.value = "";
+  }
 }
 
 // --- Save ---------------------------------------------------------------------------
@@ -754,15 +850,10 @@ async function save() {
   if (!form.value) return;
   saving.value = true;
   try {
+    // customEnv rides along untouched — it is edited on the Environment tab.
     const result = await $fetch<{ id: string }>(`/api/server/${id.value}`, {
       method: "PUT",
-      body: {
-        ...form.value,
-        // Drop incomplete/invalid env rows instead of failing validation.
-        customEnv: form.value.customEnv.filter(
-          (envVar) => isValidEnvKey(envVar.key) && envVar.value !== ""
-        ),
-      },
+      body: form.value,
     });
 
     toast.add({

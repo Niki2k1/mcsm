@@ -1,0 +1,3 @@
+<template>
+  <ServerDetailEnvironment />
+</template>

@@ -27,7 +27,8 @@ export const serverConfigSchema = z.object({
       value: z.number(),
     })
     .nullable(),
-  memory: z.string(),
+  /** Heap size, e.g. "2GB", "6GB", "16GB". */
+  memory: z.string().regex(/^\d+GB$/i),
   MOTD: z.string(),
   DIFFICULTY: z.string(),
   MAX_PLAYERS: z.number(),
@@ -61,6 +62,12 @@ export const serverConfigSchema = z.object({
     .default("minecraft:normal"),
   SPAWN_PROTECTION: z.number().int().min(0).max(1000).default(16),
   ENABLE_COMMAND_BLOCK: z.boolean().default(false),
+  /**
+   * Whitelist on/off. `null` keeps itzg's automatic behaviour (enabled when
+   * the whitelist has entries) so configs from before this field existed
+   * don't change behaviour.
+   */
+  ENABLE_WHITELIST: z.boolean().nullable().default(null),
   ENFORCE_WHITELIST: z.boolean().default(false),
 
   // --- Performance & cost ------------------------------------------------------
@@ -83,6 +90,8 @@ export const serverConfigSchema = z.object({
   /** URL of a 64x64 server icon. */
   ICON: z.string().nullable().default(null),
   RESOURCE_PACK: z.string().nullable().default(null),
+  /** SHA1 of the pack — clients re-download when it changes. Auto-set on upload. */
+  RESOURCE_PACK_SHA1: z.string().nullable().default(null),
   RESOURCE_PACK_ENFORCE: z.boolean().default(false),
   HIDE_ONLINE_PLAYERS: z.boolean().default(false),
   /** Container timezone, e.g. Europe/Berlin (affects log timestamps). */

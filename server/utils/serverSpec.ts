@@ -85,6 +85,10 @@ export async function buildServerSpec(data: ServerConfig, event?: H3Event) {
     env.LEVEL_TYPE = data.LEVEL_TYPE;
   env.SPAWN_PROTECTION = String(data.SPAWN_PROTECTION ?? 16);
   if (data.ENABLE_COMMAND_BLOCK) env.ENABLE_COMMAND_BLOCK = "true";
+  // null = let itzg decide (it enables whitelisting when WHITELIST is set);
+  // an explicit value always wins.
+  if (data.ENABLE_WHITELIST !== null && data.ENABLE_WHITELIST !== undefined)
+    env.ENABLE_WHITELIST = String(data.ENABLE_WHITELIST);
   if (data.ENFORCE_WHITELIST) env.ENFORCE_WHITELIST = "true";
 
   // --- Performance & cost ------------------------------------------------------
@@ -111,6 +115,8 @@ export async function buildServerSpec(data: ServerConfig, event?: H3Event) {
   if (data.ICON) env.ICON = data.ICON;
   if (data.RESOURCE_PACK) {
     env.RESOURCE_PACK = data.RESOURCE_PACK;
+    if (data.RESOURCE_PACK_SHA1)
+      env.RESOURCE_PACK_SHA1 = data.RESOURCE_PACK_SHA1;
     if (data.RESOURCE_PACK_ENFORCE) env.RESOURCE_PACK_ENFORCE = "true";
   }
   if (data.HIDE_ONLINE_PLAYERS) env.HIDE_ONLINE_PLAYERS = "true";
