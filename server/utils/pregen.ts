@@ -20,10 +20,16 @@ export const CHUNKY_SLUG = "chunky";
 
 /**
  * Server types that can load Chunky. Matches the loaders Chunky publishes on
- * Modrinth (paper/fabric/forge); the remaining MCSM types either have no mod
- * loader (VANILLA) or manage their own mod list (FTBA, AUTO_CURSEFORGE).
+ * Modrinth (paper/fabric/forge/neoforge). AUTO_CURSEFORGE works because the
+ * itzg image resolves the modpack's loader before the Modrinth install step
+ * runs. VANILLA has no loader and FTBA's installer manages its own files.
  */
-export const PREGEN_SUPPORTED_TYPES = ["PAPER", "FABRIC", "FORGE"] as const;
+export const PREGEN_SUPPORTED_TYPES = [
+  "PAPER",
+  "FABRIC",
+  "FORGE",
+  "AUTO_CURSEFORGE",
+] as const;
 
 /** Chunky pre-generates the overworld only in MCSM v1. */
 const PREGEN_WORLD = "minecraft:overworld";

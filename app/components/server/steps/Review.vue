@@ -134,7 +134,9 @@ const typeMeta = computed(() => {
 const bluemapEnabled = computed(
   () =>
     form.value.BLUEMAP &&
-    ["PAPER", "FABRIC", "FORGE"].includes(form.value.type ?? "")
+    ["PAPER", "FABRIC", "FORGE", "AUTO_CURSEFORGE"].includes(
+      form.value.type ?? ""
+    )
 );
 
 const fullAddress = computed(() => {
