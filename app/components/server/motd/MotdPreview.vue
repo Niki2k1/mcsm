@@ -1,6 +1,14 @@
 <template>
-  <div ref="root" class="font-[Monocraft] text-sm leading-snug">
-    <div v-for="(line, li) in lines" :key="li" class="min-h-[1.2em]">
+  <div
+    ref="root"
+    class="font-[Monocraft]"
+    :class="size === 'mc' ? 'text-[16px] leading-[18px]' : 'text-sm leading-snug'"
+  >
+    <div
+      v-for="(line, li) in lines"
+      :key="li"
+      :class="size === 'mc' ? 'min-h-[18px]' : 'min-h-[1.2em]'"
+    >
       <span
         v-for="(run, ri) in line"
         :key="ri"
@@ -16,7 +24,14 @@
 <script setup lang="ts">
 import { motdToJson } from "~/utils/motd";
 
-const props = defineProps<{ motd: string }>();
+const props = defineProps<{
+  motd: string;
+  /**
+   * `mc` renders at Minecraft's own proportions (GUI scale 2: 16px glyphs,
+   * 18px line height) for the 1:1 in-game server list preview.
+   */
+  size?: "sm" | "mc";
+}>();
 
 interface Run {
   text: string;

@@ -8,7 +8,14 @@
         </template>
 
         <div class="space-y-4">
-          <MotdPreview :motd="motd" class="min-h-[1.2em]" />
+          <!-- The server exactly as players see it in their multiplayer screen -->
+          <ServerListPreview
+            :name="server.name"
+            :motd="motd"
+            :favicon="displayFavicon"
+            :players="ping?.status?.players"
+            :latency="ping?.latency"
+          />
 
           <div class="grid grid-cols-2 sm:grid-cols-4 gap-4">
             <div>
@@ -108,9 +115,8 @@
 <script setup lang="ts">
 import { chatToMotd } from "~/utils/motd";
 import { durationSince } from "~/utils/time";
-import MotdPreview from "~/components/server/motd/MotdPreview.vue";
 
-const { id, server, ping, pingStatus } = useServerDetail();
+const { id, server, ping, pingStatus, displayFavicon } = useServerDetail();
 
 const motd = computed(() => chatToMotd(ping.value?.status?.description));
 

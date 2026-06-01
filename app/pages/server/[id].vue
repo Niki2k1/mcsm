@@ -14,67 +14,83 @@
       </div>
 
       <template v-else-if="server">
-        <UPageHeader :ui="{ root: 'pb-0 border-b-0' }">
-          <template #headline>
-            <UBreadcrumb :items="breadcrumb" />
-          </template>
+        <!-- Header: breadcrumb, icon + name/MOTD/domain, actions -->
+        <div class="pt-8 space-y-4">
+          <UBreadcrumb :items="breadcrumb" />
 
-          <template #title>
-            <span class="flex items-center gap-3">
-              {{ server.name }}
-              <UBadge :color="statusColor" variant="soft" size="lg">
-                <UIcon
-                  v-if="pingStatus === 'pending'"
-                  name="i-heroicons-arrow-path-20-solid"
-                  class="animate-spin"
-                />
-                {{ statusText }}
-              </UBadge>
-            </span>
-          </template>
+          <div class="flex items-start justify-between gap-4">
+            <div class="flex items-start gap-4 min-w-0">
+              <!-- Server icon, exactly as the server reports it -->
+              <img
+                v-if="favicon"
+                :src="favicon"
+                alt="Server icon"
+                class="size-16 shrink-0 rounded-lg ring-1 ring-default [image-rendering:pixelated]"
+              />
 
-          <template #description>
-            <span class="font-mono text-sm">{{ server.domain }}</span>
-          </template>
+              <div class="min-w-0 space-y-1">
+                <h1
+                  class="flex flex-wrap items-center gap-3 text-2xl sm:text-3xl font-bold text-highlighted"
+                >
+                  <span class="truncate">{{ server.name }}</span>
+                  <UBadge :color="statusColor" variant="soft" size="lg">
+                    <UIcon
+                      v-if="pingStatus === 'pending'"
+                      name="i-heroicons-arrow-path-20-solid"
+                      class="animate-spin"
+                    />
+                    {{ statusText }}
+                  </UBadge>
+                </h1>
 
-          <template #links>
-            <UButton
-              v-if="server.running"
-              icon="i-heroicons-arrow-path-20-solid"
-              color="neutral"
-              variant="outline"
-              :loading="acting === 'restart'"
-              @click="runAction('restart')"
-            >
-              Restart
-            </UButton>
-            <UButton
-              v-if="server.running"
-              icon="i-heroicons-stop-20-solid"
-              color="warning"
-              variant="soft"
-              :loading="acting === 'stop'"
-              @click="runAction('stop')"
-            >
-              Stop
-            </UButton>
-            <UButton
-              v-else
-              icon="i-heroicons-play-20-solid"
-              color="success"
-              :loading="acting === 'start'"
-              @click="runAction('start')"
-            >
-              Start
-            </UButton>
-          </template>
-        </UPageHeader>
+                <!-- Live MOTD as the server reports it -->
+                <MotdPreview v-if="motd" :motd="motd" />
+
+                <p class="font-mono text-sm text-muted truncate">
+                  {{ server.domain }}
+                </p>
+              </div>
+            </div>
+
+            <div class="flex gap-2 shrink-0">
+              <UButton
+                v-if="server.running"
+                icon="i-heroicons-arrow-path-20-solid"
+                color="neutral"
+                variant="outline"
+                :loading="acting === 'restart'"
+                @click="runAction('restart')"
+              >
+                Restart
+              </UButton>
+              <UButton
+                v-if="server.running"
+                icon="i-heroicons-stop-20-solid"
+                color="warning"
+                variant="soft"
+                :loading="acting === 'stop'"
+                @click="runAction('stop')"
+              >
+                Stop
+              </UButton>
+              <UButton
+                v-else
+                icon="i-heroicons-play-20-solid"
+                color="success"
+                :loading="acting === 'start'"
+                @click="runAction('start')"
+              >
+                Start
+              </UButton>
+            </div>
+          </div>
+        </div>
 
         <!-- Tab bar (Vercel/GitHub style) -->
         <UNavigationMenu
           :items="tabs"
           highlight
-          class="border-b border-default -mx-4 px-4 sm:-mx-6 sm:px-6"
+          class="border-b border-default -mx-4 px-4 sm:-mx-6 sm:px-6 mt-6"
         />
 
         <UPageBody>
@@ -87,6 +103,8 @@
 
 <script setup lang="ts">
 import type { ServerDetail, ServerPing } from "~/composables/server-detail";
+import { chatToMotd } from "~/utils/motd";
+import MotdPreview from "~/components/server/motd/MotdPreview.vue";
 
 const route = useRoute();
 const toast = useToast();
@@ -144,6 +162,13 @@ onUnmounted(() => {
 
 // --- Shared context for the tab pages ---------------------------------------
 
+// Icon uploaded during this session — previews show it right away even though
+// the server itself only reports it after a restart.
+const localFavicon = ref<string>();
+const displayFavicon = computed(
+  () => localFavicon.value ?? ping.value?.status?.favicon
+);
+
 provideServerDetail({
   id,
   server,
@@ -157,9 +182,16 @@ provideServerDetail({
   refreshPing: async () => {
     await refreshPing();
   },
+  localFavicon,
+  displayFavicon,
 });
 
 // --- Header ------------------------------------------------------------------
+
+/** Live MOTD as the running server reports it via ping. */
+const motd = computed(() => chatToMotd(ping.value?.status?.description));
+/** Header icon: a just-uploaded icon shows immediately, before any restart. */
+const favicon = displayFavicon;
 
 const breadcrumb = computed(() => [
   { label: "Servers", to: "/", icon: "i-heroicons-squares-2x2-16-solid" },

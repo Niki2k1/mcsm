@@ -351,49 +351,52 @@
       </template>
 
       <div class="space-y-4">
+        <!-- 1:1 in-game preview: icon, MOTD and name update live while editing -->
+        <UFormField
+          label="In-game preview"
+          help="Exactly how Minecraft renders this server in the multiplayer screen at the default GUI scale — pixel sizes, colors and effects included. Hover the icon, click the row."
+        >
+          <ServerListPreview
+            :name="form.name ?? server?.name"
+            :motd="form.MOTD"
+            :favicon="currentFavicon"
+            :players="
+              ping?.status?.players ?? { online: 0, max: form.MAX_PLAYERS }
+            "
+            :latency="ping?.latency"
+          />
+        </UFormField>
+
+        <USeparator />
+
         <UFormField
           label="Server Icon"
           name="ICON"
-          help="Shown in players' server lists. Upload an image (resized to 64x64 automatically, applied on next restart) or provide a URL that is downloaded at startup."
+          help="Shown in players' server lists. Upload an image (converted to 64x64 in the browser, applied on next restart) or provide a URL that is downloaded at startup."
         >
-          <div class="flex items-start gap-3 w-full max-w-lg">
-            <img
-              v-if="currentFavicon"
-              :src="currentFavicon"
-              alt="Current server icon"
-              class="size-12 shrink-0 rounded ring-1 ring-default [image-rendering:pixelated]"
-            />
-            <div
-              v-else
-              class="size-12 shrink-0 rounded ring-1 ring-default bg-elevated flex items-center justify-center"
+          <div class="space-y-2 w-full max-w-lg">
+            <UButton
+              size="sm"
+              variant="soft"
+              color="neutral"
+              icon="i-heroicons-arrow-up-tray-20-solid"
+              :loading="uploadingIcon"
+              @click="iconInput?.click()"
             >
-              <UIcon name="i-heroicons-photo" class="size-5 text-dimmed" />
-            </div>
-
-            <div class="space-y-2 flex-1 min-w-0">
-              <UButton
-                size="sm"
-                variant="soft"
-                color="neutral"
-                icon="i-heroicons-arrow-up-tray-20-solid"
-                :loading="uploadingIcon"
-                @click="iconInput?.click()"
-              >
-                Upload image
-              </UButton>
-              <input
-                ref="iconInput"
-                type="file"
-                accept="image/*"
-                class="hidden"
-                @change="onIconUpload"
-              />
-              <UInput
-                v-model="icon"
-                placeholder="…or an icon URL"
-                class="w-full"
-              />
-            </div>
+              Upload image
+            </UButton>
+            <input
+              ref="iconInput"
+              type="file"
+              accept="image/*"
+              class="hidden"
+              @change="onIconUpload"
+            />
+            <UInput
+              v-model="icon"
+              placeholder="…or an icon URL"
+              class="w-full"
+            />
           </div>
         </UFormField>
 
@@ -546,7 +549,7 @@
 <script setup lang="ts">
 import MotdEditor from "~/components/server/motd/MotdEditor.vue";
 
-const { id, server, ping, refreshPing } = useServerDetail();
+const { id, server, ping, localFavicon, displayFavicon } = useServerDetail();
 const router = useRouter();
 const toast = useToast();
 
@@ -783,8 +786,8 @@ const packInput = useTemplateRef<HTMLInputElement>("packInput");
 const uploadingIcon = ref(false);
 const uploadingPack = ref(false);
 
-/** Live icon as reported by the server itself (base64 data URI from the ping). */
-const currentFavicon = computed(() => ping.value?.status?.favicon);
+/** Icon for previews: a just-uploaded one wins over what the server reports. */
+const currentFavicon = displayFavicon;
 
 /**
  * Decode the chosen image in the browser and resize it to the 64x64 PNG
@@ -830,6 +833,16 @@ async function onIconUpload(event: Event) {
       method: "POST",
       body: png,
     });
+
+    // Show the new icon in all previews immediately — the server itself only
+    // reports it after a restart.
+    localFavicon.value = await new Promise<string>((resolve, reject) => {
+      const reader = new FileReader();
+      reader.onload = () => resolve(reader.result as string);
+      reader.onerror = () => reject(reader.error);
+      reader.readAsDataURL(png);
+    });
+
     // The uploaded file lives in the world volume; a URL-based icon would
     // overwrite it at startup, so clear it.
     if (form.value) form.value.ICON = null;
@@ -838,7 +851,6 @@ async function onIconUpload(event: Event) {
       description: "Restart the server to apply the new icon.",
       color: "success",
     });
-    await refreshPing();
   } catch (error) {
     toast.add({
       title: "Upload failed",

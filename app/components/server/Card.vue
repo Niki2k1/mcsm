@@ -10,11 +10,20 @@
     ></div>
     <div class="grow p-4 relative z-10">
       <div class="flex justify-between items-start mb-2 gap-2">
-        <div class="min-w-0">
-          <h2 class="text-lg font-semibold truncate">{{ server.name }}</h2>
-          <p class="text-xs text-muted font-mono truncate">
-            {{ server.domain }}
-          </p>
+        <div class="flex items-center gap-3 min-w-0">
+          <!-- Server icon as reported by the live ping -->
+          <img
+            v-if="info?.status?.favicon"
+            :src="info.status.favicon"
+            alt=""
+            class="size-10 shrink-0 rounded [image-rendering:pixelated] ring-1 ring-default"
+          />
+          <div class="min-w-0">
+            <h2 class="text-lg font-semibold truncate">{{ server.name }}</h2>
+            <p class="text-xs text-muted font-mono truncate">
+              {{ server.domain }}
+            </p>
+          </div>
         </div>
 
         <div class="flex items-center gap-1 shrink-0">

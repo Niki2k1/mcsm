@@ -45,6 +45,13 @@ type ServerDetailContext = {
   ping: Ref<ServerPing | undefined>;
   pingStatus: Ref<"success" | "error" | "pending" | "idle">;
   refreshPing: () => Promise<void>;
+  /**
+   * Icon uploaded in this session (data URL). Shown in previews immediately —
+   * the server itself only reports the new icon after a restart.
+   */
+  localFavicon: Ref<string | undefined>;
+  /** The icon to display: freshly uploaded one first, then what the server reports. */
+  displayFavicon: Ref<string | undefined>;
 };
 
 const injectionKey: InjectionKey<ServerDetailContext> =
