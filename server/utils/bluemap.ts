@@ -23,10 +23,16 @@ export const BLUEMAP_PORT = 8100;
 
 /**
  * Server types BlueMap can be installed on. Same plugin/mod-capable set as
- * pre-generation; the remaining MCSM types either have no loader (VANILLA) or
- * manage their own mod list (FTBA, AUTO_CURSEFORGE).
+ * pre-generation; AUTO_CURSEFORGE works because the itzg image resolves the
+ * modpack's loader before the Modrinth install step runs. VANILLA has no
+ * loader and FTBA's installer manages its own files.
  */
-export const BLUEMAP_SUPPORTED_TYPES = ["PAPER", "FABRIC", "FORGE"] as const;
+export const BLUEMAP_SUPPORTED_TYPES = [
+  "PAPER",
+  "FABRIC",
+  "FORGE",
+  "AUTO_CURSEFORGE",
+] as const;
 
 export function serverTypeSupportsBluemap(type: string | null | undefined) {
   return (BLUEMAP_SUPPORTED_TYPES as readonly string[]).includes(type ?? "");

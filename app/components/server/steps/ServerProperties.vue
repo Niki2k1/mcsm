@@ -130,6 +130,8 @@ const formFields = ref([
 const form = useCreateForm();
 
 const bluemapSupported = computed(() =>
-  ["PAPER", "FABRIC", "FORGE"].includes(form.value.type ?? "")
+  ["PAPER", "FABRIC", "FORGE", "AUTO_CURSEFORGE"].includes(
+    form.value.type ?? ""
+  )
 );
 </script>

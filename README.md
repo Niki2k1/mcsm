@@ -32,12 +32,13 @@ config files to manage.
   avatar are resolved from Mojang automatically.
 - **World pre-generation** — generate chunks ahead of time with
   [Chunky](https://modrinth.com/mod/chunky) (auto-installed), watched live on a
-  Minecraft-style chunk colormap. Paper/Fabric/Forge only.
+  Minecraft-style chunk colormap. Paper, Fabric, Forge and CurseForge modpack
+  servers.
 - **BlueMap 3D web map** — toggle an interactive
-  [BlueMap](https://bluemap.bluecolored.de/) world map for Paper/Fabric/Forge
-  servers. MCSM auto-installs it and serves it through its own domain at
-  `/map/<server>/` — no extra ports, proxies or DNS needed; Mojang's asset
-  download consent is one click in the Map tab.
+  [BlueMap](https://bluemap.bluecolored.de/) world map for Paper, Fabric, Forge
+  and CurseForge modpack servers. MCSM auto-installs it and serves it through
+  its own domain at `/map/<server>/` — no extra ports, proxies or DNS needed;
+  Mojang's asset download consent is one click in the Map tab.
 - **Review screen** — a formatted overview of every setting before you commit
   to creating the server.
 - **Direct Docker provisioning** — creates the container straight against the
@@ -310,6 +311,10 @@ nuxt.config.ts               # modules, runtimeConfig (docker hosts), storage
   it shares MCSM's domain and TLS. Map tiles are served by the Node process —
   fine for personal use, but heavy public maps would benefit from dedicated
   routing.
+- **Chunky/BlueMap on CurseForge modpacks need Minecraft 1.13.2+.** Both are
+  installed from Modrinth against the modpack's resolved mod loader; packs on
+  older Minecraft versions have no compatible build, and the container will
+  fail to start until the integration is disabled again.
 - This is an early-stage project and APIs/structure may change.
 
 ## License & attribution

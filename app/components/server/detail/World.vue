@@ -22,8 +22,8 @@
         </p>
         <p class="max-w-md mx-auto">
           World pre-generation uses the Chunky plugin, which needs a server
-          that can load plugins or mods — Paper, Fabric or Forge. Modpack
-          servers (FTB, CurseForge) manage their own mod list.
+          that can load plugins or mods — Paper, Fabric, Forge or a CurseForge
+          modpack.
         </p>
       </div>
     </UCard>
