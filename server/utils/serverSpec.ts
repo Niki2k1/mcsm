@@ -37,7 +37,14 @@ export async function buildServerSpec(data: ServerConfig, event?: H3Event) {
   const domain = `${subdomain}.${data.domain}`;
   const memory = parseMemory(data.memory);
 
-  const env: Record<string, string> = {
+  // Custom env vars go in first so the managed assignments below always win
+  // on conflicts — users can't override RCON access, the EULA, the type, etc.
+  const env: Record<string, string> = {};
+  for (const { key, value } of data.customEnv ?? []) {
+    if (key) env[key.toUpperCase()] = value;
+  }
+
+  Object.assign(env, {
     EULA: "true",
     TYPE: data.type,
     MEMORY: memory.heap,
@@ -51,7 +58,7 @@ export async function buildServerSpec(data: ServerConfig, event?: H3Event) {
     ENABLE_RCON: "true",
     RCON_PORT: String(config.rcon?.port ?? 25575),
     RCON_PASSWORD: config.rcon?.password ?? "minecraft",
-  };
+  });
 
   if (data.HARDCORE) env.HARDCORE = "true";
   if (data.LEVEL !== "world") env.LEVEL = data.LEVEL;
@@ -69,6 +76,56 @@ export async function buildServerSpec(data: ServerConfig, event?: H3Event) {
   if (data.whitelist.length > 0)
     env.WHITELIST = data.whitelist.map((user) => user.uuid).join(",");
   if (data.VERSION) env.VERSION = data.VERSION.label;
+
+  // --- Gameplay --------------------------------------------------------------
+  env.MODE = data.MODE ?? "survival";
+  env.PVP = String(data.PVP ?? true);
+  if (data.SEED) env.SEED = data.SEED;
+  if (data.LEVEL_TYPE && data.LEVEL_TYPE !== "minecraft:normal")
+    env.LEVEL_TYPE = data.LEVEL_TYPE;
+  env.SPAWN_PROTECTION = String(data.SPAWN_PROTECTION ?? 16);
+  if (data.ENABLE_COMMAND_BLOCK) env.ENABLE_COMMAND_BLOCK = "true";
+  if (data.ENFORCE_WHITELIST) env.ENFORCE_WHITELIST = "true";
+
+  // --- Performance & cost ------------------------------------------------------
+  env.VIEW_DISTANCE = String(data.VIEW_DISTANCE ?? 10);
+  env.SIMULATION_DISTANCE = String(data.SIMULATION_DISTANCE ?? 10);
+  if (data.PLAYER_IDLE_TIMEOUT)
+    env.PLAYER_IDLE_TIMEOUT = String(data.PLAYER_IDLE_TIMEOUT);
+  if (data.USE_AIKAR_FLAGS) env.USE_AIKAR_FLAGS = "true";
+
+  // Idle behaviour: pause the JVM or stop the container when nobody plays.
+  // The two are mutually exclusive in the itzg image.
+  const idleTimeout = String(data.IDLE_TIMEOUT ?? 3600);
+  if (data.IDLE_BEHAVIOR === "pause") {
+    env.ENABLE_AUTOPAUSE = "true";
+    env.AUTOPAUSE_TIMEOUT_EST = idleTimeout;
+    // Required for autopause: the watchdog would kill the paused process.
+    env.MAX_TICK_TIME = "-1";
+  } else if (data.IDLE_BEHAVIOR === "stop") {
+    env.ENABLE_AUTOSTOP = "true";
+    env.AUTOSTOP_TIMEOUT_EST = idleTimeout;
+  }
+
+  // --- Presentation & QoL -------------------------------------------------------
+  if (data.ICON) env.ICON = data.ICON;
+  if (data.RESOURCE_PACK) {
+    env.RESOURCE_PACK = data.RESOURCE_PACK;
+    if (data.RESOURCE_PACK_ENFORCE) env.RESOURCE_PACK_ENFORCE = "true";
+  }
+  if (data.HIDE_ONLINE_PLAYERS) env.HIDE_ONLINE_PLAYERS = "true";
+  if (data.TZ) env.TZ = data.TZ;
+  env.SPAWN_ANIMALS = String(data.SPAWN_ANIMALS ?? true);
+  env.SPAWN_MONSTERS = String(data.SPAWN_MONSTERS ?? true);
+  env.SPAWN_NPCS = String(data.SPAWN_NPCS ?? true);
+  env.ALLOW_NETHER = String(data.ALLOW_NETHER ?? true);
+  env.GENERATE_STRUCTURES = String(data.GENERATE_STRUCTURES ?? true);
+
+  // --- Advanced -------------------------------------------------------------------
+  if (data.MODRINTH_PROJECTS) env.MODRINTH_PROJECTS = data.MODRINTH_PROJECTS;
+  if (data.SPIGET_RESOURCES) env.SPIGET_RESOURCES = data.SPIGET_RESOURCES;
+  if (data.CUSTOM_SERVER_PROPERTIES)
+    env.CUSTOM_SERVER_PROPERTIES = data.CUSTOM_SERVER_PROPERTIES;
 
   const labels: Record<string, string> = {
     // MCSM ownership + config store
@@ -90,5 +147,8 @@ export async function buildServerSpec(data: ServerConfig, event?: H3Event) {
     labels,
     memoryBytes: memory.limitBytes,
     port: MC_PORT,
+    // Auto-stop exits the container on purpose — "unless-stopped" would
+    // immediately start it again and defeat the feature.
+    restartPolicy: data.IDLE_BEHAVIOR === "stop" ? "no" : "unless-stopped",
   };
 }

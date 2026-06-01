@@ -1,7 +1,9 @@
 <template>
   <UFooter>
     <template #top>
-      <UFooterColumns :columns="columns" />
+      <UContainer>
+        <UFooterColumns :columns="columns" />
+      </UContainer>
     </template>
 
     <template #left>

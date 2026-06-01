@@ -16,6 +16,7 @@ export default defineEventHandler(async (event) => {
       memoryBytes: spec.memoryBytes,
       port: spec.port,
       volume: spec.volume,
+      restartPolicy: spec.restartPolicy,
     });
 
     await recordActivity(spec.volume, "created", `${data.type} server`);

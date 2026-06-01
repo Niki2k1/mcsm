@@ -33,6 +33,7 @@ export default defineEventHandler(async (event) => {
       memoryBytes: spec.memoryBytes,
       port: spec.port,
       volume,
+      restartPolicy: spec.restartPolicy,
     });
 
     await recordActivity(volume, "edited", "Configuration saved — container recreated");

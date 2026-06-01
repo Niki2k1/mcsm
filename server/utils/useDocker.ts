@@ -71,6 +71,8 @@ export type ProvisionOptions = {
   network?: string;
   /** Named volume mounted at /data for world persistence. */
   volume?: string;
+  /** Docker restart policy ("unless-stopped" unless auto-stop is enabled). */
+  restartPolicy?: string;
 };
 
 // `event` is threaded through to `useRuntimeConfig(event)` so the Docker
@@ -122,7 +124,7 @@ export const useDocker = (event?: H3Event, hostId = "default") => {
       ExposedPorts: { [`${port}/tcp`]: {} },
       HostConfig: {
         Memory: options.memoryBytes,
-        RestartPolicy: { Name: "unless-stopped" },
+        RestartPolicy: { Name: options.restartPolicy ?? "unless-stopped" },
         Binds: options.volume ? [`${options.volume}:/data`] : undefined,
         NetworkMode: network,
       },

@@ -25,7 +25,7 @@
         <div>
           <h3 class="font-semibold">Game</h3>
           <p class="text-sm text-muted">
-            Server type, version and resources.
+            Server type, version, world generation and resources.
           </p>
         </div>
       </template>
@@ -74,6 +74,42 @@
           </UFormField>
         </template>
 
+        <div class="grid sm:grid-cols-2 gap-4">
+          <UFormField label="Game Mode" name="MODE">
+            <USelectMenu
+              v-model="form.MODE"
+              :items="modeOptions"
+              value-key="value"
+              class="w-full"
+            />
+          </UFormField>
+
+          <UFormField
+            label="World Type"
+            name="LEVEL_TYPE"
+            help="Only affects newly generated worlds."
+          >
+            <USelectMenu
+              v-model="form.LEVEL_TYPE"
+              :items="levelTypeOptions"
+              value-key="value"
+              class="w-full"
+            />
+          </UFormField>
+
+          <UFormField
+            label="World Seed"
+            name="SEED"
+            help="Only used when a new world is generated."
+          >
+            <UInput
+              v-model="seed"
+              placeholder="Random"
+              class="w-full font-mono"
+            />
+          </UFormField>
+        </div>
+
         <UFormField
           label="Memory"
           name="memory"
@@ -105,7 +141,7 @@
           <MotdEditor v-model="form.MOTD" />
         </UFormField>
 
-        <div class="grid sm:grid-cols-2 gap-4">
+        <div class="grid sm:grid-cols-3 gap-4">
           <UFormField label="World Name" name="LEVEL">
             <UInput v-model="form.LEVEL" placeholder="world" class="w-full" />
           </UFormField>
@@ -126,41 +162,126 @@
               class="w-full"
             />
           </UFormField>
+
+          <UFormField
+            label="Spawn Protection"
+            name="SPAWN_PROTECTION"
+            help="Radius in blocks only operators can edit (0 = off)."
+          >
+            <UInput
+              v-model.number="form.SPAWN_PROTECTION"
+              type="number"
+              :min="0"
+              class="w-full"
+            />
+          </UFormField>
         </div>
 
         <USeparator />
 
-        <div class="space-y-3">
-          <div class="flex items-center justify-between gap-4">
-            <div>
-              <p class="text-sm font-medium">Hardcore</p>
-              <p class="text-xs text-muted">
-                One life per player — death means spectator mode.
-              </p>
-            </div>
-            <USwitch v-model="form.HARDCORE" />
-          </div>
-
-          <div class="flex items-center justify-between gap-4">
-            <div>
-              <p class="text-sm font-medium">Online Mode</p>
-              <p class="text-xs text-muted">
-                Verify players against Mojang's servers (recommended).
-              </p>
-            </div>
-            <USwitch v-model="form.ONLINE_MODE" />
-          </div>
-
-          <div class="flex items-center justify-between gap-4">
-            <div>
-              <p class="text-sm font-medium">Allow Flight</p>
-              <p class="text-xs text-muted">
-                Don't kick survival players that appear to be flying.
-              </p>
-            </div>
-            <USwitch v-model="form.ALLOW_FLIGHT" />
-          </div>
+        <div class="grid sm:grid-cols-2 gap-x-8 gap-y-3">
+          <ServerDetailToggleRow
+            v-for="toggle in gameplayToggles"
+            :key="toggle.key"
+            v-model="form[toggle.key]"
+            :label="toggle.label"
+            :description="toggle.description"
+          />
         </div>
+      </div>
+    </UCard>
+
+    <!-- Performance & Cost -->
+    <UCard>
+      <template #header>
+        <div>
+          <h3 class="font-semibold">Performance</h3>
+          <p class="text-sm text-muted">
+            Resource usage, idle behaviour and JVM tuning.
+          </p>
+        </div>
+      </template>
+
+      <div class="space-y-4">
+        <div class="grid sm:grid-cols-3 gap-4">
+          <UFormField
+            label="View Distance"
+            name="VIEW_DISTANCE"
+            help="Chunks sent to clients (biggest performance lever)."
+          >
+            <UInput
+              v-model.number="form.VIEW_DISTANCE"
+              type="number"
+              :min="2"
+              :max="32"
+              class="w-full"
+            />
+          </UFormField>
+
+          <UFormField
+            label="Simulation Distance"
+            name="SIMULATION_DISTANCE"
+            help="Chunks where entities/redstone tick."
+          >
+            <UInput
+              v-model.number="form.SIMULATION_DISTANCE"
+              type="number"
+              :min="2"
+              :max="32"
+              class="w-full"
+            />
+          </UFormField>
+
+          <UFormField
+            label="Idle Player Kick"
+            name="PLAYER_IDLE_TIMEOUT"
+            help="Kick players idle for this many minutes (0 = never)."
+          >
+            <UInput
+              v-model.number="form.PLAYER_IDLE_TIMEOUT"
+              type="number"
+              :min="0"
+              class="w-full"
+            />
+          </UFormField>
+        </div>
+
+        <USeparator />
+
+        <UFormField
+          label="When nobody is online"
+          name="IDLE_BEHAVIOR"
+          help="Pausing freezes the Java process (near-zero CPU, instant wake on connect). Stopping exits the container — start it again from MCSM."
+        >
+          <UTabs
+            v-model="form.IDLE_BEHAVIOR"
+            :items="idleBehaviorOptions"
+            :content="false"
+            class="max-w-md"
+          />
+        </UFormField>
+
+        <UFormField
+          v-if="form.IDLE_BEHAVIOR !== 'none'"
+          label="Idle timeout (seconds)"
+          name="IDLE_TIMEOUT"
+          :help="`${form.IDLE_BEHAVIOR === 'pause' ? 'Pause' : 'Stop'} after this many seconds without players.`"
+        >
+          <UInput
+            v-model.number="form.IDLE_TIMEOUT"
+            type="number"
+            :min="60"
+            class="w-full max-w-xs"
+          />
+        </UFormField>
+
+        <USeparator />
+
+        <ServerDetailToggleRow
+          v-model="form.USE_AIKAR_FLAGS"
+          label="Aikar's JVM Flags"
+          description="Battle-tested garbage-collector tuning for Minecraft servers. Recommended for 4GB+ servers."
+        />
       </div>
     </UCard>
 
@@ -181,9 +302,199 @@
         </div>
       </template>
 
-      <div class="grid sm:grid-cols-2 gap-6">
-        <UserList v-model="form.operators" title="Operators" />
-        <UserList v-model="form.whitelist" title="Whitelist" />
+      <div class="space-y-4">
+        <div class="grid sm:grid-cols-2 gap-6">
+          <UserList v-model="form.operators" title="Operators" />
+          <UserList v-model="form.whitelist" title="Whitelist" />
+        </div>
+
+        <USeparator />
+
+        <div class="grid sm:grid-cols-2 gap-x-8 gap-y-3">
+          <ServerDetailToggleRow
+            v-model="form.ENFORCE_WHITELIST"
+            label="Enforce Whitelist"
+            description="Kick connected players that get removed from the whitelist."
+          />
+          <ServerDetailToggleRow
+            v-model="form.HIDE_ONLINE_PLAYERS"
+            label="Hide Online Players"
+            description="Don't show the player list in the server status."
+          />
+        </div>
+      </div>
+    </UCard>
+
+    <!-- Presentation -->
+    <UCard>
+      <template #header>
+        <div>
+          <h3 class="font-semibold">Presentation</h3>
+          <p class="text-sm text-muted">Server icon, resource pack and locale.</p>
+        </div>
+      </template>
+
+      <div class="space-y-4">
+        <UFormField
+          label="Server Icon URL"
+          name="ICON"
+          help="Image is converted to the required 64x64 PNG automatically."
+        >
+          <UInput
+            v-model="icon"
+            placeholder="https://example.com/icon.png"
+            class="w-full max-w-lg"
+          />
+        </UFormField>
+
+        <UFormField
+          label="Resource Pack URL"
+          name="RESOURCE_PACK"
+          help="Direct download link to a resource pack .zip."
+        >
+          <UInput
+            v-model="resourcePack"
+            placeholder="https://example.com/pack.zip"
+            class="w-full max-w-lg"
+          />
+        </UFormField>
+
+        <ServerDetailToggleRow
+          v-if="form.RESOURCE_PACK"
+          v-model="form.RESOURCE_PACK_ENFORCE"
+          label="Require Resource Pack"
+          description="Players who decline the resource pack are disconnected."
+        />
+
+        <UFormField
+          label="Timezone"
+          name="TZ"
+          help="Container timezone for log timestamps, e.g. Europe/Berlin."
+        >
+          <UInput
+            v-model="timezone"
+            placeholder="UTC"
+            class="w-full max-w-xs font-mono"
+          />
+        </UFormField>
+      </div>
+    </UCard>
+
+    <!-- Advanced -->
+    <UCard>
+      <template #header>
+        <div>
+          <h3 class="font-semibold">Advanced</h3>
+          <p class="text-sm text-muted">
+            Mod/plugin installs and raw server.properties overrides.
+          </p>
+        </div>
+      </template>
+
+      <div class="space-y-4">
+        <UFormField
+          label="Modrinth Projects"
+          name="MODRINTH_PROJECTS"
+          help="Comma-separated Modrinth project slugs to install as mods/plugins (requires a modded server type)."
+        >
+          <UInput
+            v-model="modrinthProjects"
+            placeholder="fabric-api, lithium, sodium"
+            class="w-full max-w-lg font-mono"
+          />
+        </UFormField>
+
+        <UFormField
+          v-if="form.type === 'PAPER'"
+          label="Spigot Resources"
+          name="SPIGET_RESOURCES"
+          help="Comma-separated SpigotMC resource IDs to install as plugins."
+        >
+          <UInput
+            v-model="spigetResources"
+            placeholder="9089, 34315"
+            class="w-full max-w-lg font-mono"
+          />
+        </UFormField>
+
+        <UFormField
+          label="Custom server.properties"
+          name="CUSTOM_SERVER_PROPERTIES"
+          help="Raw key=value lines for properties MCSM doesn't manage. One per line."
+        >
+          <UTextarea
+            v-model="customProperties"
+            placeholder="max-chained-neighbor-updates=1000000&#10;rate-limit=0"
+            :rows="4"
+            class="w-full max-w-lg font-mono"
+          />
+        </UFormField>
+      </div>
+    </UCard>
+
+    <!-- Environment variables -->
+    <UCard>
+      <template #header>
+        <div>
+          <h3 class="font-semibold">Environment Variables</h3>
+          <p class="text-sm text-muted">
+            Anything the
+            <NuxtLink
+              to="https://docker-minecraft-server.readthedocs.io/en/latest/variables/"
+              target="_blank"
+              external
+              class="text-primary hover:underline"
+              >itzg/minecraft-server image</NuxtLink
+            >
+            supports can be set here. Variables managed by MCSM (EULA, RCON,
+            type, and the fields above) always take precedence.
+          </p>
+        </div>
+      </template>
+
+      <div class="space-y-2">
+        <div
+          v-for="(envVar, index) in form.customEnv"
+          :key="index"
+          class="flex gap-2 items-start"
+        >
+          <UInput
+            v-model="envVar.key"
+            placeholder="VARIABLE_NAME"
+            class="w-56 font-mono"
+            :color="envVar.key && !isValidEnvKey(envVar.key) ? 'error' : undefined"
+          />
+          <UInput
+            v-model="envVar.value"
+            placeholder="value"
+            class="flex-1 font-mono"
+          />
+          <UButton
+            icon="i-heroicons-x-mark-20-solid"
+            variant="ghost"
+            color="error"
+            aria-label="Remove variable"
+            @click="form.customEnv.splice(index, 1)"
+          />
+        </div>
+
+        <p
+          v-if="form.customEnv.some((envVar) => envVar.key && !isValidEnvKey(envVar.key))"
+          class="text-xs text-error"
+        >
+          Variable names may only contain letters, digits and underscores, and
+          can't start with a digit.
+        </p>
+
+        <UButton
+          icon="i-heroicons-plus-20-solid"
+          variant="soft"
+          color="neutral"
+          size="sm"
+          @click="form.customEnv.push({ key: '', value: '' })"
+        >
+          Add variable
+        </UButton>
       </div>
     </UCard>
 
@@ -266,15 +577,153 @@ onBeforeRouteLeave(() => {
   return confirm("You have unsaved configuration changes. Leave anyway?");
 });
 
-// --- Field helpers ------------------------------------------------------------
+// --- Select options ------------------------------------------------------------
 
 const { data: versionOptions } = useFetch<{ label: string; value: number }[]>(
   "/api/minecraft/versions",
   { default: () => [] }
 );
 
-// USelectMenu works with object items; bind through a computed so clearing
-// works and the form keeps the {label, value} shape the API expects.
+const memoryOptions = [
+  { label: "2GB", value: "2GB", icon: "i-heroicons-user-16-solid" },
+  { label: "4GB", value: "4GB", icon: "i-heroicons-users-16-solid" },
+  { label: "8GB", value: "8GB", icon: "i-heroicons-user-group-16-solid" },
+];
+
+const difficultyOptions = [
+  { label: "Peaceful", value: "peaceful" },
+  { label: "Easy", value: "easy" },
+  { label: "Normal", value: "normal" },
+  { label: "Hard", value: "hard" },
+];
+
+const modeOptions = [
+  { label: "Survival", value: "survival" },
+  { label: "Creative", value: "creative" },
+  { label: "Adventure", value: "adventure" },
+  { label: "Spectator", value: "spectator" },
+];
+
+const levelTypeOptions = [
+  { label: "Default", value: "minecraft:normal" },
+  { label: "Superflat", value: "minecraft:flat" },
+  { label: "Large Biomes", value: "minecraft:large_biomes" },
+  { label: "Amplified", value: "minecraft:amplified" },
+  { label: "Single Biome", value: "minecraft:single_biome_surface" },
+];
+
+const idleBehaviorOptions = [
+  { label: "Keep running", value: "none", icon: "i-heroicons-play-16-solid" },
+  { label: "Pause JVM", value: "pause", icon: "i-heroicons-pause-16-solid" },
+  { label: "Stop container", value: "stop", icon: "i-heroicons-stop-16-solid" },
+];
+
+// --- Toggle rows -----------------------------------------------------------------
+
+type BooleanKey =
+  | "PVP"
+  | "ENABLE_COMMAND_BLOCK"
+  | "HARDCORE"
+  | "ONLINE_MODE"
+  | "ALLOW_FLIGHT"
+  | "SPAWN_ANIMALS"
+  | "SPAWN_MONSTERS"
+  | "SPAWN_NPCS"
+  | "ALLOW_NETHER"
+  | "GENERATE_STRUCTURES";
+
+const gameplayToggles: { key: BooleanKey; label: string; description: string }[] =
+  [
+    {
+      key: "PVP",
+      label: "PvP",
+      description: "Players can damage each other.",
+    },
+    {
+      key: "HARDCORE",
+      label: "Hardcore",
+      description: "One life per player — death means spectator mode.",
+    },
+    {
+      key: "ONLINE_MODE",
+      label: "Online Mode",
+      description: "Verify players against Mojang's servers (recommended).",
+    },
+    {
+      key: "ALLOW_FLIGHT",
+      label: "Allow Flight",
+      description: "Don't kick survival players that appear to be flying.",
+    },
+    {
+      key: "ENABLE_COMMAND_BLOCK",
+      label: "Command Blocks",
+      description: "Allow command blocks to run commands.",
+    },
+    {
+      key: "SPAWN_ANIMALS",
+      label: "Spawn Animals",
+      description: "Animals spawn naturally.",
+    },
+    {
+      key: "SPAWN_MONSTERS",
+      label: "Spawn Monsters",
+      description: "Hostile mobs spawn at night and in the dark.",
+    },
+    {
+      key: "SPAWN_NPCS",
+      label: "Spawn Villagers",
+      description: "Villagers populate villages.",
+    },
+    {
+      key: "ALLOW_NETHER",
+      label: "Allow Nether",
+      description: "Nether portals work.",
+    },
+    {
+      key: "GENERATE_STRUCTURES",
+      label: "Generate Structures",
+      description: "Villages, temples, etc. (newly generated chunks only).",
+    },
+  ];
+
+// --- Nullable string field helpers ------------------------------------------------
+
+// UInput's v-model rejects null; these config fields use null for "unset",
+// so bridge null <-> undefined through computeds.
+type NullableKey =
+  | "FTB_MODPACK_ID"
+  | "FTB_MODPACK_VERSION_ID"
+  | "CF_SLUG"
+  | "CF_FILE_ID"
+  | "SEED"
+  | "ICON"
+  | "RESOURCE_PACK"
+  | "TZ"
+  | "MODRINTH_PROJECTS"
+  | "SPIGET_RESOURCES"
+  | "CUSTOM_SERVER_PROPERTIES";
+
+function nullableField(key: NullableKey) {
+  return computed({
+    get: () => form.value?.[key] ?? undefined,
+    set: (value: string | undefined) => {
+      if (form.value) form.value[key] = value || null;
+    },
+  });
+}
+
+const ftbModpackId = nullableField("FTB_MODPACK_ID");
+const ftbModpackVersionId = nullableField("FTB_MODPACK_VERSION_ID");
+const cfSlug = nullableField("CF_SLUG");
+const cfFileId = nullableField("CF_FILE_ID");
+const seed = nullableField("SEED");
+const icon = nullableField("ICON");
+const resourcePack = nullableField("RESOURCE_PACK");
+const timezone = nullableField("TZ");
+const modrinthProjects = nullableField("MODRINTH_PROJECTS");
+const spigetResources = nullableField("SPIGET_RESOURCES");
+const customProperties = nullableField("CUSTOM_SERVER_PROPERTIES");
+
 const version = computed({
   get: () => form.value?.VERSION ?? undefined,
   set: (value) => {
@@ -289,38 +738,15 @@ const memory = computed({
   },
 });
 
-const memoryOptions = [
-  { label: "2GB", value: "2GB", icon: "i-heroicons-user-16-solid" },
-  { label: "4GB", value: "4GB", icon: "i-heroicons-users-16-solid" },
-  { label: "8GB", value: "8GB", icon: "i-heroicons-user-group-16-solid" },
-];
+// --- Custom env vars ---------------------------------------------------------------
 
-// UInput's v-model rejects null; these config fields use null for "unset",
-// so bridge null <-> undefined through computeds.
-function nullableField(
-  key: "FTB_MODPACK_ID" | "FTB_MODPACK_VERSION_ID" | "CF_SLUG" | "CF_FILE_ID"
-) {
-  return computed({
-    get: () => form.value?.[key] ?? undefined,
-    set: (value: string | undefined) => {
-      if (form.value) form.value[key] = value || null;
-    },
-  });
+const ENV_KEY_PATTERN = /^[A-Za-z_][A-Za-z0-9_]*$/;
+
+function isValidEnvKey(key: string) {
+  return ENV_KEY_PATTERN.test(key);
 }
 
-const ftbModpackId = nullableField("FTB_MODPACK_ID");
-const ftbModpackVersionId = nullableField("FTB_MODPACK_VERSION_ID");
-const cfSlug = nullableField("CF_SLUG");
-const cfFileId = nullableField("CF_FILE_ID");
-
-const difficultyOptions = [
-  { label: "Peaceful", value: "peaceful" },
-  { label: "Easy", value: "easy" },
-  { label: "Normal", value: "normal" },
-  { label: "Hard", value: "hard" },
-];
-
-// --- Save ---------------------------------------------------------------------
+// --- Save ---------------------------------------------------------------------------
 
 const saving = ref(false);
 
@@ -330,7 +756,13 @@ async function save() {
   try {
     const result = await $fetch<{ id: string }>(`/api/server/${id.value}`, {
       method: "PUT",
-      body: form.value,
+      body: {
+        ...form.value,
+        // Drop incomplete/invalid env rows instead of failing validation.
+        customEnv: form.value.customEnv.filter(
+          (envVar) => isValidEnvKey(envVar.key) && envVar.value !== ""
+        ),
+      },
     });
 
     toast.add({

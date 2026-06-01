@@ -20,6 +20,48 @@ export type CreateForm = {
   CF_SLUG: string | null;
   CF_API_KEY: string | null;
   CF_FILE_ID: string | null;
+
+  // Gameplay
+  MODE: "survival" | "creative" | "adventure" | "spectator";
+  /** World seed — only affects newly generated worlds. */
+  SEED: string | null;
+  PVP: boolean;
+  LEVEL_TYPE:
+    | "minecraft:normal"
+    | "minecraft:flat"
+    | "minecraft:large_biomes"
+    | "minecraft:amplified"
+    | "minecraft:single_biome_surface";
+  SPAWN_PROTECTION: number;
+  ENABLE_COMMAND_BLOCK: boolean;
+  ENFORCE_WHITELIST: boolean;
+
+  // Performance & cost
+  VIEW_DISTANCE: number;
+  SIMULATION_DISTANCE: number;
+  PLAYER_IDLE_TIMEOUT: number;
+  USE_AIKAR_FLAGS: boolean;
+  IDLE_BEHAVIOR: "none" | "pause" | "stop";
+  IDLE_TIMEOUT: number;
+
+  // Presentation & QoL
+  ICON: string | null;
+  RESOURCE_PACK: string | null;
+  RESOURCE_PACK_ENFORCE: boolean;
+  HIDE_ONLINE_PLAYERS: boolean;
+  TZ: string | null;
+  SPAWN_ANIMALS: boolean;
+  SPAWN_MONSTERS: boolean;
+  SPAWN_NPCS: boolean;
+  ALLOW_NETHER: boolean;
+  GENERATE_STRUCTURES: boolean;
+
+  // Advanced
+  MODRINTH_PROJECTS: string | null;
+  SPIGET_RESOURCES: string | null;
+  CUSTOM_SERVER_PROPERTIES: string | null;
+  /** Free-form env vars passed to the container (managed keys always win). */
+  customEnv: { key: string; value: string }[];
 };
 
 export const defaultCreateForm = (): CreateForm => ({
@@ -43,6 +85,41 @@ export const defaultCreateForm = (): CreateForm => ({
   CF_SLUG: null,
   CF_API_KEY: null,
   CF_FILE_ID: null,
+
+  // Gameplay
+  MODE: "survival",
+  SEED: null,
+  PVP: true,
+  LEVEL_TYPE: "minecraft:normal",
+  SPAWN_PROTECTION: 16,
+  ENABLE_COMMAND_BLOCK: false,
+  ENFORCE_WHITELIST: false,
+
+  // Performance & cost
+  VIEW_DISTANCE: 10,
+  SIMULATION_DISTANCE: 10,
+  PLAYER_IDLE_TIMEOUT: 0,
+  USE_AIKAR_FLAGS: false,
+  IDLE_BEHAVIOR: "none",
+  IDLE_TIMEOUT: 3600,
+
+  // Presentation & QoL
+  ICON: null,
+  RESOURCE_PACK: null,
+  RESOURCE_PACK_ENFORCE: false,
+  HIDE_ONLINE_PLAYERS: false,
+  TZ: null,
+  SPAWN_ANIMALS: true,
+  SPAWN_MONSTERS: true,
+  SPAWN_NPCS: true,
+  ALLOW_NETHER: true,
+  GENERATE_STRUCTURES: true,
+
+  // Advanced
+  MODRINTH_PROJECTS: null,
+  SPIGET_RESOURCES: null,
+  CUSTOM_SERVER_PROPERTIES: null,
+  customEnv: [],
 });
 
 export const useCreateForm = () => {
