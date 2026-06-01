@@ -5,3 +5,25 @@
   /* Loaded automatically by @nuxt/ui's bundled @nuxt/fonts module. */
   --font-sans: "Poppins", system-ui, sans-serif;
 }
+
+/* nuxt-charts (Unovis) theming — align tooltips, axes and legends with the
+   Nuxt UI light/dark palette. */
+:root {
+  --vis-tooltip-background-color: #ffffff !important;
+  --vis-tooltip-border-color: rgba(0, 0, 0, 0.1) !important;
+  --vis-tooltip-text-color: rgba(0, 0, 0, 0.75) !important;
+  --vis-axis-grid-color: rgba(0, 0, 0, 0.08) !important;
+  --vis-axis-tick-label-color: rgba(0, 0, 0, 0.5) !important;
+  --vis-axis-label-color: rgba(0, 0, 0, 0.5) !important;
+  --vis-legend-label-color: rgba(0, 0, 0, 0.75) !important;
+}
+
+.dark {
+  --vis-tooltip-background-color: #1f2937 !important;
+  --vis-tooltip-border-color: rgba(255, 255, 255, 0.1) !important;
+  --vis-tooltip-text-color: rgba(255, 255, 255, 0.85) !important;
+  --vis-axis-grid-color: rgba(255, 255, 255, 0.08) !important;
+  --vis-axis-tick-label-color: rgba(255, 255, 255, 0.5) !important;
+  --vis-axis-label-color: rgba(255, 255, 255, 0.5) !important;
+  --vis-legend-label-color: rgba(255, 255, 255, 0.75) !important;
+}

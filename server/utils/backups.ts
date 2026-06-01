@@ -1,0 +1,264 @@
+import type { H3Event } from "h3";
+import type Docker from "dockerode";
+import { and, desc, eq } from "drizzle-orm";
+// Imported explicitly (not via the `db` auto-import): the auto-import's type
+// resolves to `any` under pnpm because it references the package by path,
+// which bypasses the package's `exports` types.
+import { db } from "@nuxthub/db";
+import { backups } from "../db/schema";
+
+/**
+ * World backups via disposable helper containers.
+ *
+ * The Docker socket proxy in production has no EXEC permission, so we can't
+ * `docker exec` into running servers. Instead, every backup operation runs a
+ * short-lived alpine container that mounts the world volume and the shared
+ * `mcsm-backups` volume, and tars/untars between them. That only needs
+ * CONTAINERS/VOLUMES/POST permissions, which the proxy allows.
+ */
+
+const BACKUP_VOLUME = "mcsm-backups";
+const HELPER_IMAGE = "alpine:3.22";
+
+/** Backup tarball paths are derived from sanitized volume names + timestamps. */
+const SAFE_FILENAME = /^[a-z0-9-]+\/\d+\.tar\.gz$/;
+
+// --- Helper container plumbing ------------------------------------------------
+
+/** Strip Docker's 8-byte multiplexing headers from a non-TTY logs buffer. */
+function demuxLogs(buffer: Buffer): string {
+  let output = "";
+  let offset = 0;
+  while (offset + 8 <= buffer.length) {
+    const size = buffer.readUInt32BE(offset + 4);
+    output += buffer.subarray(offset + 8, offset + 8 + size).toString("utf8");
+    offset += 8 + size;
+  }
+  return output;
+}
+
+/** Run a one-shot helper container and return its exit code + output. */
+async function runHelper(
+  docker: Docker,
+  cmd: string[],
+  binds: string[]
+): Promise<{ exitCode: number; output: string }> {
+  const container = await docker.createContainer({
+    Image: HELPER_IMAGE,
+    Cmd: cmd,
+    HostConfig: {
+      Binds: binds,
+      // Tar jobs need no network — keeps helpers off the shared networks.
+      NetworkMode: "none",
+    },
+    Labels: { "mcsm.helper": "true" },
+  });
+
+  try {
+    await container.start();
+    const result = await container.wait();
+    const logs = (await container.logs({
+      stdout: true,
+      stderr: true,
+      follow: false,
+    })) as unknown as Buffer;
+    return { exitCode: result.StatusCode, output: demuxLogs(logs) };
+  } finally {
+    await container.remove({ force: true }).catch(() => {});
+  }
+}
+
+async function ensureBackupVolume(docker: Docker) {
+  // Creating an existing volume is a no-op in the Docker API.
+  await docker.createVolume({ Name: BACKUP_VOLUME });
+}
+
+// --- Public API -----------------------------------------------------------------
+
+export async function listBackups(volume: string) {
+  return db
+    .select()
+    .from(backups)
+    .where(eq(backups.volume, volume))
+    .orderBy(desc(backups.createdAt));
+}
+
+export async function getBackup(volume: string, backupId: number) {
+  return db
+    .select()
+    .from(backups)
+    .where(and(eq(backups.id, backupId), eq(backups.volume, volume)))
+    .get();
+}
+
+/**
+ * Tar the server's world volume into the backup volume.
+ *
+ * If the server is running, world saving is paused (`save-off` + `save-all`)
+ * around the tar so the snapshot is consistent, and re-enabled afterwards.
+ */
+export async function createBackup(
+  event: H3Event,
+  serverId: string,
+  label?: string
+) {
+  const { getServer, docker, ensureImage } = useDocker(event);
+  const server = await getServer(serverId);
+  if (!server.volume) {
+    throw createError({
+      statusCode: 400,
+      statusMessage: "Server has no world volume to back up",
+    });
+  }
+
+  await ensureBackupVolume(docker);
+  await ensureImage(HELPER_IMAGE);
+
+  const filename = `${server.volume}/${Date.now()}.tar.gz`;
+  if (!SAFE_FILENAME.test(filename)) {
+    throw createError({ statusCode: 400, statusMessage: "Invalid volume name" });
+  }
+
+  // Best-effort consistent snapshot — ignore RCON failures (server may be
+  // booting or unreachable; the tar still works, just less consistent).
+  const pauseSaves = server.running
+    ? withRcon(event, serverId, async (rcon) => {
+        await rcon.send("save-off");
+        await rcon.send("save-all flush");
+      }).catch(() => {})
+    : Promise.resolve();
+  await pauseSaves;
+
+  try {
+    const { exitCode, output } = await runHelper(
+      docker,
+      [
+        "sh",
+        "-c",
+        // Print the archive size as the last output line so we can record it.
+        `mkdir -p "/backups/${server.volume}" && tar czf "/backups/${filename}" -C /data . && stat -c %s "/backups/${filename}"`,
+      ],
+      [`${server.volume}:/data:ro`, `${BACKUP_VOLUME}:/backups`]
+    );
+
+    if (exitCode !== 0) {
+      console.error("[mcsm] Backup helper failed:", output);
+      throw createError({
+        statusCode: 500,
+        statusMessage: "Backup failed",
+      });
+    }
+
+    const sizeBytes =
+      parseInt(output.trim().split("\n").pop() ?? "", 10) || null;
+
+    const [row] = await db
+      .insert(backups)
+      .values({
+        volume: server.volume,
+        filename,
+        sizeBytes,
+        createdAt: Date.now(),
+        label: label ?? null,
+        state: "done",
+      })
+      .returning();
+
+    await recordActivity(server.volume, "backup-created", label);
+    return row;
+  } finally {
+    if (server.running) {
+      await withRcon(event, serverId, (rcon) => rcon.send("save-on")).catch(
+        () => {}
+      );
+    }
+  }
+}
+
+/**
+ * Restore a backup into the server's world volume. The server is stopped for
+ * the restore and started again afterwards (if it was running).
+ */
+export async function restoreBackup(
+  event: H3Event,
+  serverId: string,
+  backupId: number
+) {
+  const { getServer, docker, ensureImage, stopServer, startServer } =
+    useDocker(event);
+  const server = await getServer(serverId);
+  if (!server.volume) {
+    throw createError({ statusCode: 400, statusMessage: "Server has no volume" });
+  }
+
+  const backup = await getBackup(server.volume, backupId);
+  if (!backup || !SAFE_FILENAME.test(backup.filename)) {
+    throw createError({ statusCode: 404, statusMessage: "Backup not found" });
+  }
+
+  await ensureImage(HELPER_IMAGE);
+
+  const wasRunning = server.running;
+  if (wasRunning) await stopServer(serverId);
+
+  try {
+    const { exitCode, output } = await runHelper(
+      docker,
+      [
+        "sh",
+        "-c",
+        // Clear the volume (including dotfiles) before extracting.
+        `find /data -mindepth 1 -delete && tar xzf "/backups/${backup.filename}" -C /data`,
+      ],
+      [`${server.volume}:/data`, `${BACKUP_VOLUME}:/backups:ro`]
+    );
+
+    if (exitCode !== 0) {
+      console.error("[mcsm] Restore helper failed:", output);
+      throw createError({ statusCode: 500, statusMessage: "Restore failed" });
+    }
+
+    await recordActivity(
+      server.volume,
+      "backup-restored",
+      new Date(backup.createdAt).toISOString()
+    );
+    return { ok: true };
+  } finally {
+    if (wasRunning) await startServer(serverId);
+  }
+}
+
+/** Delete a backup tarball and its metadata. */
+export async function deleteBackup(
+  event: H3Event,
+  serverId: string,
+  backupId: number
+) {
+  const { getServer, docker, ensureImage } = useDocker(event);
+  const server = await getServer(serverId);
+  if (!server.volume) {
+    throw createError({ statusCode: 400, statusMessage: "Server has no volume" });
+  }
+
+  const backup = await getBackup(server.volume, backupId);
+  if (!backup || !SAFE_FILENAME.test(backup.filename)) {
+    throw createError({ statusCode: 404, statusMessage: "Backup not found" });
+  }
+
+  await ensureImage(HELPER_IMAGE);
+
+  const { exitCode, output } = await runHelper(
+    docker,
+    ["rm", "-f", `/backups/${backup.filename}`],
+    [`${BACKUP_VOLUME}:/backups`]
+  );
+  if (exitCode !== 0) {
+    console.error("[mcsm] Backup delete helper failed:", output);
+    throw createError({ statusCode: 500, statusMessage: "Delete failed" });
+  }
+
+  await db.delete(backups).where(eq(backups.id, backupId));
+  await recordActivity(server.volume, "backup-deleted");
+  return { ok: true };
+}
