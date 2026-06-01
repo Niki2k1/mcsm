@@ -223,6 +223,11 @@ export const useDocker = (event?: H3Event, hostId = "default") => {
     }
   }
 
+  /** Restart a container (starts it if it was stopped). */
+  async function restartServer(id: string) {
+    await docker.getContainer(id).restart({ t: 10 });
+  }
+
   return {
     docker,
     ensureImage,
@@ -232,5 +237,6 @@ export const useDocker = (event?: H3Event, hostId = "default") => {
     removeServer,
     startServer,
     stopServer,
+    restartServer,
   };
 };

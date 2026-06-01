@@ -47,6 +47,7 @@
   "devDependencies": {
     "@iconify-json/heroicons": "^1.2.3",
     "@iconify-json/tabler": "^1.2.0",
+    "@nuxt/kit": "^4.4.6",
     "@types/dockerode": "^4.0.1",
     "@vueuse/core": "^14.3.0",
     "@vueuse/nuxt": "^14.3.0",

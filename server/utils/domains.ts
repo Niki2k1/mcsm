@@ -1,4 +1,8 @@
 import { eq } from "drizzle-orm";
+// Imported explicitly (not via the `db` auto-import): the auto-import's type
+// resolves to `any` under pnpm because it references the package by path,
+// which bypasses the package's `exports` types.
+import { db } from "@nuxthub/db";
 import { domains } from "../db/schema";
 
 /** Domains servers can be created under (SQLite-backed). */

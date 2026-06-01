@@ -1,0 +1,3 @@
+<template>
+  <ServerDetailSettings />
+</template>
