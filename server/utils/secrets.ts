@@ -1,9 +1,12 @@
+import { eq } from "drizzle-orm";
+import { secrets } from "../db/schema";
+
 /**
  * Global secret store.
  *
  * Some settings — API keys in particular — are the same for every server and a
- * pain to re-enter per container. We keep them in one place (the `objects`
- * storage on the mcsm-data volume) and inject them into containers at
+ * pain to re-enter per container. We keep them in one place (the SQLite
+ * database on the mcsm-data volume) and inject them into containers at
  * provision time, so changing one value and re-applying updates every server.
  *
  * Values are write-only over the API: the UI can set or clear a secret and see
@@ -36,8 +39,6 @@ export const SECRET_DEFS: SecretDef[] = [
   },
 ];
 
-const STORAGE_KEY = "secrets.json";
-
 export function isKnownSecret(key: string): boolean {
   return SECRET_DEFS.some((def) => def.key === key);
 }
@@ -50,24 +51,29 @@ export function maskSecret(value: string): string {
 }
 
 export const useSecrets = () => {
-  const storage = useStorage("objects");
+  const getAll = async (): Promise<Record<string, string>> => {
+    const rows = await db.select().from(secrets);
+    return Object.fromEntries(rows.map((row) => [row.key, row.value]));
+  };
 
-  const getAll = async (): Promise<Record<string, string>> =>
-    (await storage.getItem<Record<string, string>>(STORAGE_KEY)) ?? {};
-
-  const get = async (key: string): Promise<string | undefined> =>
-    (await getAll())[key];
+  const get = async (key: string): Promise<string | undefined> => {
+    const row = await db
+      .select()
+      .from(secrets)
+      .where(eq(secrets.key, key))
+      .get();
+    return row?.value;
+  };
 
   const set = async (key: string, value: string) => {
-    const all = await getAll();
-    all[key] = value;
-    await storage.setItem(STORAGE_KEY, all);
+    await db
+      .insert(secrets)
+      .values({ key, value })
+      .onConflictDoUpdate({ target: secrets.key, set: { value } });
   };
 
   const remove = async (key: string) => {
-    const all = await getAll();
-    delete all[key];
-    await storage.setItem(STORAGE_KEY, all);
+    await db.delete(secrets).where(eq(secrets.key, key));
   };
 
   return { getAll, get, set, remove };

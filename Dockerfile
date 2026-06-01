@@ -25,8 +25,13 @@ ENV PORT=3000
 # Only the built Nitro server output is needed at runtime.
 COPY --from=build /app/.output ./.output
 
-# Domains list (unstorage fs driver) lives here.
+# App data volume: SQLite database (.data/db) and legacy unstorage files
+# (.data/objects).
 VOLUME ["/app/.data"]
 
 EXPOSE 3000
-CMD ["node", ".output/server/index.mjs"]
+# The SQLite client opens .data/db/sqlite.db the moment the server module
+# graph is evaluated — before any code can create the directory — so it must
+# exist before node starts. Migrations are then applied at startup by
+# server/plugins/migrations.ts.
+CMD ["sh", "-c", "mkdir -p .data/db && exec node .output/server/index.mjs"]

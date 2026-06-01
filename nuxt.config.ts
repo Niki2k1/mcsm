@@ -15,7 +15,16 @@ export default defineNuxtConfig({
 
   // Nuxt UI v4 bundles Tailwind, icon, fonts and color-mode and includes the
   // former Pro components for free (no license, no separate module).
-  modules: ["@nuxt/ui", "@vueuse/nuxt"],
+  modules: ["@nuxt/ui", "@vueuse/nuxt", "@nuxthub/core", "nuxt-charts"],
+
+  // NuxtHub provides the SQLite database (Drizzle ORM, auto-imported `db` +
+  // `schema` in server code). The libsql driver stores the file at
+  // `.data/db/sqlite.db`, which lives on the persistent mcsm-data volume in
+  // production. Migrations apply automatically in dev; in the prebuilt Docker
+  // image they are applied at startup by server/plugins/migrations.ts.
+  hub: {
+    db: "sqlite",
+  },
 
   css: ["~/assets/css/main.css", "@xterm/xterm/css/xterm.css"],
 
@@ -64,11 +73,23 @@ export default defineNuxtConfig({
 
   nitro: {
     storage: {
+      // Pre-SQLite storage. Still mounted so server/plugins/migrations.ts can
+      // import legacy JSON data (secrets/settings/domains) into the database.
       objects: {
         driver: "fs",
         base: "./.data/objects",
       },
     },
+
+    // Bundle the Drizzle migration SQL files into the server output so the
+    // prebuilt Docker image can apply them at startup against the runtime
+    // data volume (see server/plugins/migrations.ts).
+    serverAssets: [
+      {
+        baseName: "migrations",
+        dir: "./db/migrations",
+      },
+    ],
 
     imports: {
       presets: [

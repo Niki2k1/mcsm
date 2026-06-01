@@ -2,6 +2,9 @@ allowBuilds:
   '@parcel/watcher': true
   cpu-features: true
   esbuild: true
+  # maplibre-gl is pulled in by nuxt-charts (vue-chrts) for map charts, which
+  # MCSM doesn't use — no need to run its build scripts.
+  maplibre-gl: false
   protobufjs: true
   ssh2: true
   vue-demi: true

@@ -5,20 +5,16 @@ export default defineEventHandler(async (event) => {
     domain: z.string().min(1),
   });
 
-  const storage = useStorage("objects");
+  const domains = useDomains();
 
-  const domains = (await storage.getItem<string[]>("domains.json")) ?? [];
-
-  if (domains.includes(domain)) {
+  if (await domains.has(domain)) {
     throw createError({
       statusCode: 400,
       statusMessage: `Domain '${domain}' already exists`,
     });
   }
 
-  domains.push(domain);
-
-  await storage.setItem("domains.json", domains);
+  await domains.add(domain);
 
   return {
     message: `Domain '${domain}' successfully created`,

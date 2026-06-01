@@ -11,11 +11,15 @@
     "dev": "nuxt dev",
     "generate": "nuxt generate",
     "preview": "nuxt preview",
-    "postinstall": "nuxt prepare"
+    "postinstall": "nuxt prepare",
+    "db:generate": "nuxt-db generate",
+    "start": "mkdir -p .data/db && node .output/server/index.mjs"
   },
   "dependencies": {
     "@ahdg/minecraftstatuspinger": "^1.1.5",
+    "@libsql/client": "^0.17.3",
     "@nuxt/ui": "^4.8.1",
+    "@nuxthub/core": "^0.10.7",
     "@sfirew/minecraft-motd-parser": "^1.1.6",
     "@tiptap/core": "3.24.0",
     "@tiptap/extension-bubble-menu": "3.24.0",
@@ -26,10 +30,12 @@
     "@xterm/xterm": "^6.0.0",
     "defu": "^6.1.7",
     "dockerode": "^5.0.0",
+    "drizzle-orm": "^0.45.2",
     "h3-zod": "^0.5.3",
     "jimp-compact": "0.16.1-2",
     "minecraft-data": "^3.110.2",
     "nuxt": "^4.4.6",
+    "nuxt-charts": "^2.1.4",
     "rcon-client": "^4.2.5",
     "tailwindcss": "^4.3.0",
     "typescript": "^5.9.2",
@@ -43,6 +49,7 @@
     "@iconify-json/tabler": "^1.2.0",
     "@types/dockerode": "^4.0.1",
     "@vueuse/core": "^14.3.0",
-    "@vueuse/nuxt": "^14.3.0"
+    "@vueuse/nuxt": "^14.3.0",
+    "drizzle-kit": "^0.31.10"
   }
 }

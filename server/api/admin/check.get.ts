@@ -79,8 +79,7 @@ export default defineEventHandler(async (event) => {
   });
 
   // Only allow checking domains MCSM manages (the base, or a subdomain of one).
-  const storage = useStorage("objects");
-  const domains = (await storage.getItem<string[]>("domains.json")) ?? [];
+  const domains = await useDomains().list();
   const owned = domains.some((d) => host === d || host.endsWith(`.${d}`));
   if (!owned) {
     throw createError({
