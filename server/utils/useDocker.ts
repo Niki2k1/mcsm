@@ -33,6 +33,8 @@ export type ServerSummary = {
   type: string | null;
   running: boolean;
   config: ServerConfig | null;
+  /** World volume name — stable identity (e.g. for /map/<volume>/ links). */
+  volume: string | null;
 };
 
 function connect(host: DockerHostConfig): Docker {
@@ -152,6 +154,10 @@ export const useDocker = (event?: H3Event, hostId = "default") => {
         type: cfg?.type ?? null,
         running: container.State === "running",
         config: cfg,
+        volume:
+          (container.Mounts ?? []).find(
+            (mount) => mount.Destination === "/data"
+          )?.Name ?? null,
       };
     });
   }

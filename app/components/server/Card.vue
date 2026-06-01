@@ -36,6 +36,20 @@
             {{ statusText }}
           </UBadge>
 
+          <!-- BlueMap web map (opens in a new tab). -->
+          <UButton
+            v-if="mapUrl"
+            :href="mapUrl"
+            target="_blank"
+            external
+            icon="i-heroicons-map-20-solid"
+            color="neutral"
+            variant="ghost"
+            size="xs"
+            aria-label="Open BlueMap"
+            @click.stop
+          />
+
           <!-- Quick start/stop. Everything else lives on the detail page. -->
           <UButton
             v-if="server.running"
@@ -86,9 +100,18 @@ const props = defineProps<{
     domain: string;
     type: string | null;
     running: boolean;
-    config?: { ICON?: string | null } | null;
+    config?: { ICON?: string | null; BLUEMAP?: boolean } | null;
+    volume?: string | null;
   };
 }>();
+
+// BlueMap link — served through MCSM's /map/ proxy, keyed by volume name.
+// A plain href (not NuxtLink): /map/ is a server route, not an SPA page.
+const mapUrl = computed(() =>
+  props.server.config?.BLUEMAP && props.server.running && props.server.volume
+    ? `/map/${props.server.volume}/`
+    : null
+);
 
 const emit = defineEmits<{
   start: [server: { id: string; name: string }];

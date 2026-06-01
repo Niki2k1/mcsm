@@ -30,6 +30,14 @@ config files to manage.
   it rendered in the Minecraft font, including obfuscated-text animation.
 - **Operators & whitelist** — look players up by username; their UUID and skin
   avatar are resolved from Mojang automatically.
+- **World pre-generation** — generate chunks ahead of time with
+  [Chunky](https://modrinth.com/mod/chunky) (auto-installed), watched live on a
+  Minecraft-style chunk colormap. Paper/Fabric/Forge only.
+- **BlueMap 3D web map** — toggle an interactive
+  [BlueMap](https://bluemap.bluecolored.de/) world map for Paper/Fabric/Forge
+  servers. MCSM auto-installs it and serves it through its own domain at
+  `/map/<server>/` — no extra ports, proxies or DNS needed; Mojang's asset
+  download consent is one click in the Map tab.
 - **Review screen** — a formatted overview of every setting before you commit
   to creating the server.
 - **Direct Docker provisioning** — creates the container straight against the
@@ -297,6 +305,11 @@ nuxt.config.ts               # modules, runtimeConfig (docker hosts), storage
 - **Per-server MOTD/offline status** is set as an env var on the container; the
   richer offline-status placeholder behaviour of file-based proxies isn't
   modelled through Infrarust labels.
+- **BlueMap traffic flows through MCSM.** The map is proxied by the dashboard
+  (`/map/<volume>/` → container port 8100 over the shared Docker network), so
+  it shares MCSM's domain and TLS. Map tiles are served by the Node process —
+  fine for personal use, but heavy public maps would benefit from dedicated
+  routing.
 - This is an early-stage project and APIs/structure may change.
 
 ## License & attribution

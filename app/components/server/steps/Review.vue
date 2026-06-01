@@ -37,6 +37,9 @@
           {{ versionLabel }}
         </ReviewRow>
         <ReviewRow label="Memory">{{ form.memory ?? "—" }}</ReviewRow>
+        <ReviewRow v-if="bluemapEnabled" label="BlueMap">
+          <BoolBadge :value="true" />
+        </ReviewRow>
         <ReviewRow v-if="form.FTB_MODPACK_ID" label="Modpack ID">
           {{ form.FTB_MODPACK_ID }}
         </ReviewRow>
@@ -127,6 +130,12 @@ const typeMeta = computed(() => {
 
   return form.value.type ? types[form.value.type] : null;
 });
+
+const bluemapEnabled = computed(
+  () =>
+    form.value.BLUEMAP &&
+    ["PAPER", "FABRIC", "FORGE"].includes(form.value.type ?? "")
+);
 
 const fullAddress = computed(() => {
   const subdomain =

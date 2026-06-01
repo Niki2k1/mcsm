@@ -19,7 +19,8 @@ import { backups } from "../db/schema";
  */
 
 const BACKUP_VOLUME = "mcsm-backups";
-const HELPER_IMAGE = "alpine:3.22";
+/** Image used for disposable helper containers (also reused by bluemap.ts). */
+export const HELPER_IMAGE = "alpine:3.22";
 
 /** Backup tarball paths are derived from sanitized volume names + timestamps. */
 const SAFE_FILENAME = /^[a-z0-9-]+\/\d+\.tar\.gz$/;
@@ -38,8 +39,13 @@ function demuxLogs(buffer: Buffer): string {
   return output;
 }
 
-/** Run a one-shot helper container and return its exit code + output. */
-async function runHelper(
+/**
+ * Run a one-shot helper container and return its exit code + output. Exported
+ * for other volume-touching features (e.g. BlueMap's config patch) — the
+ * socket proxy has no EXEC permission, so this is the only way to run
+ * commands against a volume.
+ */
+export async function runHelper(
   docker: Docker,
   cmd: string[],
   binds: string[]

@@ -1,0 +1,3 @@
+<template>
+  <ServerDetailMap />
+</template>
