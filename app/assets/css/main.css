@@ -6,24 +6,29 @@
   --font-sans: "Poppins", system-ui, sans-serif;
 }
 
-/* nuxt-charts (Unovis) theming — align tooltips, axes and legends with the
-   Nuxt UI light/dark palette. */
+/* nuxt-charts (Unovis + vue-chrts) theming — map the chart variables onto
+   Nuxt UI's semantic palette so tooltips, axes and legends follow the active
+   color mode automatically (https://nuxtcharts.com/docs/getting-started/installation). */
 :root {
-  --vis-tooltip-background-color: #ffffff !important;
-  --vis-tooltip-border-color: rgba(0, 0, 0, 0.1) !important;
-  --vis-tooltip-text-color: rgba(0, 0, 0, 0.75) !important;
-  --vis-axis-grid-color: rgba(0, 0, 0, 0.08) !important;
-  --vis-axis-tick-label-color: rgba(0, 0, 0, 0.5) !important;
-  --vis-axis-label-color: rgba(0, 0, 0, 0.5) !important;
-  --vis-legend-label-color: rgba(0, 0, 0, 0.75) !important;
-}
+  /* Default series colors when a chart category doesn't set one. */
+  --vis-color0: var(--ui-primary) !important;
+  --vis-color1: var(--ui-secondary) !important;
 
-.dark {
-  --vis-tooltip-background-color: #1f2937 !important;
-  --vis-tooltip-border-color: rgba(255, 255, 255, 0.1) !important;
-  --vis-tooltip-text-color: rgba(255, 255, 255, 0.85) !important;
-  --vis-axis-grid-color: rgba(255, 255, 255, 0.08) !important;
-  --vis-axis-tick-label-color: rgba(255, 255, 255, 0.5) !important;
-  --vis-axis-label-color: rgba(255, 255, 255, 0.5) !important;
-  --vis-legend-label-color: rgba(255, 255, 255, 0.75) !important;
+  /* Tooltip container (Unovis) */
+  --vis-tooltip-background-color: var(--ui-bg-elevated) !important;
+  --vis-tooltip-border-color: var(--ui-border) !important;
+  --vis-tooltip-text-color: var(--ui-text-muted) !important;
+
+  /* Tooltip content (vue-chrts) — the title defaults to #000, which is
+     invisible on a dark tooltip, so it must be themed explicitly. */
+  --vis-tooltip-title-color: var(--ui-text-highlighted) !important;
+  --vis-tooltip-title-border-bottom: 1px solid var(--ui-border) !important;
+  --vis-tooltip-label-color: var(--ui-text-muted) !important;
+  --vis-tooltip-value-color: var(--ui-text-highlighted) !important;
+
+  /* Axes & legend */
+  --vis-axis-grid-color: var(--ui-border) !important;
+  --vis-axis-tick-label-color: var(--ui-text-dimmed) !important;
+  --vis-axis-label-color: var(--ui-text-dimmed) !important;
+  --vis-legend-label-color: var(--ui-text-muted) !important;
 }

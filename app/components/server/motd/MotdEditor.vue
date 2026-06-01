@@ -107,10 +107,13 @@
       </div>
     </div>
 
-    <!-- Inline bubble menu (shown on selection) -->
+    <!-- Inline bubble menu (shown on selection). Positioned absolutely from
+         the start so it never participates in layout — the BubbleMenu plugin
+         only takes over (and moves it into the editor wrapper) the first time
+         a selection shows it; until then it must not push the editor down. -->
     <div
       ref="bubble"
-      class="flex items-center gap-0.5 rounded-md border border-default bg-default p-1 shadow-lg"
+      class="absolute z-50 flex items-center gap-0.5 rounded-md border border-default bg-default p-1 shadow-lg"
       style="visibility: hidden"
     >
       <UButton

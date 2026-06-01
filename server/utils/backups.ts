@@ -1,3 +1,4 @@
+import { PassThrough } from "node:stream";
 import type { H3Event } from "h3";
 import type Docker from "dockerode";
 import { and, desc, eq } from "drizzle-orm";
@@ -226,6 +227,72 @@ export async function restoreBackup(
     return { ok: true };
   } finally {
     if (wasRunning) await startServer(serverId);
+  }
+}
+
+/**
+ * Open a download stream for a backup tarball.
+ *
+ * The tarball lives on the `mcsm-backups` Docker volume, which MCSM can't
+ * read directly — so a helper container `cat`s it to stdout and we stream
+ * that (demultiplexed) to the caller. The returned `cleanup` must be called
+ * once the consumer is done (or has aborted) to remove the helper container.
+ */
+export async function openBackupDownload(
+  event: H3Event,
+  serverId: string,
+  backupId: number
+) {
+  const { getServer, docker, ensureImage } = useDocker(event);
+  const server = await getServer(serverId);
+  if (!server.volume) {
+    throw createError({ statusCode: 400, statusMessage: "Server has no volume" });
+  }
+
+  const backup = await getBackup(server.volume, backupId);
+  if (!backup || !SAFE_FILENAME.test(backup.filename)) {
+    throw createError({ statusCode: 404, statusMessage: "Backup not found" });
+  }
+
+  await ensureImage(HELPER_IMAGE);
+
+  const container = await docker.createContainer({
+    Image: HELPER_IMAGE,
+    Cmd: ["cat", `/backups/${backup.filename}`],
+    HostConfig: {
+      Binds: [`${BACKUP_VOLUME}:/backups:ro`],
+      NetworkMode: "none",
+    },
+    Labels: { "mcsm.helper": "true" },
+  });
+
+  const cleanup = async () => {
+    await container.remove({ force: true }).catch(() => {});
+  };
+
+  try {
+    // Attach before starting so no output is missed, then demux stdout into
+    // the stream we hand back. stderr only carries error noise — drain it.
+    const attachStream = await container.attach({
+      stream: true,
+      stdout: true,
+      stderr: true,
+    });
+
+    const stdout = new PassThrough();
+    const stderr = new PassThrough();
+    stderr.resume();
+    container.modem.demuxStream(attachStream, stdout, stderr);
+
+    attachStream.on("end", () => stdout.end());
+    attachStream.on("error", (error: Error) => stdout.destroy(error));
+
+    await container.start();
+
+    return { backup, stream: stdout, cleanup };
+  } catch (error) {
+    await cleanup();
+    throw error;
   }
 }
 

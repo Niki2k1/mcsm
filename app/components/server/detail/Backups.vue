@@ -66,6 +66,17 @@
           <div class="flex gap-2 shrink-0">
             <UButton
               size="xs"
+              variant="ghost"
+              color="neutral"
+              icon="i-heroicons-arrow-down-tray-20-solid"
+              :href="`/api/server/${id}/backups/${backup.id}/download`"
+              external
+              aria-label="Download backup"
+            >
+              Download
+            </UButton>
+            <UButton
+              size="xs"
               variant="soft"
               color="warning"
               icon="i-heroicons-arrow-uturn-left-20-solid"
