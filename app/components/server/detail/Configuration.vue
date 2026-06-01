@@ -116,17 +116,11 @@
           help="Heap size for the Minecraft server. The container gets 1 GB extra headroom."
         >
           <div class="flex items-center gap-3 flex-wrap">
-            <UButtonGroup size="sm">
-              <UButton
-                v-for="preset in memoryPresets"
-                :key="preset"
-                :variant="memoryGb === preset ? 'solid' : 'outline'"
-                :color="memoryGb === preset ? 'primary' : 'neutral'"
-                @click="memoryGb = preset"
-              >
-                {{ preset }}GB
-              </UButton>
-            </UButtonGroup>
+            <UTabs
+              v-model="memory"
+              :items="memoryOptions"
+              :content="false"
+            />
             <div class="flex items-center gap-1.5">
               <UInput
                 v-model.number="memoryGb"
@@ -743,9 +737,23 @@ const version = computed({
   },
 });
 
-// Memory is stored as "<n>GB"; expose it as a number with quick presets so
-// any size works, not just the presets.
-const memoryPresets = [2, 4, 8, 12, 16];
+// Memory is stored as "<n>GB". The preset tabs and the free number input both
+// read/write the same field, so they stay in sync: picking a tab updates the
+// input, and typing a non-preset size simply leaves no tab selected.
+const memoryOptions = [
+  { label: "2GB", value: "2GB", icon: "i-heroicons-user-16-solid" },
+  { label: "4GB", value: "4GB", icon: "i-heroicons-users-16-solid" },
+  { label: "8GB", value: "8GB", icon: "i-heroicons-user-group-16-solid" },
+  { label: "12GB", value: "12GB", icon: "i-heroicons-building-storefront-16-solid" },
+  { label: "16GB", value: "16GB", icon: "i-heroicons-building-office-2-16-solid" },
+];
+
+const memory = computed({
+  get: () => form.value?.memory ?? "2GB",
+  set: (value: string) => {
+    if (form.value && value) form.value.memory = value;
+  },
+});
 
 const memoryGb = computed({
   get: () => parseInt(form.value?.memory ?? "2", 10) || 2,
