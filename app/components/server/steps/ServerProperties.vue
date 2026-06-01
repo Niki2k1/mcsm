@@ -44,6 +44,16 @@
         v-model="form[field.name]"
       />
     </UFormField>
+
+    <!-- BlueMap is a plugin/mod, so it only applies to mod-capable types. -->
+    <UFormField
+      v-if="bluemapSupported"
+      name="BLUEMAP"
+      label="BlueMap (3D web map)"
+      help="Auto-installs the BlueMap plugin/mod and serves an interactive 3D map of the world through MCSM."
+    >
+      <UCheckbox v-model="form.BLUEMAP" />
+    </UFormField>
   </div>
 </template>
 
@@ -118,4 +128,8 @@ const formFields = ref([
 ]);
 
 const form = useCreateForm();
+
+const bluemapSupported = computed(() =>
+  ["PAPER", "FABRIC", "FORGE"].includes(form.value.type ?? "")
+);
 </script>

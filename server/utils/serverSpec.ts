@@ -141,7 +141,13 @@ export async function buildServerSpec(data: ServerConfig, event?: H3Event) {
   env.GENERATE_STRUCTURES = String(data.GENERATE_STRUCTURES ?? true);
 
   // --- Advanced -------------------------------------------------------------------
-  if (data.MODRINTH_PROJECTS) env.MODRINTH_PROJECTS = data.MODRINTH_PROJECTS;
+  // BlueMap is installed via Modrinth like any other project, merged into the
+  // user's own MODRINTH_PROJECTS list so the two never clobber each other.
+  const modrinthProjects =
+    data.BLUEMAP && serverTypeSupportsBluemap(data.type)
+      ? addModrinthProject(data.MODRINTH_PROJECTS, BLUEMAP_SLUG)
+      : data.MODRINTH_PROJECTS;
+  if (modrinthProjects) env.MODRINTH_PROJECTS = modrinthProjects;
   if (data.SPIGET_RESOURCES) env.SPIGET_RESOURCES = data.SPIGET_RESOURCES;
   if (data.CUSTOM_SERVER_PROPERTIES)
     env.CUSTOM_SERVER_PROPERTIES = data.CUSTOM_SERVER_PROPERTIES;
@@ -169,5 +175,54 @@ export async function buildServerSpec(data: ServerConfig, event?: H3Event) {
     // Auto-stop exits the container on purpose — "unless-stopped" would
     // immediately start it again and defeat the feature.
     restartPolicy: data.IDLE_BEHAVIOR === "stop" ? "no" : "unless-stopped",
+  };
+}
+
+/**
+ * Recreate a server's container with a new config. Docker can't change env
+ * vars or labels in place, so the old container is removed (keeping its
+ * volume) and a fresh one is provisioned reusing the same name and volume —
+ * the world and the server's identity survive.
+ *
+ * Used by the edit flow and by integrations (pre-generation, BlueMap) that
+ * toggle config and need the container rebuilt.
+ */
+export async function recreateServer(
+  event: H3Event | undefined,
+  serverId: string,
+  data: ServerConfig,
+  activityDetail: string
+) {
+  const config = useRuntimeConfig(event);
+  const { getServer, removeServer, provisionServer } = useDocker(event);
+
+  const existing = await getServer(serverId);
+  const spec = await buildServerSpec(data, event);
+
+  // Reuse the original container name and volume so the world survives even
+  // if the display name / subdomain changed.
+  const name = existing.containerName || spec.name;
+  const volume = existing.volume || spec.volume;
+
+  await removeServer(serverId, { removeVolume: false });
+
+  const container = await provisionServer({
+    name,
+    image: config.docker?.image || "itzg/minecraft-server",
+    env: spec.env,
+    labels: spec.labels,
+    memoryBytes: spec.memoryBytes,
+    port: spec.port,
+    volume,
+    restartPolicy: spec.restartPolicy,
+  });
+
+  await recordActivity(volume, "edited", activityDetail);
+
+  return {
+    id: container.id,
+    name: container.name,
+    domain: spec.domain,
+    volume,
   };
 }

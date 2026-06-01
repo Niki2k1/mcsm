@@ -47,29 +47,17 @@ export function serverTypeSupportsPregen(type: string | null | undefined) {
   return (PREGEN_SUPPORTED_TYPES as readonly string[]).includes(type ?? "");
 }
 
-/** Split a MODRINTH_PROJECTS value into its project slugs/ids. */
-function modrinthTokens(projects: string | null | undefined): string[] {
-  return (projects ?? "")
-    .split(/[\s,]+/)
-    .map((token) => token.trim())
-    .filter(Boolean);
-}
-
 /**
  * Whether Chunky is already in a MODRINTH_PROJECTS value. Tolerates the
  * version/loader suffixes itzg supports (e.g. `chunky:beta`, `chunky:1.4.40`).
  */
 export function hasChunky(projects: string | null | undefined): boolean {
-  return modrinthTokens(projects).some(
-    (token) => token.split(":")[0]?.toLowerCase() === CHUNKY_SLUG
-  );
+  return hasModrinthProject(projects, CHUNKY_SLUG);
 }
 
 /** Append Chunky to a MODRINTH_PROJECTS value (no-op when already present). */
 export function addChunky(projects: string | null | undefined): string {
-  if (hasChunky(projects)) return projects ?? CHUNKY_SLUG;
-  const existing = modrinthTokens(projects);
-  return [...existing, CHUNKY_SLUG].join(",");
+  return addModrinthProject(projects, CHUNKY_SLUG);
 }
 
 /**

@@ -102,6 +102,14 @@ export const serverConfigSchema = z.object({
   ALLOW_NETHER: z.boolean().default(true),
   GENERATE_STRUCTURES: z.boolean().default(true),
 
+  // --- Integrations ----------------------------------------------------------------
+  /**
+   * BlueMap 3D web map (https://bluemap.bluecolored.de). Auto-installed from
+   * Modrinth and served through MCSM at /map/<volume>/. Only applies to
+   * plugin/mod-capable types (Paper/Fabric/Forge).
+   */
+  BLUEMAP: z.boolean().default(false),
+
   // --- Advanced -------------------------------------------------------------------
   /** Comma/newline-separated Modrinth project slugs to install (mods/plugins). */
   MODRINTH_PROJECTS: z.string().nullable().default(null),

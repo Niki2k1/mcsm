@@ -56,7 +56,9 @@ type Server = {
   type: string | null;
   running: boolean;
   /** Stored config — the card uses ICON for its icon fallback. */
-  config?: { ICON?: string | null } | null;
+  config?: { ICON?: string | null; BLUEMAP?: boolean } | null;
+  /** World volume name — used for the card's BlueMap link. */
+  volume?: string | null;
 };
 
 const serverModal = useServerModal();

@@ -59,6 +59,10 @@ export type CreateForm = {
   ALLOW_NETHER: boolean;
   GENERATE_STRUCTURES: boolean;
 
+  // Integrations
+  /** BlueMap 3D web map (Paper/Fabric/Forge only). */
+  BLUEMAP: boolean;
+
   // Advanced
   MODRINTH_PROJECTS: string | null;
   SPIGET_RESOURCES: string | null;
@@ -119,6 +123,9 @@ export const defaultCreateForm = (): CreateForm => ({
   SPAWN_NPCS: true,
   ALLOW_NETHER: true,
   GENERATE_STRUCTURES: true,
+
+  // Integrations
+  BLUEMAP: false,
 
   // Advanced
   MODRINTH_PROJECTS: null,

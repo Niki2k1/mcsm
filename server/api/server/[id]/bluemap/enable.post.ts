@@ -2,10 +2,8 @@ import { z } from "zod";
 import { serverConfigSchema } from "../../../../schema/server.schema";
 
 /**
- * One-click enable for world pre-generation: append Chunky to the server's
- * MODRINTH_PROJECTS and recreate the container (same flow as a config edit —
- * Docker can't change env vars in place). The itzg image downloads Chunky on
- * the next boot.
+ * Enable BlueMap: set BLUEMAP in the config and recreate the container so the
+ * itzg image installs it from Modrinth on the next boot.
  *
  * Returns the new container id — the caller must navigate to it.
  */
@@ -27,36 +25,32 @@ export default defineEventHandler(async (event) => {
       statusMessage: "Server has no stored configuration",
     });
   }
-  if (!serverTypeSupportsPregen(existing.config.type)) {
+  if (!serverTypeSupportsBluemap(existing.config.type)) {
     throw createError({
       statusCode: 400,
-      statusMessage: `Pre-generation is not supported for ${existing.config.type} servers`,
+      statusMessage: `BlueMap is not supported for ${existing.config.type} servers`,
     });
   }
-  if (hasChunky(existing.config.MODRINTH_PROJECTS)) {
-    // Already enabled — nothing to do.
+  if (existing.config.BLUEMAP) {
     return { id: existing.id, alreadyEnabled: true };
   }
 
   // Re-validate so configs created before newer schema fields pick up defaults.
-  const data = serverConfigSchema.parse({
-    ...existing.config,
-    MODRINTH_PROJECTS: addChunky(existing.config.MODRINTH_PROJECTS),
-  });
+  const data = serverConfigSchema.parse({ ...existing.config, BLUEMAP: true });
 
   try {
     const result = await recreateServer(
       event,
       id,
       data,
-      "Enabled world pre-generation (Chunky) — container recreated"
+      "Enabled BlueMap — container recreated"
     );
     return { id: result.id, alreadyEnabled: false };
   } catch (error) {
     console.error(error);
     throw createError({
       statusCode: 500,
-      statusMessage: "Failed to enable pre-generation",
+      statusMessage: "Failed to enable BlueMap",
     });
   }
 });
