@@ -14,7 +14,10 @@ export type ActivityAction =
   | "deleted"
   | "backup-created"
   | "backup-restored"
-  | "backup-deleted";
+  | "backup-deleted"
+  | "pregen-started"
+  | "pregen-completed"
+  | "pregen-cancelled";
 
 /**
  * Record a server lifecycle event. Events are keyed by the world volume name —

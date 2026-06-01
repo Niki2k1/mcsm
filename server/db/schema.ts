@@ -51,7 +51,8 @@ export const activityEvents = sqliteTable(
     t: integer("t").notNull(),
     /**
      * One of: created, started, stopped, restarted, edited, deleted,
-     * backup-created, backup-restored, backup-deleted.
+     * backup-created, backup-restored, backup-deleted,
+     * pregen-started, pregen-completed, pregen-cancelled.
      */
     action: text("action").notNull(),
     /** Optional human-readable detail (e.g. what changed). */
@@ -76,6 +77,36 @@ export const backups = sqliteTable(
   },
   (table) => [index("backups_volume_idx").on(table.volume)]
 );
+
+/**
+ * Current world pre-generation (Chunky) task per server — one row per volume.
+ * This is a live snapshot, not a history; completed/cancelled runs are recorded
+ * as activity events.
+ */
+export const pregenTasks = sqliteTable("pregen_tasks", {
+  /** World volume name — stable server identity. */
+  volume: text("volume").primaryKey(),
+  /** idle | running | paused | completed | cancelled | failed */
+  state: text("state").notNull().default("idle"),
+  /** Requested square radius around the center, in blocks. */
+  radius: integer("radius").notNull().default(0),
+  /** Center of the pre-generated area, in blocks. */
+  centerX: integer("center_x").notNull().default(0),
+  centerZ: integer("center_z").notNull().default(0),
+  /** Latest progress snapshot reported by `chunky progress`. */
+  processedChunks: integer("processed_chunks").notNull().default(0),
+  totalChunks: integer("total_chunks"),
+  percent: real("percent").notNull().default(0),
+  /** Generation rate in chunks per second. */
+  rate: real("rate"),
+  etaSeconds: integer("eta_seconds"),
+  /** Chunk position Chunky is currently working on. */
+  currentX: integer("current_x"),
+  currentZ: integer("current_z"),
+  startedAt: integer("started_at"),
+  updatedAt: integer("updated_at").notNull(),
+  completedAt: integer("completed_at"),
+});
 
 /** Global secrets (API keys) injected into containers at provision time. */
 export const secrets = sqliteTable("secrets", {

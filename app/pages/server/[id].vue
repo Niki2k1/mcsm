@@ -264,6 +264,11 @@ const tabs = computed(() => [
     to: `/server/${id.value}/backups`,
   },
   {
+    label: "World",
+    icon: "i-heroicons-globe-alt-20-solid",
+    to: `/server/${id.value}/world`,
+  },
+  {
     label: "Settings",
     icon: "i-heroicons-cog-6-tooth-20-solid",
     to: `/server/${id.value}/settings`,

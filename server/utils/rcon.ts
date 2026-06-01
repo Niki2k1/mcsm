@@ -10,9 +10,12 @@ import type { H3Event } from "h3";
  *
  * Throws 404 (unknown server), 409 (not running) or 502 (RCON failure) —
  * matching what API routes are expected to surface.
+ *
+ * `event` is optional so background plugins (no request context) can use this
+ * too — `useRuntimeConfig`/`useDocker` both work without an event.
  */
 export async function withRcon<T>(
-  event: H3Event,
+  event: H3Event | undefined,
   serverId: string,
   fn: (rcon: Rcon) => Promise<T>
 ): Promise<T> {

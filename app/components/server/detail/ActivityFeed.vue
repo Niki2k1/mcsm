@@ -130,6 +130,24 @@ const STYLES: Record<
     bg: "bg-error/10",
     text: "text-error",
   },
+  "pregen-started": {
+    label: "Pre-generation started",
+    icon: "i-heroicons-globe-alt-20-solid",
+    bg: "bg-primary/10",
+    text: "text-primary",
+  },
+  "pregen-completed": {
+    label: "Pre-generation completed",
+    icon: "i-heroicons-check-circle-20-solid",
+    bg: "bg-success/10",
+    text: "text-success",
+  },
+  "pregen-cancelled": {
+    label: "Pre-generation cancelled",
+    icon: "i-heroicons-x-circle-20-solid",
+    bg: "bg-warning/10",
+    text: "text-warning",
+  },
 };
 
 const FALLBACK_STYLE = {
