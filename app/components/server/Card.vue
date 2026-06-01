@@ -1,6 +1,7 @@
 <template>
-  <div
-    class="rounded-lg shadow-md overflow-hidden flex text-highlighted relative ring-1 ring-default"
+  <NuxtLink
+    :to="`/server/${server.id}`"
+    class="block rounded-lg shadow-md overflow-hidden text-highlighted relative ring-1 ring-default transition hover:shadow-lg hover:ring-primary"
     :class="borderClass"
   >
     <div
@@ -26,6 +27,7 @@
             {{ statusText }}
           </UBadge>
 
+          <!-- Quick start/stop. Everything else lives on the detail page. -->
           <UButton
             v-if="server.running"
             icon="i-heroicons-stop-20-solid"
@@ -33,7 +35,7 @@
             variant="ghost"
             size="xs"
             aria-label="Stop server"
-            @click="emit('stop', server)"
+            @click.stop.prevent="emit('stop', server)"
           />
           <UButton
             v-else
@@ -42,33 +44,7 @@
             variant="ghost"
             size="xs"
             aria-label="Start server"
-            @click="emit('start', server)"
-          />
-
-          <UButton
-            icon="i-heroicons-command-line-20-solid"
-            color="neutral"
-            variant="ghost"
-            size="xs"
-            aria-label="Open console"
-            @click="emit('console', server)"
-          />
-
-          <UButton
-            icon="i-heroicons-pencil-square-20-solid"
-            color="neutral"
-            variant="ghost"
-            size="xs"
-            aria-label="Edit server"
-            @click="emit('edit', server.id)"
-          />
-          <UButton
-            icon="i-heroicons-trash-20-solid"
-            color="error"
-            variant="ghost"
-            size="xs"
-            aria-label="Delete server"
-            @click="emit('delete', server)"
+            @click.stop.prevent="emit('start', server)"
           />
         </div>
       </div>
@@ -78,7 +54,7 @@
       <div class="flex justify-between text-sm" v-if="status === 'success'">
         <span class="flex gap-2 items-center">
           <UIcon name="i-heroicons-users-20-solid" />
-          {{ info?.status.players.online }}/{{ info?.status.players.max }}
+          {{ info?.status?.players?.online }}/{{ info?.status?.players?.max }}
         </span>
         <span class="flex gap-2 items-center">
           <UIcon name="i-tabler-wave-saw-tool" />
@@ -86,12 +62,13 @@
         </span>
       </div>
     </div>
-  </div>
+  </NuxtLink>
 </template>
 
 <script lang="ts" setup>
 import { chatToMotd } from "~/utils/motd";
 import MotdPreview from "~/components/server/motd/MotdPreview.vue";
+import type { ServerPing } from "~/composables/server-detail";
 
 const props = defineProps<{
   server: {
@@ -104,18 +81,15 @@ const props = defineProps<{
 }>();
 
 const emit = defineEmits<{
-  edit: [id: string];
-  delete: [server: { id: string; name: string }];
   start: [server: { id: string; name: string }];
   stop: [server: { id: string; name: string }];
-  console: [server: { id: string; name: string; running: boolean }];
 }>();
 
 const {
   data: info,
   refresh,
   status: _status,
-} = useFetch("/api/minecraft/server/info", {
+} = useFetch<ServerPing>("/api/minecraft/server/info", {
   query: { host: props.server.domain },
   retry: false,
 });

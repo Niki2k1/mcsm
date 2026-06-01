@@ -8,11 +8,8 @@
 
     <Footer />
 
-    <!-- Shared create/edit wizard, opened from the header and the dashboard. -->
+    <!-- Shared create wizard, opened from the header and the dashboard. -->
     <ServerFormModal />
-
-    <!-- Server console (log stream + RCON), opened from a server card. -->
-    <ServerConsoleModal />
   </UApp>
 </template>
 

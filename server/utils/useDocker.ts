@@ -171,6 +171,9 @@ export const useDocker = (event?: H3Event, hostId = "default") => {
       config: cfg,
       containerName: (info.Name ?? "").replace(/^\//, ""),
       volume,
+      // When the container started (ISO string) — used for uptime display.
+      startedAt: info.State?.Running ? (info.State?.StartedAt ?? null) : null,
+      createdAt: info.Created ?? null,
     };
   }
 

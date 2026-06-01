@@ -4,8 +4,10 @@ export default defineEventHandler(async (event) => {
   const { id } = await useValidatedParams(event, { id: z.string() });
 
   try {
-    const { restartServer } = useDocker(event);
+    const { restartServer, getServer } = useDocker(event);
+    const server = await getServer(id);
     await restartServer(id);
+    await recordActivity(server.volume, "restarted");
     return { ok: true };
   } catch (error) {
     console.error(error);

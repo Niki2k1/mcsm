@@ -18,6 +18,8 @@ export default defineEventHandler(async (event) => {
       volume: spec.volume,
     });
 
+    await recordActivity(spec.volume, "created", `${data.type} server`);
+
     return { id: container.id, name: container.name, domain: spec.domain };
   } catch (error) {
     console.error(error);

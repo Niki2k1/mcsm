@@ -3,7 +3,8 @@ export type CreateForm = {
   name: string | null;
   domain: string | null;
   subdomain: string | null;
-  VERSION: string | null;
+  /** Minecraft version as the option object the version select works with. */
+  VERSION: { label: string; value: number } | null;
   memory: string | null;
   MOTD: string;
   DIFFICULTY: "peaceful" | "easy" | "normal" | "hard";

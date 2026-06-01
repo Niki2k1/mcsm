@@ -35,6 +35,8 @@ export default defineEventHandler(async (event) => {
       volume,
     });
 
+    await recordActivity(volume, "edited", "Configuration saved — container recreated");
+
     return { id: container.id, name: container.name, domain: spec.domain };
   } catch (error) {
     console.error(error);

@@ -9,6 +9,19 @@ export type ServerDetail = {
   config: CreateForm | null;
   containerName?: string;
   volume?: string;
+  /** ISO timestamp of the current run's start (null when stopped). */
+  startedAt?: string | null;
+  /** ISO timestamp of container creation. */
+  createdAt?: string | null;
+};
+
+/** One row from GET /api/server/[id]/activity. */
+export type ActivityEvent = {
+  id: number;
+  volume: string;
+  t: number;
+  action: string;
+  detail: string | null;
 };
 
 export type ServerPing = {

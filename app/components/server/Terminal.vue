@@ -1,26 +1,20 @@
 <template>
-  <UModal
-    v-model:open="state.open"
-    :title="`Console — ${state.server?.name ?? ''}`"
-    :ui="{ content: 'max-w-4xl h-[80dvh]', body: 'flex flex-col gap-2 min-h-0' }"
-  >
-    <template #body>
-      <div
-        ref="termEl"
-        class="flex-1 min-h-0 w-full rounded-md overflow-hidden bg-black p-2"
-      />
-      <p class="shrink-0 text-xs text-muted">
-        Streaming the server console. Type a command and press Enter to run it
-        via RCON (the server must be running).
-      </p>
-    </template>
-  </UModal>
+  <div
+    ref="termEl"
+    class="size-full min-h-0 rounded-md overflow-hidden bg-black p-2"
+  />
 </template>
 
 <script setup lang="ts">
 import type { Terminal } from "@xterm/xterm";
 
-const { state } = useConsoleModal();
+/**
+ * Live server console: streams container logs (SSE) and runs typed commands
+ * via RCON. Used full-page on the server detail Console tab.
+ */
+const props = defineProps<{
+  serverId: string;
+}>();
 
 const termEl = ref<HTMLElement | null>(null);
 
@@ -37,8 +31,7 @@ function writePrompt() {
 }
 
 async function sendCommand(command: string) {
-  const server = state.value.server;
-  if (!term || !server) return;
+  if (!term) return;
 
   term.write("\r\n");
   const trimmed = command.trim();
@@ -46,7 +39,7 @@ async function sendCommand(command: string) {
 
   try {
     const { response } = await $fetch<{ response: string }>(
-      `/api/server/${server.id}/rcon`,
+      `/api/server/${props.serverId}/rcon`,
       { method: "POST", body: { command: trimmed } }
     );
     if (response) term.write(response.replace(/\r?\n/g, "\r\n"));
@@ -100,17 +93,15 @@ async function start() {
   fitAddon.fit();
   term.onData(handleInput);
 
-  // Keep the terminal sized to its (flex) container. The observer fires on the
-  // initial layout, when the modal finishes animating open, and on any resize —
-  // so xterm's row count always matches the visible height and the input line
-  // is never clipped.
+  // Keep the terminal sized to its container. The observer fires on the
+  // initial layout and on any resize, so xterm's row count always matches the
+  // visible height and the input line is never clipped.
   resizeObserver = new ResizeObserver(() => {
     requestAnimationFrame(() => fitAddon?.fit());
   });
   resizeObserver.observe(termEl.value);
 
-  const server = state.value.server!;
-  source = new EventSource(`/api/server/${server.id}/logs`);
+  source = new EventSource(`/api/server/${props.serverId}/logs`);
   source.onmessage = (e) =>
     term?.write(`${e.data.replace(/\r?\n/g, "\r\n")}\r\n`);
   source.onerror = () => {
@@ -133,10 +124,16 @@ function stop() {
   inputBuffer = "";
 }
 
+// Re-attach when the underlying container changes (a config save recreates the
+// container under a new id, but Vue may reuse this component instance).
 watch(
-  () => state.value.open,
-  (open) => (open ? start() : stop())
+  () => props.serverId,
+  () => {
+    stop();
+    start();
+  }
 );
 
+onMounted(start);
 onBeforeUnmount(stop);
 </script>
