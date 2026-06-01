@@ -242,13 +242,9 @@ async function onUpload(event: Event) {
     });
     await refresh();
   } catch (error) {
-    const statusCode = (error as { statusCode?: number })?.statusCode;
     toast.add({
       title: "Upload failed",
-      description:
-        statusCode === 400
-          ? "The file is not a valid .tar.gz world backup."
-          : "Could not upload the backup.",
+      description: errorMessage(error, "Could not upload the backup."),
       color: "error",
     });
   } finally {

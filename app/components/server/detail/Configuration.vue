@@ -786,6 +786,38 @@ const uploadingPack = ref(false);
 /** Live icon as reported by the server itself (base64 data URI from the ping). */
 const currentFavicon = computed(() => ping.value?.status?.favicon);
 
+/**
+ * Decode the chosen image in the browser and resize it to the 64x64 PNG
+ * Minecraft needs. The browser decodes anything it can display (WebP, AVIF,
+ * GIF, ...), which is far more than the server-side image library supports.
+ */
+async function fileToIconPng(file: File): Promise<Blob> {
+  const bitmap = await createImageBitmap(file);
+  try {
+    const canvas = document.createElement("canvas");
+    canvas.width = 64;
+    canvas.height = 64;
+    const context = canvas.getContext("2d");
+    if (!context) throw new Error("Canvas is not available");
+
+    // Cover-fit: scale to fill 64x64 and center-crop.
+    const scale = Math.max(64 / bitmap.width, 64 / bitmap.height);
+    const width = bitmap.width * scale;
+    const height = bitmap.height * scale;
+    context.drawImage(bitmap, (64 - width) / 2, (64 - height) / 2, width, height);
+
+    return await new Promise<Blob>((resolve, reject) =>
+      canvas.toBlob(
+        (blob) =>
+          blob ? resolve(blob) : reject(new Error("PNG export failed")),
+        "image/png"
+      )
+    );
+  } finally {
+    bitmap.close();
+  }
+}
+
 async function onIconUpload(event: Event) {
   const input = event.target as HTMLInputElement;
   const file = input.files?.[0];
@@ -793,9 +825,10 @@ async function onIconUpload(event: Event) {
 
   uploadingIcon.value = true;
   try {
+    const png = await fileToIconPng(file);
     await $fetch(`/api/server/${id.value}/icon`, {
       method: "POST",
-      body: file,
+      body: png,
     });
     // The uploaded file lives in the world volume; a URL-based icon would
     // overwrite it at startup, so clear it.
@@ -806,10 +839,13 @@ async function onIconUpload(event: Event) {
       color: "success",
     });
     await refreshPing();
-  } catch {
+  } catch (error) {
     toast.add({
       title: "Upload failed",
-      description: "The file could not be processed as an image.",
+      description: errorMessage(
+        error,
+        "The file could not be read as an image."
+      ),
       color: "error",
     });
   } finally {
@@ -838,10 +874,13 @@ async function onPackUpload(event: Event) {
       description: "Save the configuration to apply it.",
       color: "success",
     });
-  } catch {
+  } catch (error) {
     toast.add({
       title: "Upload failed",
-      description: "The file is not a valid .zip resource pack.",
+      description: errorMessage(
+        error,
+        "The file is not a valid .zip resource pack."
+      ),
       color: "error",
     });
   } finally {
