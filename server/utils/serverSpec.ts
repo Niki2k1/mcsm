@@ -113,7 +113,15 @@ export async function buildServerSpec(data: ServerConfig, event?: H3Event) {
 
   // --- Presentation & QoL -------------------------------------------------------
   if (data.ICON) {
-    env.ICON = data.ICON;
+    // Icons hosted by MCSM itself must be fetched via MCSM's *internal* Docker
+    // hostname — the Minecraft container can't reach the public domain (NAT
+    // hairpin from inside the network times out). External URLs pass through.
+    const selfHostedPath =
+      data.ICON.match(/\/api\/icons\/[A-Za-z0-9._-]+$/)?.[0] ??
+      (data.ICON.startsWith("/") ? data.ICON : null);
+    env.ICON = selfHostedPath
+      ? `${config.internalUrl || "http://mcsm:3000"}${selfHostedPath}`
+      : data.ICON;
     // Without this, itzg only applies ICON when the volume has no
     // server-icon.png yet — icon changes would never take effect.
     env.OVERRIDE_ICON = "TRUE";

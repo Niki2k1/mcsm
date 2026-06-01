@@ -51,6 +51,11 @@ services:
       # below) so Infrarust can reach them.
       NUXT_DOCKER_NETWORK: infrarust
       NUXT_DOCKER_IMAGE: itzg/minecraft-server
+      # How Minecraft containers reach MCSM over the shared Docker network
+      # (e.g. to download uploaded server icons). `mcsm` is this service's
+      # compose name; containers cannot use the public domain for this — NAT
+      # hairpin from inside the network times out.
+      NUXT_INTERNAL_URL: http://mcsm:3000
       # Coolify: generates a domain and routes HTTPS to port 3000.
       SERVICE_FQDN_MCSM_3000: ""
     # mcsm is multi-homed (dockerproxy for the Docker API, infrarust for RCON

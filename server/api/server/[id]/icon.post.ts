@@ -69,7 +69,8 @@ export default defineEventHandler(async (event) => {
 
   await recordActivity(server.volume, "edited", "Server icon uploaded");
 
-  // Public URL: itzg downloads it at container start, the UI previews it.
-  const origin = getRequestURL(event).origin;
-  return { url: `${origin}/api/icons/${filename}` };
+  // Relative URL: the browser previews it against the public origin, while
+  // serverSpec expands it to MCSM's internal Docker hostname for the container
+  // (which can't reach the public domain — NAT hairpin).
+  return { url: `/api/icons/${filename}` };
 });

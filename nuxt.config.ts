@@ -40,6 +40,14 @@ export default defineNuxtConfig({
   // would work in dev but silently break in the prebuilt image.
   // https://nuxt.com/docs/guide/going-further/runtime-config
   runtimeConfig: {
+    // Base URL where the *Minecraft containers* can reach MCSM — i.e. MCSM's
+    // hostname on the shared Docker network, NOT the public domain. Containers
+    // can't reach the host's public IP (NAT hairpin times out), so things they
+    // download from MCSM (server icons) must use this URL.
+    // `mcsm` = the docker-compose service name; port 3000 = Nitro inside the
+    // container.
+    internalUrl: "http://mcsm:3000", // NUXT_INTERNAL_URL
+
     // RCON credentials MCSM uses to run console commands against servers.
     // The RCON port is never published — only reachable on the shared network.
     rcon: {
