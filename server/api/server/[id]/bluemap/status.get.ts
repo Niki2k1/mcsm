@@ -20,11 +20,11 @@ export default defineEventHandler(async (event) => {
   const enabled = supported && server.config?.BLUEMAP === true;
 
   // The map is "ready" when BlueMap's webserver answers — which it only does
-  // after install + accepted asset download. Unreachable in local dev (the
-  // container name doesn't resolve from the host) — degrades to false.
+  // after install + accepted asset download. Reached by container name in
+  // production and through a dev tunnel in local dev.
   const ready =
     enabled && server.running && server.containerName
-      ? await probeBluemap(server.containerName)
+      ? await probeBluemap({ name: server.containerName, id: server.id })
       : false;
 
   // Published = viewable at /map/<volume>/ without logging in.

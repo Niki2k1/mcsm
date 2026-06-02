@@ -33,16 +33,23 @@ export default defineNitroPlugin(() => {
 
           const containerStats = await readContainerStats(docker, server.id);
 
-          // Ping by container name — resolvable on the shared Docker network
-          // in production. Unreachable (e.g. local dev) → null player data.
-          // The race guards against the pinger's promise never settling on
-          // certain DNS/socket failures.
+          // Ping by container name (production) or through a dev tunnel
+          // (local dev). Unreachable → null player data. The race guards
+          // against the pinger's promise never settling on certain DNS/socket
+          // failures.
           let players: number | null = null;
           let maxPlayers: number | null = null;
           let latency: number | null = null;
           try {
+            const address = await containerAddress(
+              undefined,
+              { name: detail.containerName, id: detail.id },
+              25565
+            );
             const pingPromise = useMinecraftServer({
-              host: detail.containerName,
+              host: address.host,
+              port: address.port,
+              disableSRV: import.meta.dev,
               timeout: 5_000,
             });
             // Swallow late rejections of a raced-out promise.

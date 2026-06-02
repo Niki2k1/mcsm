@@ -15,6 +15,7 @@ const SAFE_VOLUME = /^[a-z0-9-]+$/;
 
 type ResolvedTarget = {
   containerName: string;
+  containerId: string;
   running: boolean;
   bluemap: boolean;
 };
@@ -41,6 +42,7 @@ async function resolveTarget(
     if (detail.volume !== volume || !detail.containerName) continue;
     target = {
       containerName: detail.containerName,
+      containerId: detail.id,
       running: detail.running,
       bluemap: true,
     };
@@ -78,8 +80,15 @@ export default defineEventHandler(async (event) => {
 
   const path = rest.join("/");
   const query = getRequestURL(event).search;
+
+  // Container name in production, 127.0.0.1 dev tunnel in local dev.
+  const address = await containerAddress(
+    event,
+    { name: target.containerName, id: target.containerId },
+    BLUEMAP_PORT
+  );
   return proxyRequest(
     event,
-    `http://${target.containerName}:${BLUEMAP_PORT}/${path}${query}`
+    `http://${address.host}:${address.port}/${path}${query}`
   );
 });

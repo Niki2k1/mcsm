@@ -86,6 +86,17 @@
               @update:model-value="setPublished"
             />
             <UButton
+              v-if="status.ready && server?.running"
+              icon="i-heroicons-arrow-path-20-solid"
+              variant="soft"
+              color="neutral"
+              size="sm"
+              :loading="updatingMap"
+              @click="updateMap"
+            >
+              Update map
+            </UButton>
+            <UButton
               v-if="status.ready && status.mapPath"
               :href="status.mapPath"
               target="_blank"
@@ -146,14 +157,51 @@
         <p v-if="setupHint" class="text-sm text-warning">{{ setupHint }}</p>
       </div>
 
-      <!-- Ready: the embedded map -->
-      <iframe
-        v-else-if="status.mapPath"
-        :src="status.mapPath"
-        class="block w-full h-[70vh] border-0 rounded-b-lg bg-black"
-        title="BlueMap"
-        loading="lazy"
-      />
+      <!-- Ready: render queue progress (when active) + the embedded map -->
+      <template v-else-if="status.mapPath">
+        <div
+          v-if="renderStatus && !renderStatus.idle"
+          class="space-y-3 border-b border-default p-4"
+        >
+          <div
+            v-for="map in renderStatus.updating"
+            :key="map.map"
+            class="space-y-1.5"
+          >
+            <div
+              class="flex flex-wrap items-center justify-between gap-2 text-sm"
+            >
+              <span class="font-medium">
+                Rendering map “{{ map.map }}”
+              </span>
+              <span class="font-mono text-xs text-muted">
+                <template v-if="map.percent != null"
+                  >{{ map.percent.toFixed(1) }}%</template
+                >
+                <template v-if="map.remaining">
+                  · {{ map.remaining }} left</template
+                >
+                <template v-if="map.region">
+                  · region {{ map.region.x }}, {{ map.region.z }}</template
+                >
+              </span>
+            </div>
+            <UProgress :model-value="map.percent ?? 0" :max="100" size="sm" />
+          </div>
+          <p v-if="renderStatus.pendingMaps > 0" class="text-xs text-muted">
+            {{ renderStatus.pendingMaps }}
+            {{ renderStatus.pendingMaps === 1 ? "map is" : "maps are" }}
+            queued for rendering. The map below updates live as tiles finish.
+          </p>
+        </div>
+
+        <iframe
+          :src="status.mapPath"
+          class="block w-full h-[70vh] border-0 rounded-b-lg bg-black"
+          title="BlueMap"
+          loading="lazy"
+        />
+      </template>
     </UCard>
 
     <!-- Disable confirmation -->
@@ -201,17 +249,90 @@ const { data: status, refresh } = useFetch<BluemapStatus>(
   { retry: false }
 );
 
-// Poll while waiting for BlueMap to come up (installing / just accepted).
-// Once the map is ready (or the feature is off), there's nothing to poll for.
+// Poll while waiting for BlueMap to come up (installing / just accepted), and
+// keep the render-queue status fresh while the map is usable.
 let interval: ReturnType<typeof setInterval> | null = null;
 onMounted(() => {
+  refreshRenderStatus();
   interval = setInterval(() => {
     if (status.value?.enabled && !status.value.ready) refresh();
+    refreshRenderStatus();
   }, 10_000);
 });
 onUnmounted(() => {
   if (interval) clearInterval(interval);
 });
+
+// --- BlueMap render queue --------------------------------------------------------
+
+type RenderStatus = {
+  renderThreads: number | null;
+  updating: {
+    map: string;
+    percent: number | null;
+    remaining: string | null;
+    region: { x: number; z: number } | null;
+  }[];
+  pendingMaps: number;
+  idle: boolean;
+  raw: string;
+};
+
+const renderStatus = ref<RenderStatus | null>(null);
+const updatingMap = ref(false);
+
+/** Refresh the render queue reading — only meaningful while the map serves. */
+async function refreshRenderStatus() {
+  if (!status.value?.enabled || !status.value.ready || !server.value?.running) {
+    renderStatus.value = null;
+    return;
+  }
+  try {
+    renderStatus.value = await $fetch<RenderStatus>(
+      `/api/server/${id.value}/bluemap/render-status`
+    );
+  } catch {
+    // Server stopped or RCON unavailable — nothing to show.
+    renderStatus.value = null;
+  }
+}
+
+// The map just became ready (e.g. after accepting the asset download) — get an
+// initial render-queue reading right away instead of waiting for the next poll.
+watch(
+  () => status.value?.ready,
+  (ready) => {
+    if (ready) refreshRenderStatus();
+  }
+);
+
+/** Save the world and have BlueMap re-render everything that changed. */
+async function updateMap() {
+  updatingMap.value = true;
+  try {
+    renderStatus.value = await $fetch<RenderStatus>(
+      `/api/server/${id.value}/bluemap/update`,
+      { method: "POST" }
+    );
+    toast.add({
+      title: "Map update started",
+      description:
+        "The world was saved and BlueMap is re-rendering changed areas — progress shows above the map.",
+      color: "success",
+    });
+  } catch (error) {
+    toast.add({
+      title: "Could not update the map",
+      description: errorMessage(
+        error,
+        "Triggering the BlueMap update failed."
+      ),
+      color: "error",
+    });
+  } finally {
+    updatingMap.value = false;
+  }
+}
 
 // --- Actions --------------------------------------------------------------------
 

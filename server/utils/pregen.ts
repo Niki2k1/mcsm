@@ -3,7 +3,7 @@ import { eq } from "drizzle-orm";
 // resolves to `any` under pnpm because it references the package by path,
 // which bypasses the package's `exports` types.
 import { db } from "@nuxthub/db";
-import type { Rcon } from "rcon-client";
+import type { RconConnection } from "./rcon";
 import { pregenTasks } from "../db/schema";
 
 /**
@@ -151,7 +151,7 @@ export function parseChunkyProgress(response: string): ChunkyProgress {
 // ---------------------------------------------------------------------------
 
 export async function chunkyStart(
-  rcon: Rcon,
+  rcon: RconConnection,
   opts: { centerX: number; centerZ: number; radiusBlocks: number }
 ) {
   await rcon.send(`chunky world ${PREGEN_WORLD}`);
@@ -161,22 +161,24 @@ export async function chunkyStart(
   return rcon.send("chunky start");
 }
 
-export async function chunkyPause(rcon: Rcon) {
+export async function chunkyPause(rcon: RconConnection) {
   return rcon.send("chunky pause");
 }
 
-export async function chunkyContinue(rcon: Rcon) {
+export async function chunkyContinue(rcon: RconConnection) {
   return rcon.send("chunky continue");
 }
 
 /** Cancel discards saved progress, so Chunky asks for confirmation. */
-export async function chunkyCancel(rcon: Rcon) {
+export async function chunkyCancel(rcon: RconConnection) {
   const response = await rcon.send("chunky cancel");
   if (/confirm/i.test(response)) return rcon.send("chunky confirm");
   return response;
 }
 
-export async function chunkyProgress(rcon: Rcon): Promise<ChunkyProgress> {
+export async function chunkyProgress(
+  rcon: RconConnection
+): Promise<ChunkyProgress> {
   return parseChunkyProgress(await rcon.send("chunky progress"));
 }
 
@@ -260,6 +262,10 @@ export async function applyChunkyProgress(
       `Pre-generated ${updated.processedChunks.toLocaleString()} chunks` +
         (updated.radius ? ` (radius ${updated.radius})` : "")
     );
+
+    // The freshly generated chunks aren't on the BlueMap yet — flush them to
+    // disk and kick a render update (no-op when BlueMap isn't enabled).
+    void updateBluemapAfterPregen(volume);
   }
 
   return updated;
