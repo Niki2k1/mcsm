@@ -41,6 +41,22 @@ export default defineNuxtConfig({
 
   css: ["~/assets/css/main.css", "@xterm/xterm/css/xterm.css"],
 
+  // Because of `ssr: false`, @nuxt/icon defaults its provider to the public
+  // Iconify API, fetching every icon from api.iconify.design in the browser at
+  // runtime. Transient icons (e.g. UButton's loading spinner,
+  // `i-lucide-loader-circle`) disappear before that round trip finishes, so
+  // they never render. Serve the locally installed @iconify-json collections
+  // (heroicons, tabler, lucide) from Nitro instead, and inline the icons found
+  // in app source plus the spinner into the client bundle so they render
+  // instantly without any request.
+  icon: {
+    provider: "server",
+    clientBundle: {
+      scan: true,
+      icons: ["lucide:loader-circle"],
+    },
+  },
+
   colorMode: {
     preference: "dark",
   },
