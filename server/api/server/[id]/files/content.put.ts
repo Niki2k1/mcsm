@@ -20,7 +20,7 @@ export default defineEventHandler(async (event) => {
     throw createError({ statusCode: 404, statusMessage: "Server not found" });
   }
 
-  if (!serverTypeSupportsAddons(server.config?.type)) {
+  if (!serverTypeSupportsJars(server.config?.type)) {
     throw createError({
       statusCode: 400,
       statusMessage: "This server type does not support config editing",

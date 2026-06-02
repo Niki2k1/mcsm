@@ -149,13 +149,13 @@ const STYLES: Record<
     text: "text-warning",
   },
   "jars-uploaded": {
-    label: "Add-ons uploaded",
+    label: "Jars uploaded",
     icon: "i-heroicons-puzzle-piece-20-solid",
     bg: "bg-primary/10",
     text: "text-primary",
   },
   "jar-deleted": {
-    label: "Add-on deleted",
+    label: "Jar deleted",
     icon: "i-heroicons-trash-20-solid",
     bg: "bg-error/10",
     text: "text-error",

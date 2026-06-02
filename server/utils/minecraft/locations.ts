@@ -1,5 +1,5 @@
 /**
- * Add-on (mod/plugin) locations per server type.
+ * Mod/plugin jar and config file locations per server type.
  *
  * This is the single source of truth for where jars and editable config files
  * live inside a server's /data volume, shared by the jar manager and the
@@ -10,15 +10,15 @@
  * Server types that can load custom jars. VANILLA has no loader; FTBA's
  * installer owns its files (manual changes get clobbered on sync).
  */
-export const ADDONS_SUPPORTED_TYPES = [
+export const JAR_SUPPORTED_TYPES = [
   "PAPER",
   "FABRIC",
   "FORGE",
   "AUTO_CURSEFORGE",
 ] as const;
 
-export function serverTypeSupportsAddons(type?: string | null): boolean {
-  return (ADDONS_SUPPORTED_TYPES as readonly string[]).includes(type ?? "");
+export function serverTypeSupportsJars(type?: string | null): boolean {
+  return (JAR_SUPPORTED_TYPES as readonly string[]).includes(type ?? "");
 }
 
 /**
@@ -26,7 +26,7 @@ export function serverTypeSupportsAddons(type?: string | null): boolean {
  * servers load plugins/, mod loaders load mods/. Null for unsupported types.
  */
 export function jarsDir(type?: string | null): "plugins" | "mods" | null {
-  if (!serverTypeSupportsAddons(type)) return null;
+  if (!serverTypeSupportsJars(type)) return null;
   return type === "PAPER" ? "plugins" : "mods";
 }
 
@@ -35,7 +35,7 @@ export function jarsDir(type?: string | null): "plugins" | "mods" | null {
  * editor: plugin configs live next to the jars; mod configs live in config/.
  */
 export function configRoots(type?: string | null): string[] {
-  if (!serverTypeSupportsAddons(type)) return [];
+  if (!serverTypeSupportsJars(type)) return [];
   return type === "PAPER" ? ["plugins"] : ["config"];
 }
 
