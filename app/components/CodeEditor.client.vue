@@ -1,5 +1,10 @@
 <template>
-  <div ref="host" class="h-full w-full" />
+  <!-- Wrapper owns the size (and receives fallthrough classes); Monaco fills it
+       absolutely. Monaco can't size itself — without a positively-sized
+       container it collapses to a few pixels, so keep a min-height fallback. -->
+  <div class="relative w-full min-h-48">
+    <div ref="host" class="absolute inset-0" />
+  </div>
 </template>
 
 <script setup lang="ts">
