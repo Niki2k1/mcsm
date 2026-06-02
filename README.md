@@ -44,6 +44,10 @@ config files to manage.
   and CurseForge modpack servers. MCSM auto-installs it and serves it through
   its own domain at `/map/<server>/` — no extra ports, proxies or DNS needed;
   Mojang's asset download consent is one click in the Map tab.
+- **Mods, plugins & config files** — upload custom `.jar` files (or `.zip`
+  bundles) straight into a server's mods/plugins folder, and edit plugin/mod
+  and server config files in a built-in Monaco editor — with server-side
+  YAML/JSON validation so a typo can't take the server down.
 - **Review screen** — a formatted overview of every setting before you commit
   to creating the server.
 - **Direct Docker provisioning** — creates the container straight against the

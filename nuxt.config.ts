@@ -108,6 +108,14 @@ export default defineNuxtConfig({
     },
   },
 
+  vite: {
+    optimizeDeps: {
+      // modern-monaco ships its own workers and lazy-loads grammars; Vite's
+      // dependency pre-bundling would break those dynamic imports.
+      exclude: ["modern-monaco"],
+    },
+  },
+
   nitro: {
     storage: {
       // Pre-SQLite storage. Still mounted so server/plugins/migrations.ts can
