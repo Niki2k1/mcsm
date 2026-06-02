@@ -11,6 +11,8 @@
       <UButton icon="i-heroicons-plus-20-solid" @click="serverModal.openCreate()">
         Create Server
       </UButton>
+
+      <UserMenu />
     </template>
 
     <template #body>

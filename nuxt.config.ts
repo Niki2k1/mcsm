@@ -15,7 +15,20 @@ export default defineNuxtConfig({
 
   // Nuxt UI v4 bundles Tailwind, icon, fonts and color-mode and includes the
   // former Pro components for free (no license, no separate module).
-  modules: ["@nuxt/ui", "@vueuse/nuxt", "@nuxthub/core", "nuxt-charts"],
+  modules: [
+    "@nuxt/ui",
+    "@vueuse/nuxt",
+    "@nuxthub/core",
+    "nuxt-charts",
+    "nuxt-auth-utils",
+  ],
+
+  // nuxt-auth-utils: sealed session cookies + WebAuthn (passkeys).
+  // Sessions are encrypted with NUXT_SESSION_PASSWORD (auto-generated into
+  // .env in dev; MUST be set in production or sessions reset on every restart).
+  auth: {
+    webAuthn: true,
+  },
 
   // NuxtHub provides the SQLite database (Drizzle ORM, auto-imported `db` +
   // `schema` in server code). The libsql driver stores the file at
@@ -40,6 +53,22 @@ export default defineNuxtConfig({
   // would work in dev but silently break in the prebuilt image.
   // https://nuxt.com/docs/guide/going-further/runtime-config
   runtimeConfig: {
+    // Login session cookie lifetime (seconds), read by nuxt-auth-utils.
+    session: {
+      maxAge: 60 * 60 * 24 * 7, // 1 week, NUXT_SESSION_MAX_AGE
+    },
+
+    // OAuth providers (nuxt-auth-utils). A provider's login button only shows
+    // up when its client id is configured. Microsoft = Entra ID app
+    // registration; tenant `common` allows personal + work accounts.
+    oauth: {
+      microsoft: {
+        clientId: "", // NUXT_OAUTH_MICROSOFT_CLIENT_ID
+        clientSecret: "", // NUXT_OAUTH_MICROSOFT_CLIENT_SECRET
+        tenant: "common", // NUXT_OAUTH_MICROSOFT_TENANT
+      },
+    },
+
     // Base URL where the *Minecraft containers* can reach MCSM — i.e. MCSM's
     // hostname on the shared Docker network, NOT the public domain. Containers
     // can't reach the host's public IP (NAT hairpin times out), so things they

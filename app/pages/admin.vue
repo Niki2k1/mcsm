@@ -8,6 +8,7 @@
     </div>
 
     <AdminStatusPanel />
+    <AdminUsersPanel />
     <AdminSecretsPanel />
     <AdminDomainsPanel />
     <AdminMaintenancePanel />

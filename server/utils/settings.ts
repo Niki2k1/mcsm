@@ -14,6 +14,11 @@ import { settings } from "../db/schema";
 export interface AppSettings {
   /** Public IP or hostname players reach MCSM/Infrarust at. */
   publicHost?: string;
+  /**
+   * World volumes whose BlueMap is published (viewable without login).
+   * Everything else behind /map/<volume>/ requires a session.
+   */
+  publicMaps?: string[];
 }
 
 export const useSettings = () => {

@@ -1,15 +1,8 @@
 <template>
   <UApp>
-    <Header />
-
-    <UMain>
+    <NuxtLayout>
       <NuxtPage />
-    </UMain>
-
-    <Footer />
-
-    <!-- Shared create wizard, opened from the header and the dashboard. -->
-    <ServerFormModal />
+    </NuxtLayout>
   </UApp>
 </template>
 

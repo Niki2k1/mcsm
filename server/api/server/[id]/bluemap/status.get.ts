@@ -27,11 +27,16 @@ export default defineEventHandler(async (event) => {
       ? await probeBluemap(server.containerName)
       : false;
 
+  // Published = viewable at /map/<volume>/ without logging in.
+  const { publicMaps = [] } = await useSettings().get();
+  const published = Boolean(server.volume && publicMaps.includes(server.volume));
+
   return {
     supported,
     enabled,
     running: server.running,
     ready,
+    published,
     mapPath: server.volume ? `/map/${server.volume}/` : null,
   };
 });

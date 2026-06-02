@@ -77,6 +77,14 @@
             </p>
           </div>
           <div class="flex items-center gap-2">
+            <!-- Publish toggle: published maps are viewable without login. -->
+            <USwitch
+              :model-value="status.published"
+              :disabled="publishing"
+              :label="status.published ? 'Public' : 'Private'"
+              size="sm"
+              @update:model-value="setPublished"
+            />
             <UButton
               v-if="status.ready && status.mapPath"
               :href="status.mapPath"
@@ -181,6 +189,7 @@ type BluemapStatus = {
   enabled: boolean;
   running: boolean;
   ready: boolean;
+  published: boolean;
   mapPath: string | null;
 };
 
@@ -257,6 +266,36 @@ async function disable() {
     });
   } finally {
     disabling.value = false;
+  }
+}
+
+// Publish / unpublish: published maps can be viewed without logging in,
+// e.g. by players you share the link with.
+const publishing = ref(false);
+
+async function setPublished(value: boolean) {
+  publishing.value = true;
+  try {
+    await $fetch(`/api/server/${id.value}/bluemap/publish`, {
+      method: "POST",
+      body: { public: value },
+    });
+    await refresh();
+    toast.add({
+      title: value ? "Map published" : "Map unpublished",
+      description: value
+        ? "Anyone with the link can now view this map — no login needed."
+        : "The map now requires a login again.",
+      color: "success",
+    });
+  } catch (error) {
+    toast.add({
+      title: "Could not update map visibility",
+      description: errorMessage(error, "Updating the map visibility failed."),
+      color: "error",
+    });
+  } finally {
+    publishing.value = false;
   }
 }
 

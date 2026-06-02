@@ -56,6 +56,16 @@ services:
       # compose name; containers cannot use the public domain for this — NAT
       # hairpin from inside the network times out.
       NUXT_INTERNAL_URL: http://mcsm:3000
+      # REQUIRED: encrypts login session cookies (min. 32 characters). If left
+      # empty, a random one is generated at startup — meaning every restart
+      # logs everyone out. Generate one with: openssl rand -base64 32
+      NUXT_SESSION_PASSWORD: ""
+      # Optional: "Sign in with Microsoft" (Entra ID app registration). The
+      # login button only appears when a client id is configured. The redirect
+      # URI to register is https://<your-domain>/auth/microsoft
+      # NUXT_OAUTH_MICROSOFT_CLIENT_ID: ""
+      # NUXT_OAUTH_MICROSOFT_CLIENT_SECRET: ""
+      # NUXT_OAUTH_MICROSOFT_TENANT: common
       # Coolify: generates a domain and routes HTTPS to port 3000.
       SERVICE_FQDN_MCSM_3000: ""
     # mcsm is multi-homed (dockerproxy for the Docker API, infrarust for RCON

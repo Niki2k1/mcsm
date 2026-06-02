@@ -108,6 +108,42 @@ export const pregenTasks = sqliteTable("pregen_tasks", {
   completedAt: integer("completed_at"),
 });
 
+/**
+ * Dashboard accounts. The first account is created by the first-run setup
+ * wizard (and is always an admin); admins create further users from the
+ * Admin panel — there is no open registration.
+ */
+export const users = sqliteTable("users", {
+  id: integer("id").primaryKey({ autoIncrement: true }),
+  email: text("email").notNull().unique(),
+  name: text("name").notNull(),
+  /** Scrypt hash (nuxt-auth-utils hashPassword). Null = OAuth/passkey-only account. */
+  password: text("password"),
+  admin: integer("admin", { mode: "boolean" }).notNull().default(false),
+  createdAt: integer("created_at").notNull(),
+});
+
+/** WebAuthn (passkey) credentials, many per user. */
+export const credentials = sqliteTable(
+  "credentials",
+  {
+    /** Credential id as reported by the authenticator (base64url). */
+    id: text("id").primaryKey(),
+    userId: integer("user_id")
+      .notNull()
+      .references(() => users.id, { onDelete: "cascade" }),
+    /** Friendly label, e.g. "MacBook Touch ID". */
+    name: text("name"),
+    publicKey: text("public_key").notNull(),
+    counter: integer("counter").notNull().default(0),
+    backedUp: integer("backed_up", { mode: "boolean" }).notNull().default(false),
+    /** JSON array of WebAuthn transports, e.g. ["internal","hybrid"]. */
+    transports: text("transports"),
+    createdAt: integer("created_at").notNull(),
+  },
+  (table) => [index("credentials_user_id_idx").on(table.userId)]
+);
+
 /** Global secrets (API keys) injected into containers at provision time. */
 export const secrets = sqliteTable("secrets", {
   key: text("key").primaryKey(),

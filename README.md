@@ -13,6 +13,11 @@ config files to manage.
 
 ## Features
 
+- **Login & accounts** — the dashboard and API are behind a login
+  ([nuxt-auth-utils](https://github.com/atinux/nuxt-auth-utils)): password,
+  passkeys (WebAuthn) and "Sign in with Microsoft". A first-run wizard creates
+  the admin account; more users are managed from the Admin panel. Published
+  BlueMaps stay reachable without a login.
 - **Guided create/edit wizard** — a 4-step flow (Type → Details → Properties →
   Review) in a modal, shared between creating a server and editing an existing
   one.
@@ -156,6 +161,7 @@ built server — see [Nuxt runtime config](https://nuxt.com/docs/guide/going-fur
 
 | Variable                              | Required | Description |
 | ------------------------------------- | -------- | ----------- |
+| `NUXT_SESSION_PASSWORD`               | ✅       | Encrypts login session cookies (min. 32 chars, e.g. `openssl rand -base64 32`). Auto-generated in dev; without it in production every restart logs everyone out. |
 | `NUXT_DOCKER_HOSTS_DEFAULT_SOCKET_PATH` | ✅     | Path to the Docker socket MCSM provisions on. Defaults to `/var/run/docker.sock`. |
 | `NUXT_DOCKER_NETWORK`                 | ✅       | Shared Docker network Infrarust and the MC containers join. Default `infrarust`. |
 | `NUXT_DOCKER_IMAGE`                   | –        | Server image. Default `itzg/minecraft-server`. |
@@ -163,6 +169,15 @@ built server — see [Nuxt runtime config](https://nuxt.com/docs/guide/going-fur
 | `NUXT_RCON_PORT`                      | –        | RCON port inside the container. Default `25575` (never published). |
 | `NUXT_DOCKER_HOSTS_DEFAULT_HOST`      | –        | Remote Docker daemon host. When set, takes precedence over the socket. |
 | `NUXT_DOCKER_HOSTS_DEFAULT_PORT` / `..._PROTOCOL` / `..._CA` / `..._CERT` / `..._KEY` | – | Remote daemon port and TLS material. |
+| `NUXT_OAUTH_MICROSOFT_CLIENT_ID` / `..._CLIENT_SECRET` / `..._TENANT` | – | Enables "Sign in with Microsoft" (Entra ID app registration; redirect URI `https://<your-domain>/auth/microsoft`). The login button only shows when configured. |
+
+#### Authentication
+
+On first launch MCSM shows a setup wizard that creates the admin account.
+There is no open registration — additional users are created from the **Admin
+panel**. Each user can sign in with their password, register **passkeys**
+(Touch ID, Windows Hello, security keys) from the user menu, or use **Sign in
+with Microsoft** if their account email matches an MCSM user.
 
 ### 3. Secure the Docker socket ⚠️
 
