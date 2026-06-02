@@ -19,6 +19,7 @@ export type ActivityAction =
   | "pregen-completed"
   | "pregen-cancelled"
   | "jars-uploaded"
+  | "jars-updated"
   | "jar-deleted"
   | "config-edited";
 

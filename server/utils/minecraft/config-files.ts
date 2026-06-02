@@ -94,9 +94,10 @@ function dirname(path: string): string {
 
 /**
  * Run a read-only shell snippet in a throwaway container with the server's
- * volume mounted, returning its stdout. Used for the file listing.
+ * volume mounted, returning its stdout. Used for the file listing, jar
+ * hashing (jars.ts) and modpack loader detection (locations.ts).
  */
-async function runInVolume(id: string, script: string): Promise<string> {
+export async function runInVolume(id: string, script: string): Promise<string> {
   const { docker, getServer } = useDocker();
   const config = useRuntimeConfig();
 

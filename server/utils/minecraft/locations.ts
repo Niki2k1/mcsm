@@ -46,3 +46,33 @@ export function configRoots(type?: string | null): string[] {
  * env vars on every start, so edits there would be silently lost.
  */
 export const ROOT_CONFIG_EXTENSIONS = [".yml", ".yaml", ".toml"] as const;
+
+/**
+ * Detect a CurseForge modpack's mod loader from markers the installer leaves
+ * in the volume. The loader never changes for a modpack, so results are
+ * cached per volume for the process lifetime. Returns null when the modpack
+ * hasn't installed yet (first boot still running).
+ */
+const loaderCache = new Map<string, "fabric" | "forge" | "neoforge">();
+
+export async function detectLoader(
+  id: string,
+  volume: string | null | undefined
+): Promise<"fabric" | "forge" | "neoforge" | null> {
+  if (volume && loaderCache.has(volume)) return loaderCache.get(volume)!;
+
+  const out = await runInVolume(
+    id,
+    // Ordered checks; first match wins.
+    `if [ -d /data/libraries/net/neoforged ]; then echo neoforge; ` +
+      `elif [ -d /data/libraries/net/minecraftforge ]; then echo forge; ` +
+      `elif [ -f /data/fabric-server-launch.jar ] || [ -d /data/libraries/net/fabricmc ]; then echo fabric; fi`
+  );
+
+  const detected = out.trim().split("\n").pop()?.trim();
+  if (detected === "fabric" || detected === "forge" || detected === "neoforge") {
+    if (volume) loaderCache.set(volume, detected);
+    return detected;
+  }
+  return null;
+}

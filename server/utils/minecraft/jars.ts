@@ -261,6 +261,29 @@ export async function readJar(
 }
 
 /**
+ * SHA-1 of every jar in /data/<dir>, keyed by filename. One helper-container
+ * run hashes them all — used for Modrinth's hash-based update detection.
+ */
+export async function jarHashes(
+  id: string,
+  dir: string
+): Promise<Record<string, string>> {
+  // `sha1sum` output: "<hash>  <path>" per line. Missing dir → no output.
+  const out = await runInVolume(
+    id,
+    `cd /data/${dir} 2>/dev/null && sha1sum -- *.jar 2>/dev/null`
+  );
+
+  const hashes: Record<string, string> = {};
+  for (const line of out.split("\n")) {
+    const match = /^([0-9a-f]{40})\s+\*?(.+?)\r?$/.exec(line.trim());
+    if (!match) continue;
+    hashes[match[2]!] = match[1]!;
+  }
+  return hashes;
+}
+
+/**
  * Delete a single jar. The main container may be running (and holding the jar
  * open), so we mount the same volume into a throwaway helper that runs `rm`.
  * `name` is passed as a bare argv element — no shell — and is validated by the
