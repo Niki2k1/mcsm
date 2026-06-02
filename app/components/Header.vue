@@ -1,7 +1,7 @@
 <template>
   <UHeader>
     <template #title>
-      <h1 class="text-primary font-bold">Minecraft Server Manager</h1>
+      <h1 class="text-primary font-bold">MCSM</h1>
       <UBadge label="Beta" variant="subtle" color="error" class="mb-0.5" />
     </template>
 
