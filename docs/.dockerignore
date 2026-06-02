@@ -1,0 +1,9 @@
+node_modules
+.output
+.nuxt
+.nitro
+.cache
+.data
+*.log
+Dockerfile
+.dockerignore
