@@ -283,9 +283,9 @@ const tabs = computed(() => [
               server.value?.config?.type ?? ""
             )
           ? "Mods"
-          : "Add-ons",
+          : "Files",
     icon: "i-heroicons-puzzle-piece-20-solid",
-    to: `/server/${id.value}/addons`,
+    to: `/server/${id.value}/files`,
   },
   {
     label: "Settings",

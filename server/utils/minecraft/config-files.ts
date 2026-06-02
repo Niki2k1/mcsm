@@ -4,7 +4,7 @@ import { parse as parseYaml } from "yaml";
 /**
  * Read/write access to a server's editable config files.
  *
- * Scope depends on the server type (see addons.ts):
+ * Scope depends on the server type (see locations.ts):
  *   - plugin servers: plugins/**
  *   - mod servers:    config/**
  *   - both:           root-level *.yml / *.yaml / *.toml (bukkit.yml, ...)
@@ -63,7 +63,7 @@ function safeRelPath(input: string, scope: ConfigScope): string {
   if (path.toLowerCase().endsWith(".jar")) {
     throw createError({
       statusCode: 400,
-      statusMessage: "Jar files are managed in the add-ons list",
+      statusMessage: "Jar files are managed in the Plugins/Mods list",
     });
   }
 
