@@ -8,10 +8,6 @@
     <UNavigationMenu :items="links" />
 
     <template #right>
-      <UButton icon="i-heroicons-plus-20-solid" @click="serverModal.openCreate()">
-        Create Server
-      </UButton>
-
       <UserMenu />
     </template>
 
@@ -22,8 +18,6 @@
 </template>
 
 <script setup lang="ts">
-const serverModal = useServerModal();
-
 const links = [
   { to: "/", label: "Overview", icon: "i-heroicons-squares-2x2-16-solid" },
   { to: "/admin", label: "Admin", icon: "i-heroicons-cog-6-tooth-16-solid" },
