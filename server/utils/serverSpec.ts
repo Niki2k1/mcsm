@@ -147,7 +147,13 @@ export async function buildServerSpec(data: ServerConfig, event?: H3Event) {
     data.BLUEMAP && serverTypeSupportsBluemap(data.type)
       ? addModrinthProject(data.MODRINTH_PROJECTS, BLUEMAP_SLUG)
       : data.MODRINTH_PROJECTS;
-  if (modrinthProjects) env.MODRINTH_PROJECTS = modrinthProjects;
+  if (modrinthProjects) {
+    env.MODRINTH_PROJECTS = modrinthProjects;
+    // Auto-installed projects often have required dependencies — e.g. Chunky
+    // and BlueMap on Fabric need fabric-api — so let the itzg image resolve
+    // and download those too. A custom env var of the same name wins.
+    env.MODRINTH_DOWNLOAD_DEPENDENCIES ||= "required";
+  }
   if (data.SPIGET_RESOURCES) env.SPIGET_RESOURCES = data.SPIGET_RESOURCES;
   if (data.CUSTOM_SERVER_PROPERTIES)
     env.CUSTOM_SERVER_PROPERTIES = data.CUSTOM_SERVER_PROPERTIES;
