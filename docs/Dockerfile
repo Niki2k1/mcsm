@@ -18,6 +18,11 @@ COPY . .
 # Nuxt's build + prerender needs more heap than Node's conservative
 # in-container default (which is derived from the cgroup memory limit).
 ENV NODE_OPTIONS="--max-old-space-size=4096"
+# Public URL the docs are deployed under (e.g. https://docs.example.com).
+# Read by nuxt-site-config and Docus at generate time: enables llms.txt,
+# sitemap.xml and absolute OG-image URLs. The site still builds without it.
+ARG NUXT_SITE_URL
+ENV NUXT_SITE_URL=$NUXT_SITE_URL
 RUN pnpm generate
 
 # --- Runtime stage ---------------------------------------------------------

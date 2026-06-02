@@ -14,6 +14,9 @@ export default defineNuxtConfig({
     "~/components",
   ],
 
+  // The deployment URL is not hardcoded — set NUXT_SITE_URL at build time
+  // (docs/Dockerfile passes it through as a build arg). It enables llms.txt,
+  // sitemap.xml and absolute OG-image URLs.
   site: {
     name: "MCSM",
   },
