@@ -253,12 +253,12 @@
           :description="`${(task?.processedChunks ?? 0).toLocaleString()} chunks generated. Players can explore the area without any generation lag.`"
         />
 
-        <!-- The Minecraft-style chunk colormap -->
-        <ServerDetailChunkColormap
+        <!-- Map of the area: observed activity + Chunky's live position -->
+        <ServerDetailPregenRadar
           class="max-w-lg mx-auto"
           :radius-blocks="vizRadius"
-          :processed="task?.processedChunks ?? 0"
           :state="vizState"
+          :percent="task?.percent"
           :center-x="task?.centerX ?? form.centerX"
           :center-z="task?.centerZ ?? form.centerZ"
           :current="vizCurrent"

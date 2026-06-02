@@ -94,7 +94,7 @@ exec access to the host.
 ### World pre-generation & BlueMap
 
 Generate chunks ahead of time with [Chunky](https://modrinth.com/mod/chunky)
-(auto-installed), watched live on a Minecraft-style chunk colormap. Toggle an
+(auto-installed), watched live on a map of the area being generated. Toggle an
 interactive [BlueMap](https://bluemap.bluecolored.de/) 3D world map — MCSM
 auto-installs it and serves it through its own domain at `/map/<server>/`, no
 extra ports, proxies or DNS needed. Maps can be published so they're viewable
@@ -341,7 +341,7 @@ app/
       detail/            # Server page tabs: Overview, Configuration, Environment,
                          #   Players, Console, Analytics, Backups, World, Map,
                          #   Files, Settings (+ ActivityFeed, ModrinthBrowser,
-                         #   ChunkColormap)
+                         #   PregenRadar)
       motd/              # MOTD editor, preview renderer, § code legend
     user/                # Player lookup list (operators / whitelist)
   composables/           # create-form, server-detail, server-modal, MOTD parser

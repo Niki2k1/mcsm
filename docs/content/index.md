@@ -225,8 +225,8 @@ And everything else a server needs
   World pre-generation
 
   #description
-  Generate chunks ahead of time with Chunky and watch progress live on a
-  Minecraft-style chunk colormap.
+  Generate chunks ahead of time with Chunky and watch live progress on a
+  map of the area — including where Chunky is working right now.
   :::
 
   :::u-page-feature
