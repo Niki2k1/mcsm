@@ -1,0 +1,12 @@
+# Makes docs/ its own pnpm workspace root, so installing/building the docs
+# site never affects the MCSM app's lockfile or Docker build (and vice versa).
+allowBuilds:
+  better-sqlite3: true
+  esbuild: true
+  sharp: true
+  '@parcel/watcher': true
+  workerd: true
+  vue-demi: true
+  # maplibre-gl is pulled in by nuxt-charts (vue-chrts) for map charts, which
+  # the docs demos don't use — no need to run its build scripts.
+  maplibre-gl: false

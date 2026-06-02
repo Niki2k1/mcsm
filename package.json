@@ -9,6 +9,7 @@
   "scripts": {
     "build": "nuxt build",
     "dev": "portless mcsm nuxt dev",
+    "dev:docs": "cd docs && portless mcsm-docs pnpm dev",
     "generate": "nuxt generate",
     "preview": "nuxt preview",
     "postinstall": "nuxt prepare",

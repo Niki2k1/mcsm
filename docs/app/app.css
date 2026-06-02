@@ -1,0 +1,26 @@
+/* Make sure Tailwind picks up classes used by the demo components and utils
+   (the Docus layer only registers content/ and its own app/ as sources). */
+@source "./components/**/*";
+@source "./utils/**/*";
+
+/* nuxt-charts (Unovis + vue-chrts) theming for the live Analytics demo — same
+   mapping as the MCSM app: chart variables follow Nuxt UI's semantic palette so
+   tooltips, axes and legends adapt to the active color mode. */
+:root {
+  --vis-color0: var(--ui-primary) !important;
+  --vis-color1: var(--ui-secondary) !important;
+
+  --vis-tooltip-background-color: var(--ui-bg-elevated) !important;
+  --vis-tooltip-border-color: var(--ui-border) !important;
+  --vis-tooltip-text-color: var(--ui-text-muted) !important;
+
+  --vis-tooltip-title-color: var(--ui-text-highlighted) !important;
+  --vis-tooltip-title-border-bottom: 1px solid var(--ui-border) !important;
+  --vis-tooltip-label-color: var(--ui-text-muted) !important;
+  --vis-tooltip-value-color: var(--ui-text-highlighted) !important;
+
+  --vis-axis-grid-color: var(--ui-border) !important;
+  --vis-axis-tick-label-color: var(--ui-text-dimmed) !important;
+  --vis-axis-label-color: var(--ui-text-dimmed) !important;
+  --vis-legend-label-color: var(--ui-text-muted) !important;
+}
