@@ -70,6 +70,14 @@ export const serverConfigSchema = z.object({
   ENABLE_WHITELIST: z.boolean().nullable().default(null),
   ENFORCE_WHITELIST: z.boolean().default(false),
 
+  /**
+   * itzg image Java variant — old Minecraft/modpacks need old Java:
+   * ≤1.16 → java8, 1.17–1.20.4 → java17, 1.20.5+ → java21/latest.
+   */
+  JAVA_VERSION: z
+    .enum(["latest", "java21", "java17", "java11", "java8-multiarch"])
+    .default("latest"),
+
   // --- Performance & cost ------------------------------------------------------
   VIEW_DISTANCE: z.number().int().min(2).max(32).default(10),
   SIMULATION_DISTANCE: z.number().int().min(2).max(32).default(10),

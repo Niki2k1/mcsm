@@ -38,6 +38,9 @@ export type CreateForm = {
   ENABLE_WHITELIST: boolean | null;
   ENFORCE_WHITELIST: boolean;
 
+  /** itzg image Java variant — old Minecraft/modpacks need old Java. */
+  JAVA_VERSION: "latest" | "java21" | "java17" | "java11" | "java8-multiarch";
+
   // Performance & cost
   VIEW_DISTANCE: number;
   SIMULATION_DISTANCE: number;
@@ -102,6 +105,8 @@ export const defaultCreateForm = (): CreateForm => ({
   ENABLE_COMMAND_BLOCK: false,
   ENABLE_WHITELIST: null,
   ENFORCE_WHITELIST: false,
+
+  JAVA_VERSION: "latest",
 
   // Performance & cost
   VIEW_DISTANCE: 10,

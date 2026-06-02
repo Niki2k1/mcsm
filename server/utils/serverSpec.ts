@@ -170,12 +170,21 @@ export async function buildServerSpec(data: ServerConfig, event?: H3Event) {
     "infrarust.proxy_mode": "passthrough",
   };
 
+  // Older Minecraft/modpacks need older Java — the itzg image variant tag
+  // selects the JVM. The base image (and registry) stays configurable.
+  const baseImage = config.docker?.image || "itzg/minecraft-server";
+  const image =
+    data.JAVA_VERSION && data.JAVA_VERSION !== "latest"
+      ? `${baseImage.split(":")[0]}:${data.JAVA_VERSION}`
+      : baseImage;
+
   return {
     name: `mc-${subdomain}`,
     volume: `mc-${subdomain}`,
     domain,
     env,
     labels,
+    image,
     memoryBytes: memory.limitBytes,
     port: MC_PORT,
     // Auto-stop exits the container on purpose — "unless-stopped" would
@@ -199,7 +208,6 @@ export async function recreateServer(
   data: ServerConfig,
   activityDetail: string
 ) {
-  const config = useRuntimeConfig(event);
   const { getServer, removeServer, provisionServer } = useDocker(event);
 
   const existing = await getServer(serverId);
@@ -214,7 +222,7 @@ export async function recreateServer(
 
   const container = await provisionServer({
     name,
-    image: config.docker?.image || "itzg/minecraft-server",
+    image: spec.image,
     env: spec.env,
     labels: spec.labels,
     memoryBytes: spec.memoryBytes,

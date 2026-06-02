@@ -37,6 +37,12 @@
           {{ versionLabel }}
         </ReviewRow>
         <ReviewRow label="Memory">{{ form.memory ?? "—" }}</ReviewRow>
+        <ReviewRow
+          v-if="form.JAVA_VERSION && form.JAVA_VERSION !== 'latest'"
+          label="Java"
+        >
+          {{ form.JAVA_VERSION }}
+        </ReviewRow>
         <ReviewRow v-if="bluemapEnabled" label="BlueMap">
           <BoolBadge :value="true" />
         </ReviewRow>

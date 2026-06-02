@@ -133,6 +133,19 @@
             </div>
           </div>
         </UFormField>
+
+        <UFormField
+          label="Java version"
+          name="JAVA_VERSION"
+          help="Old Minecraft versions and modpacks need old Java: ≤1.16 → Java 8, 1.17–1.20.4 → Java 17, newer → latest. Applied on the next save (container recreation)."
+        >
+          <USelectMenu
+            v-model="javaVersion"
+            :items="javaOptions"
+            value-key="value"
+            class="w-full sm:w-72"
+          />
+        </UFormField>
       </div>
     </UCard>
 
@@ -764,6 +777,23 @@ const memoryGb = computed({
     if (!form.value) return;
     const clamped = Math.min(64, Math.max(1, Math.round(value || 1)));
     form.value.memory = `${clamped}GB`;
+  },
+});
+
+// Java version: configs from before this field existed have it undefined —
+// show (and keep) "latest" until the user picks something else.
+const javaOptions = [
+  { label: "Latest (recommended)", value: "latest" },
+  { label: "Java 21 — MC 1.20.5+", value: "java21" },
+  { label: "Java 17 — MC 1.17 – 1.20.4", value: "java17" },
+  { label: "Java 11 — legacy", value: "java11" },
+  { label: "Java 8 — MC ≤1.16 / old modpacks", value: "java8-multiarch" },
+];
+
+const javaVersion = computed({
+  get: () => form.value?.JAVA_VERSION ?? "latest",
+  set: (value: CreateForm["JAVA_VERSION"]) => {
+    if (form.value) form.value.JAVA_VERSION = value;
   },
 });
 

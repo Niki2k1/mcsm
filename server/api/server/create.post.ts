@@ -3,14 +3,13 @@ import { serverConfigSchema } from "../../schema/server.schema";
 export default defineEventHandler(async (event) => {
   const data = await useValidatedBody(event, serverConfigSchema);
 
-  const config = useRuntimeConfig(event);
   const { provisionServer } = useDocker(event);
   const spec = await buildServerSpec(data, event);
 
   try {
     const container = await provisionServer({
       name: spec.name,
-      image: config.docker?.image || "itzg/minecraft-server",
+      image: spec.image,
       env: spec.env,
       labels: spec.labels,
       memoryBytes: spec.memoryBytes,
