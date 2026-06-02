@@ -47,6 +47,17 @@
               >
                 Delete {{ selectedJars.length }}
               </UButton>
+              <UButton
+                v-if="updatableJars.length"
+                icon="i-heroicons-arrow-path-20-solid"
+                color="warning"
+                variant="soft"
+                size="sm"
+                :loading="updating"
+                @click="runUpdate(updatableJars.map((u) => u.filename))"
+              >
+                Update all ({{ updatableJars.length }})
+              </UButton>
               <UInput
                 v-model="jarSearch"
                 icon="i-heroicons-magnifying-glass-20-solid"
@@ -54,6 +65,14 @@
                 size="sm"
                 class="w-40"
               />
+              <UButton
+                icon="i-heroicons-globe-alt-20-solid"
+                variant="soft"
+                size="sm"
+                @click="modrinthOpen = true"
+              >
+                Browse Modrinth
+              </UButton>
               <div class="flex items-center gap-2">
                 <USwitch v-model="restartAfter" size="sm" />
                 <span class="text-xs text-muted whitespace-nowrap">
@@ -131,10 +150,28 @@
                   name="i-heroicons-puzzle-piece-20-solid"
                   class="size-5 text-muted shrink-0"
                 />
-                <div class="flex-1 min-w-0">
+                <div class="flex-1 min-w-0 flex items-center gap-2">
                   <p class="text-sm font-medium font-mono truncate">
                     {{ jar.name }}
                   </p>
+                  <UBadge
+                    v-if="updateFor(jar.name)"
+                    color="warning"
+                    variant="soft"
+                    size="sm"
+                    class="shrink-0"
+                  >
+                    Update: {{ updateFor(jar.name)!.latestVersion }}
+                  </UBadge>
+                  <UBadge
+                    v-else-if="projectInfoFor(jar.name)?.managed"
+                    color="neutral"
+                    variant="soft"
+                    size="sm"
+                    class="shrink-0"
+                  >
+                    auto-install
+                  </UBadge>
                 </div>
                 <div class="w-24 text-right text-sm text-muted">
                   {{ formatSize(jar.size) }}
@@ -386,6 +423,15 @@
         </div>
       </template>
     </UModal>
+
+    <!-- Modrinth browser -->
+    <ServerDetailModrinthBrowser
+      v-model:open="modrinthOpen"
+      :installed-project-ids="installedProjectIds"
+      :restart="restartAfter"
+      :kind-label="kindLabel"
+      @installed="onModrinthInstalled"
+    />
   </div>
 </template>
 
@@ -519,6 +565,105 @@ async function upload() {
   }
 }
 
+// --- Modrinth (browse / updates) ---------------------------------------------------
+
+type JarUpdate = {
+  filename: string;
+  projectId: string;
+  latestVersion: string;
+  latestFilename: string;
+  managed: boolean;
+};
+
+const modrinthOpen = ref(false);
+const updating = ref(false);
+
+// Hash-based update check — cached server-side, so this is cheap to refetch.
+const { data: modrinthInfo, refresh: refreshUpdates } = useFetch<{
+  projects: Record<string, { projectId: string; managed: boolean }>;
+  updates: JarUpdate[];
+}>(() => `/api/server/${id.value}/modrinth/updates`, {
+  retry: false,
+  immediate: true,
+  // Update info is a nice-to-have; never block the tab on Modrinth being slow.
+  lazy: true,
+  default: () => ({ projects: {}, updates: [] }),
+});
+
+function updateFor(filename: string): JarUpdate | undefined {
+  return modrinthInfo.value?.updates.find(
+    (update) => update.filename === filename
+  );
+}
+
+function projectInfoFor(filename: string) {
+  return modrinthInfo.value?.projects[filename];
+}
+
+/** Jars with updates the user can actually apply (auto-installed ones re-sync on boot). */
+const updatableJars = computed(() =>
+  (modrinthInfo.value?.updates ?? []).filter((update) => !update.managed)
+);
+
+/** Project ids already present on the server — powers "Installed" in the browser. */
+const installedProjectIds = computed(
+  () =>
+    new Set(
+      Object.values(modrinthInfo.value?.projects ?? {}).map(
+        (project) => project.projectId
+      )
+    )
+);
+
+async function runUpdate(filenames: string[]) {
+  if (!filenames.length) return;
+  updating.value = true;
+  try {
+    const result = await $fetch<{
+      updated: { from: string; to: string; version: string }[];
+      failed: { filename: string; reason: string }[];
+      restarted: boolean;
+    }>(`/api/server/${id.value}/modrinth/update`, {
+      method: "POST",
+      body: { filenames, restart: restartAfter.value },
+    });
+
+    if (result.updated.length) {
+      toast.add({
+        title: `${result.updated.length} ${result.updated.length === 1 ? "jar" : "jars"} updated`,
+        description: result.restarted
+          ? "The server is restarting to load them."
+          : "Updates load on the next server start.",
+        color: "success",
+      });
+    }
+    for (const failure of result.failed) {
+      toast.add({
+        title: `${failure.filename} not updated`,
+        description: failure.reason,
+        color: "warning",
+      });
+    }
+
+    await refreshJars();
+    await refreshUpdates({ dedupe: "cancel" });
+    if (result.restarted) await refreshServer();
+  } catch (error) {
+    toast.add({
+      title: "Update failed",
+      description: errorMessage(error, "Could not update the jars."),
+      color: "error",
+    });
+  } finally {
+    updating.value = false;
+  }
+}
+
+async function onModrinthInstalled() {
+  await refreshJars();
+  await refreshUpdates({ dedupe: "cancel" });
+}
+
 // --- Delete ----------------------------------------------------------------------
 
 const deleteOpen = ref(false);
@@ -527,7 +672,18 @@ const deleting = ref(false);
 const pendingDelete = ref("");
 
 function jarMenuItems(jar: JarInfo): DropdownMenuItem[] {
-  return [
+  const items: DropdownMenuItem[] = [];
+
+  const update = updateFor(jar.name);
+  if (update && !update.managed) {
+    items.push({
+      label: `Update to ${update.latestVersion}`,
+      icon: "i-heroicons-arrow-path-20-solid",
+      onSelect: () => runUpdate([jar.name]),
+    });
+  }
+
+  items.push(
     {
       label: "Download",
       icon: "i-heroicons-arrow-down-tray-20-solid",
@@ -546,8 +702,10 @@ function jarMenuItems(jar: JarInfo): DropdownMenuItem[] {
         pendingDelete.value = jar.name;
         deleteOpen.value = true;
       },
-    },
-  ];
+    }
+  );
+
+  return items;
 }
 
 async function deleteOne(name: string, restart: boolean) {
@@ -737,7 +895,9 @@ watch(id, () => {
   uploadFiles.value = [];
   editorOpen.value = false;
   editingFile.value = null;
+  modrinthOpen.value = false;
   refreshJars();
   refreshFiles();
+  refreshUpdates();
 });
 </script>

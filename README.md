@@ -48,6 +48,12 @@ config files to manage.
   bundles) straight into a server's mods/plugins folder, and edit plugin/mod
   and server config files in a built-in Monaco editor — with server-side
   YAML/JSON validation so a typo can't take the server down.
+- **Modrinth browser & updates** — search [Modrinth](https://modrinth.com)
+  right from the dashboard, filtered to builds compatible with the server's
+  loader and Minecraft version, and install them (plus required dependencies)
+  in one click. Installed jars are identified by their SHA-1 hash, so anything
+  on Modrinth — even manually uploaded files — gets an "update available"
+  badge and one-click updates.
 - **Review screen** — a formatted overview of every setting before you commit
   to creating the server.
 - **Direct Docker provisioning** — creates the container straight against the

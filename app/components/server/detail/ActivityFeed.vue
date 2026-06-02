@@ -154,6 +154,12 @@ const STYLES: Record<
     bg: "bg-primary/10",
     text: "text-primary",
   },
+  "jars-updated": {
+    label: "Jars updated",
+    icon: "i-heroicons-arrow-path-20-solid",
+    bg: "bg-info/10",
+    text: "text-info",
+  },
   "jar-deleted": {
     label: "Jar deleted",
     icon: "i-heroicons-trash-20-solid",
