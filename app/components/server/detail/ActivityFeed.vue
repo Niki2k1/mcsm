@@ -148,6 +148,12 @@ const STYLES: Record<
     bg: "bg-warning/10",
     text: "text-warning",
   },
+  "world-reset": {
+    label: "World reset",
+    icon: "i-heroicons-arrow-uturn-left-20-solid",
+    bg: "bg-warning/10",
+    text: "text-warning",
+  },
   "jars-uploaded": {
     label: "Jars uploaded",
     icon: "i-heroicons-puzzle-piece-20-solid",
