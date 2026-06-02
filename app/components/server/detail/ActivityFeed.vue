@@ -148,6 +148,24 @@ const STYLES: Record<
     bg: "bg-warning/10",
     text: "text-warning",
   },
+  "jars-uploaded": {
+    label: "Add-ons uploaded",
+    icon: "i-heroicons-puzzle-piece-20-solid",
+    bg: "bg-primary/10",
+    text: "text-primary",
+  },
+  "jar-deleted": {
+    label: "Add-on deleted",
+    icon: "i-heroicons-trash-20-solid",
+    bg: "bg-error/10",
+    text: "text-error",
+  },
+  "config-edited": {
+    label: "Config file edited",
+    icon: "i-heroicons-pencil-square-20-solid",
+    bg: "bg-info/10",
+    text: "text-info",
+  },
 };
 
 const FALLBACK_STYLE = {

@@ -274,6 +274,20 @@ const tabs = computed(() => [
     to: `/server/${id.value}/map`,
   },
   {
+    // Paper loads plugins; the mod loaders load mods. Unsupported types still
+    // get the tab (it explains why the feature isn't available).
+    label:
+      server.value?.config?.type === "PAPER"
+        ? "Plugins"
+        : ["FABRIC", "FORGE", "AUTO_CURSEFORGE"].includes(
+              server.value?.config?.type ?? ""
+            )
+          ? "Mods"
+          : "Add-ons",
+    icon: "i-heroicons-puzzle-piece-20-solid",
+    to: `/server/${id.value}/addons`,
+  },
+  {
     label: "Settings",
     icon: "i-heroicons-cog-6-tooth-20-solid",
     to: `/server/${id.value}/settings`,
