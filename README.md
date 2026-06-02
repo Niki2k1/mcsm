@@ -310,6 +310,7 @@ server/
     minecraft/               # skin rendering, status pinger, caching
   schema/server.schema.ts    # shared zod config schema
 public/                      # Monocraft font, favicon
+docs/                        # design notes (e.g. Infrarust v2 feature survey)
 nuxt.config.ts               # modules, runtimeConfig (docker hosts), storage
 ```
 
@@ -324,7 +325,9 @@ nuxt.config.ts               # modules, runtimeConfig (docker hosts), storage
   time they're recreated (an edit).
 - **Per-server MOTD/offline status** is set as an env var on the container; the
   richer offline-status placeholder behaviour of file-based proxies isn't
-  modelled through Infrarust labels.
+  modelled through Infrarust labels. (Infrarust v2 offers more here — see
+  [docs/infrarust-v2-features.md](docs/infrarust-v2-features.md) for what MCSM
+  could adopt.)
 - **BlueMap traffic flows through MCSM.** The map is proxied by the dashboard
   (`/map/<volume>/` → container port 8100 over the shared Docker network), so
   it shares MCSM's domain and TLS. Map tiles are served by the Node process —
