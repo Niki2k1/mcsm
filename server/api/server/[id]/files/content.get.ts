@@ -27,7 +27,12 @@ export default defineEventHandler(async (event) => {
   }
 
   try {
-    const file = await readConfigFile(id, server.config?.type, path);
+    const file = await readConfigFile(
+      id,
+      server.config?.type,
+      server.config?.LEVEL,
+      path
+    );
 
     if (download === "true") {
       const filename = file.path.split("/").pop() ?? "config";

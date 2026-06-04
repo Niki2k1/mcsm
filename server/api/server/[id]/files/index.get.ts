@@ -20,7 +20,7 @@ export default defineEventHandler(async (event) => {
   }
 
   try {
-    return await listConfigFiles(id, server.config?.type);
+    return await listConfigFiles(id, server.config?.type, server.config?.LEVEL);
   } catch (error) {
     if ((error as { statusCode?: number }).statusCode) throw error;
     console.error(error);

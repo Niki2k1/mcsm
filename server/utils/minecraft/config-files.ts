@@ -6,7 +6,8 @@ import { parse as parseYaml } from "yaml";
  *
  * Scope depends on the server type (see locations.ts):
  *   - plugin servers: plugins/**
- *   - mod servers:    config/**
+ *   - mod servers:    config/** and <level>/serverconfig/** (Forge/NeoForge
+ *                     per-world configs for the active world)
  *   - both:           root-level *.yml / *.yaml / *.toml (bukkit.yml, ...)
  * `server.properties` is never editable — itzg regenerates it from env vars on
  * every start, so edits there would be silently lost.
@@ -15,8 +16,9 @@ import { parse as parseYaml } from "yaml";
  * or not the server is up). Reading and writing a single file use the Docker
  * archive API on the main container, which also works while stopped.
  *
- * Every client-supplied path goes through `safeRelPath`, so a request can
- * never read or clobber files elsewhere in the volume (worlds, etc.).
+ * Every client-supplied path goes through `safeRelPath`, so a request can only
+ * touch the scoped roots above — never other world data, jars or itzg
+ * internals.
  */
 
 const MAX_FILE_BYTES = 2 * 1024 * 1024; // 2 MB — config files, not data dumps
@@ -27,8 +29,8 @@ export type ConfigFile = { path: string; size: number };
 
 type ConfigScope = { roots: string[]; rootExts: readonly string[] };
 
-function scopeFor(type?: string | null): ConfigScope {
-  return { roots: configRoots(type), rootExts: ROOT_CONFIG_EXTENSIONS };
+function scopeFor(type?: string | null, level?: string | null): ConfigScope {
+  return { roots: configRoots(type, level), rootExts: ROOT_CONFIG_EXTENSIONS };
 }
 
 /** Validate a client-supplied path and return it normalised (relative to /data). */
@@ -139,17 +141,19 @@ export async function runInVolume(id: string, script: string): Promise<string> {
 /** List the editable config files for a server (relative paths + sizes). */
 export async function listConfigFiles(
   id: string,
-  type: string | null | undefined
+  type: string | null | undefined,
+  level?: string | null
 ): Promise<ConfigFile[]> {
-  const scope = scopeFor(type);
+  const scope = scopeFor(type, level);
   if (!scope.roots.length) return [];
 
   // One find per config root (paths prefixed via -printf so no post-processing
-  // is needed), plus one for the root-level extension allowlist. stderr is
-  // dropped so missing directories just yield no output.
+  // is needed), plus one for the root-level extension allowlist. The target is
+  // quoted so world names with spaces stay intact, and stderr is dropped so
+  // missing directories just yield no output.
   const finds = scope.roots.map(
     (root) =>
-      `find /data/${root} -maxdepth ${MAX_FIND_DEPTH} -type f -printf '%s\\t${root}/%P\\n' 2>/dev/null`
+      `find "/data/${root}" -maxdepth ${MAX_FIND_DEPTH} -type f -printf '%s\\t${root}/%P\\n' 2>/dev/null`
   );
   const rootNameTests = scope.rootExts
     .map((ext) => `-name '*${ext}'`)
@@ -187,9 +191,10 @@ export async function listConfigFiles(
 export async function readConfigFile(
   id: string,
   type: string | null | undefined,
+  level: string | null | undefined,
   inputPath: string
 ): Promise<{ path: string; content: string }> {
-  const path = safeRelPath(inputPath, scopeFor(type));
+  const path = safeRelPath(inputPath, scopeFor(type, level));
   const { docker } = useDocker();
   const container = docker.getContainer(id);
 
@@ -264,10 +269,11 @@ export async function readConfigFile(
 export async function writeConfigFile(
   id: string,
   type: string | null | undefined,
+  level: string | null | undefined,
   inputPath: string,
   content: string
 ): Promise<void> {
-  const path = safeRelPath(inputPath, scopeFor(type));
+  const path = safeRelPath(inputPath, scopeFor(type, level));
 
   if (Buffer.byteLength(content, "utf8") > MAX_FILE_BYTES) {
     throw createError({
