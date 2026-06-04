@@ -51,6 +51,7 @@
           :height="220"
           :curve-type="CurveType.MonotoneX"
           :x-formatter="xFormatter"
+          :tooltip-title-formatter="formatTooltipTitle"
           :y-grid-line="true"
           :hide-legend="true"
         />
@@ -67,6 +68,7 @@
           :height="220"
           :curve-type="CurveType.MonotoneX"
           :x-formatter="xFormatter"
+          :tooltip-title-formatter="formatTooltipTitle"
           :y-formatter="(value: number) => `${value}%`"
           :y-grid-line="true"
           :hide-legend="true"
@@ -89,6 +91,7 @@
           :height="220"
           :curve-type="CurveType.MonotoneX"
           :x-formatter="xFormatter"
+          :tooltip-title-formatter="formatTooltipTitle"
           :y-formatter="(value: number) => `${value} MiB`"
           :y-grid-line="true"
           :hide-legend="true"
@@ -106,6 +109,7 @@
           :height="220"
           :curve-type="CurveType.MonotoneX"
           :x-formatter="xFormatter"
+          :tooltip-title-formatter="formatTooltipTitle"
           :y-formatter="(value: number) => `${value} ms`"
           :y-grid-line="true"
           :hide-legend="true"
@@ -123,6 +127,7 @@
           :height="220"
           :curve-type="CurveType.MonotoneX"
           :x-formatter="networkXFormatter"
+          :tooltip-title-formatter="formatTooltipTitle"
           :y-formatter="(value: number) => `${value} KiB/min`"
           :y-grid-line="true"
         />
@@ -132,6 +137,8 @@
 </template>
 
 <script setup lang="ts">
+import { formatDate } from "@vueuse/core";
+
 const { id } = useServerDetail();
 
 // --- Data ---------------------------------------------------------------------
@@ -190,6 +197,13 @@ function formatTick(timestamp: number | undefined) {
 }
 
 const xFormatter = (i: number) => formatTick(samples.value[i]?.t);
+
+// Tooltips fall back to the first data key (the raw `t` timestamp) for their
+// title, so format the hovered point into a readable date/time instead.
+function formatTooltipTitle(point: { t?: number } | undefined) {
+  if (!point?.t) return "";
+  return formatDate(new Date(point.t), "MMM D, HH:mm");
+}
 
 // --- Chart data -------------------------------------------------------------------
 
