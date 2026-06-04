@@ -28,7 +28,13 @@ export default defineEventHandler(async (event) => {
   }
 
   try {
-    await writeConfigFile(id, server.config?.type, path, content);
+    await writeConfigFile(
+      id,
+      server.config?.type,
+      server.config?.LEVEL,
+      path,
+      content
+    );
   } catch (error) {
     if ((error as { statusCode?: number }).statusCode) throw error;
     console.error(error);

@@ -31,12 +31,41 @@ export function jarsDir(type?: string | null): "plugins" | "mods" | null {
 }
 
 /**
- * Directory roots (relative to /data) whose files are editable in the config
- * editor: plugin configs live next to the jars; mod configs live in config/.
+ * World folder names are interpolated into the helper container's `find`
+ * command, so they must stay shell-safe. Mirrors the check in world/reset.
  */
-export function configRoots(type?: string | null): string[] {
+const SAFE_LEVEL = /^[A-Za-z0-9 _.-]+$/;
+
+/**
+ * The active world's per-world server config folder (relative to /data), or
+ * null if the world name isn't shell-safe. Forge/NeoForge copy each mod's
+ * `*-server.toml` from defaultconfigs/ into `<level>/serverconfig` the first
+ * time a world is created, and that copy — not defaultconfigs/ — is what the
+ * running world actually reads. `level` defaults to "world" (itzg's default
+ * when LEVEL is unset).
+ */
+export function worldServerConfigRoot(level?: string | null): string | null {
+  const name = (level || "world").trim();
+  if (!SAFE_LEVEL.test(name)) return null;
+  return `${name}/serverconfig`;
+}
+
+/**
+ * Directory roots (relative to /data) whose files are editable in the config
+ * editor: plugin configs live next to the jars; mod configs live in config/,
+ * plus the active world's serverconfig/ (Forge/NeoForge per-world configs).
+ */
+export function configRoots(
+  type?: string | null,
+  level?: string | null
+): string[] {
   if (!serverTypeSupportsJars(type)) return [];
-  return type === "PAPER" ? ["plugins"] : ["config"];
+  if (type === "PAPER") return ["plugins"];
+
+  const roots = ["config"];
+  const worldServerConfig = worldServerConfigRoot(level);
+  if (worldServerConfig) roots.push(worldServerConfig);
+  return roots;
 }
 
 /**
