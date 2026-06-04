@@ -126,12 +126,20 @@ export async function createBackup(
     throw createError({ statusCode: 400, statusMessage: "Invalid volume name" });
   }
 
+  // BlueMap renders continuously into the same volume we're about to tar,
+  // writing transient `*.filepart` tiles that it renames into place as it
+  // goes. `save-off` doesn't stop it, so without pausing it tar can list a
+  // `.filepart` and then fail with "No such file or directory" when BlueMap
+  // renames it away mid-archive — aborting the whole backup.
+  const bluemapInstalled = hasBluemap(server.config?.MODRINTH_PROJECTS);
+
   // Best-effort consistent snapshot — ignore RCON failures (server may be
   // booting or unreachable; the tar still works, just less consistent).
   const pauseSaves = server.running
     ? withRcon(event, serverId, async (rcon) => {
         await rcon.send("save-off");
         await rcon.send("save-all flush");
+        if (bluemapInstalled) await rcon.send("bluemap stop");
       }).catch(() => {})
     : Promise.resolve();
   await pauseSaves;
@@ -142,8 +150,10 @@ export async function createBackup(
       [
         "sh",
         "-c",
-        // Print the archive size as the last output line so we can record it.
-        `mkdir -p "/backups/${server.volume}" && tar czf "/backups/${filename}" -C /data . && stat -c %s "/backups/${filename}"`,
+        // Skip incomplete tiles BlueMap may have left behind (`*.filepart`) —
+        // they're never restorable. Print the archive size as the last output
+        // line so we can record it.
+        `mkdir -p "/backups/${server.volume}" && tar czf "/backups/${filename}" --exclude='*.filepart' -C /data . && stat -c %s "/backups/${filename}"`,
       ],
       [`${server.volume}:/data:ro`, `${BACKUP_VOLUME}:/backups`]
     );
@@ -175,9 +185,10 @@ export async function createBackup(
     return row;
   } finally {
     if (server.running) {
-      await withRcon(event, serverId, (rcon) => rcon.send("save-on")).catch(
-        () => {}
-      );
+      await withRcon(event, serverId, async (rcon) => {
+        await rcon.send("save-on");
+        if (bluemapInstalled) await rcon.send("bluemap start");
+      }).catch(() => {});
     }
   }
 }
