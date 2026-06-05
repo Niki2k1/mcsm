@@ -3,6 +3,37 @@ import type { H3Event } from "h3";
 import type { ServerConfig } from "../schema/server.schema";
 
 /**
+ * The uid/gid the itzg image runs the Minecraft process as. Anything we push
+ * into /data via `putArchive` must be owned by this user: tar headers default
+ * to uid/gid 0, and Docker applies that ownership to every entry — including
+ * directory entries, which re-own *existing* dirs (e.g. the world folder) to
+ * root. The server runs as UID 1000 by default and then can't write them,
+ * which shows up as "Failed to save level: Permission denied". Honors a custom
+ * UID/GID set on the container; falls back to itzg's 1000:1000 default.
+ */
+export async function containerOwner(
+  container: Docker.Container
+): Promise<{ uid: number; gid: number }> {
+  const fallback = { uid: 1000, gid: 1000 };
+  try {
+    const info = await container.inspect();
+    const env = info.Config?.Env ?? [];
+    const read = (key: string) => {
+      const entry = env.find((e) => e.startsWith(`${key}=`));
+      if (!entry) return null;
+      const value = Number(entry.slice(key.length + 1));
+      return Number.isInteger(value) && value >= 0 ? value : null;
+    };
+    return {
+      uid: read("UID") ?? fallback.uid,
+      gid: read("GID") ?? fallback.gid,
+    };
+  } catch {
+    return fallback;
+  }
+}
+
+/**
  * Direct Docker provisioner.
  *
  * MCSM creates the Minecraft container itself (instead of going through

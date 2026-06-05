@@ -286,6 +286,11 @@ export async function writeConfigFile(
 
   const { docker } = useDocker();
   const container = docker.getContainer(id);
+  // Own every entry as the server's runtime user. Without this the tar's
+  // directory entries (e.g. `<level>/` for a per-world config) re-own the
+  // existing world folder to root, and the running server can no longer save
+  // it — "Failed to save level: Permission denied".
+  const { uid, gid } = await containerOwner(container);
 
   // Build the tar with the full relative path (including directory entries)
   // and extract it at /data — putArchive fails if the target directory
@@ -295,9 +300,9 @@ export async function writeConfigFile(
   let parent = "";
   for (const segment of segments) {
     parent += `${segment}/`;
-    tar.entry({ name: parent, type: "directory", mode: 0o755 });
+    tar.entry({ name: parent, type: "directory", mode: 0o755, uid, gid });
   }
-  tar.entry({ name: path, mode: 0o644 }, Buffer.from(content, "utf8"));
+  tar.entry({ name: path, mode: 0o644, uid, gid }, Buffer.from(content, "utf8"));
   tar.finalize();
 
   await container.putArchive(tar as unknown as NodeJS.ReadableStream, {

@@ -195,11 +195,17 @@ export async function writeJars(
 ): Promise<void> {
   const { docker } = useDocker();
   const container = docker.getContainer(id);
+  // Own the jars (and the dir entry) as the server's runtime user so the
+  // directory entry doesn't re-own an existing plugins/mods folder to root.
+  const { uid, gid } = await containerOwner(container);
 
   const tar = pack();
-  tar.entry({ name: `${dir}/`, type: "directory", mode: 0o755 });
+  tar.entry({ name: `${dir}/`, type: "directory", mode: 0o755, uid, gid });
   for (const jar of jars) {
-    tar.entry({ name: `${dir}/${jar.name}`, mode: 0o644 }, Buffer.from(jar.data));
+    tar.entry(
+      { name: `${dir}/${jar.name}`, mode: 0o644, uid, gid },
+      Buffer.from(jar.data)
+    );
   }
   tar.finalize();
 
