@@ -102,10 +102,12 @@ services:
     #   - "3000:3000"
 
   infrarust:
-    # Our own build of Infrarust WITH the Docker provider compiled in. The
-    # upstream image ships without the `docker` cargo feature, so it ignores the
-    # [docker] config and discovers no backends (see infrarust/Dockerfile).
-    image: ghcr.io/niki2k1/mcsm-infrarust:latest
+    # Official Infrarust image. As of v2.0.0-alpha.7 ("Compile Docker") the
+    # upstream build enables the `docker` cargo feature, so the [docker] provider
+    # below works out of the box — MCSM no longer needs its own rebuild. The
+    # image is multi-arch (amd64 + arm64). Pin to a digest if you want to freeze
+    # a specific build (upstream only publishes the moving `latest` tag).
+    image: ghcr.io/shadowner/infrarust:latest
     restart: unless-stopped
     depends_on:
       - docker-socket-proxy

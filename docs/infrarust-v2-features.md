@@ -1,7 +1,7 @@
 # Infrarust v2 — features MCSM could adopt
 
 Findings from a review of [Infrarust](https://github.com/Shadowner/Infrarust)
-`2.0.0-alpha.6` (the version our custom image builds). MCSM currently uses
+`2.0.0-alpha.6`. MCSM currently uses
 Infrarust for **routing only** — four Docker labels (`infrarust.enable`,
 `infrarust.domains`, `infrarust.port`, `infrarust.proxy_mode`) and nothing
 else. v2 ships a lot more that we could integrate.
@@ -11,8 +11,8 @@ else. v2 ships a lot more that we could integrate.
 ## 1. Admin API + Web UI (biggest opportunity)
 
 The `infrarust-plugin-admin-api` plugin is **always compiled into the binary**
-(unlike the docker provider, it is not feature-gated), including our
-`mcsm-infrarust` image. It is enabled via a `[web]` block in the proxy config:
+(it is not feature-gated), so it ships in the official image. It is enabled via
+a `[web]` block in the proxy config:
 
 ```toml
 [web]
@@ -111,6 +111,7 @@ building on PR [Shadowner/Infrarust#83](https://github.com/Shadowner/Infrarust/p
 
 - Everything here targets `2.0.0-alpha.6` — the API surface and config format
   may change before a stable v2 release.
-- If upstream PR #83 is merged, the official image gains the docker provider
-  and we can drop our custom `infrarust/Dockerfile` build; all of the above
-  applies identically to the official image.
+- Since `2.0.0-alpha.7` the official image builds with the `docker` cargo
+  feature enabled, so MCSM runs it unmodified (we dropped our custom
+  `infrarust/Dockerfile` rebuild). Bumping the pinned image to a release newer
+  than the `alpha.6` reviewed here may shift some of the details above.
