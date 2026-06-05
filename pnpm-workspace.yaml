@@ -15,3 +15,13 @@ minimumReleaseAgeExclude:
   - protobufjs
   - tinyexec
   - tinyglobby
+# Force patched versions of vulnerable transitive deps (Dependabot, all
+# ReDoS-class in build tooling). Each bump stays within the same major, so it
+# only lifts the old duplicate the tree still pins — newer copies are untouched.
+overrides:
+  'cross-spawn@<7.0.6': '^7.0.6'
+  'glob@10': '^10.5.0'
+  'minimatch@5': '^5.1.8'
+  'minimatch@9': '^9.0.7'
+  'picomatch@2': '^2.3.2'
+  'brace-expansion@2': '^2.0.3'
