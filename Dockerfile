@@ -12,7 +12,10 @@ COPY package.json pnpm-lock.yaml pnpm-workspace.yaml ./
 RUN pnpm install --frozen-lockfile --ignore-scripts
 
 COPY . .
-RUN pnpm build
+# Cap the heap so the Nitro/rollup build doesn't get OOM-killed near the
+# runner's memory ceiling (the failure surfaces as a bare "[ELIFECYCLE]
+# Command failed" with no rollup error).
+RUN NODE_OPTIONS=--max-old-space-size=4096 pnpm build
 
 # --- Runtime stage ---------------------------------------------------------
 FROM node:22-alpine AS runtime
