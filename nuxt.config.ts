@@ -72,6 +72,14 @@ export default defineNuxtConfig({
     // Login session cookie lifetime (seconds), read by nuxt-auth-utils.
     session: {
       maxAge: 60 * 60 * 24 * 7, // 1 week, NUXT_SESSION_MAX_AGE
+      cookie: {
+        // Browsers only accept `Secure` cookies over HTTPS (or on localhost),
+        // so logging in from e.g. a LAN IP over plain HTTP silently fails.
+        // The key must exist here for the NUXT_SESSION_COOKIE_SECURE runtime
+        // override to apply — set it to "false" for HTTP-only deployments.
+        secure: true, // NUXT_SESSION_COOKIE_SECURE
+        sameSite: "lax",
+      },
     },
 
     // OAuth providers (nuxt-auth-utils). A provider's login button only shows
