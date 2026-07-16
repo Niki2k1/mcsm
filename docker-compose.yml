@@ -59,7 +59,13 @@ services:
       # REQUIRED: encrypts login session cookies (min. 32 characters). If left
       # empty, a random one is generated at startup — meaning every restart
       # logs everyone out. Generate one with: openssl rand -base64 32
-      NUXT_SESSION_PASSWORD: ""
+      NUXT_SESSION_PASSWORD: "${NUXT_SESSION_PASSWORD}"
+      # The session cookie is marked `Secure` by default, which browsers only
+      # accept over HTTPS (localhost being the one exception). If you serve
+      # MCSM over plain HTTP — e.g. `docker compose up` accessed via a LAN IP
+      # with no reverse proxy — logins will fail because the browser refuses
+      # to store the cookie. Set this to "false" in that case.
+      NUXT_SESSION_COOKIE_SECURE: "false"
       # Optional: "Sign in with Microsoft" (Entra ID app registration). The
       # login button only appears when a client id is configured. The redirect
       # URI to register is https://<your-domain>/auth/microsoft
