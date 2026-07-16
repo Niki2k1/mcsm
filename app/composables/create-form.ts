@@ -3,6 +3,7 @@ export type CreateForm = {
   name: string | null;
   domain: string | null;
   subdomain: string | null;
+  hostPort: number | null;
   /** Minecraft version as the option object the version select works with. */
   VERSION: { label: string; value: number } | null;
   memory: string | null;
@@ -79,6 +80,7 @@ export const defaultCreateForm = (): CreateForm => ({
   name: null,
   domain: null,
   subdomain: null,
+  hostPort: null,
   VERSION: null,
   memory: "2GB",
   MOTD: "",

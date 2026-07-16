@@ -9,6 +9,22 @@
       />
     </UFormField>
 
+    <UFormField
+      name="hostPort"
+      label="Host Port"
+      description="Optionally publish the server on a host port. Reachable at <server-ip>:<port> without a domain"
+    >
+      <UInput
+        v-model.number="hostPort"
+        type="number"
+        :min="1"
+        :max="65535"
+        placeholder="Host Port"
+        autocomplete="off"
+        class="w-full"
+      />
+    </UFormField>
+
     <UFormField name="domain" label="Domain" required>
       <div class="grid grid-cols-3 gap-2">
         <UInput
@@ -77,6 +93,15 @@ const javaOptions = [
   { label: "Java 11 — legacy", value: "java11" },
   { label: "Java 8 — MC ≤1.16 / old modpacks", value: "java8-multiarch" },
 ];
+
+// A cleared number input yields "" (not null), which the server's schema
+// rejects — coerce anything non-numeric back to null.
+const hostPort = computed({
+  get: () => form.value.hostPort,
+  set(value: number | string | null) {
+    form.value.hostPort = typeof value === "number" ? value : null;
+  },
+});
 
 const subDomain = computed({
   get() {

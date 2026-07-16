@@ -21,6 +21,7 @@ export const serverConfigSchema = z.object({
   name: z.string(),
   domain: z.string(),
   subdomain: z.string().nullable(),
+  hostPort: z.number().int().min(1).max(65535).nullable().default(null),
   VERSION: z
     .object({
       label: z.string(),
