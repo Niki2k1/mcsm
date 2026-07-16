@@ -1,7 +1,8 @@
-# MCSM stack for plain `docker compose up`.
+# MCSM stack for Coolify (Docker Compose resource).
 #
-# Deploying on Coolify? Use docker-compose.coolify.yml instead — it attaches
-# mcsm to Coolify's Traefik proxy network and expects HTTPS termination there.
+# Running plain `docker compose up` instead? Use docker-compose.yml — it
+# publishes port 3000 on the host and doesn't need Coolify's proxy network.
+# In Coolify, set the resource's "Docker Compose Location" to this file.
 #
 #   mcsm                — the web app (image published to GHCR by CI)
 #   infrarust           — the Minecraft proxy (label-based discovery)
@@ -34,9 +35,6 @@ services:
 
   mcsm:
     image: ghcr.io/niki2k1/mcsm:latest
-    # For a local build instead of the published image, comment `image` above
-    # and uncomment:
-    # build: .
     restart: unless-stopped
     depends_on:
       - docker-socket-proxy
@@ -59,25 +57,38 @@ services:
       # compose name; containers cannot use the public domain for this — NAT
       # hairpin from inside the network times out.
       NUXT_INTERNAL_URL: http://mcsm:3000
-      # REQUIRED: encrypts login session cookies (min. 32 characters). Set it
-      # in a `.env` file next to this compose file (or inline here). If left
-      # empty, a random one is generated at startup — meaning every restart
-      # logs everyone out. Generate one with: openssl rand -base64 32
-      NUXT_SESSION_PASSWORD: "${NUXT_SESSION_PASSWORD:-}"
-      # The session cookie is marked `Secure` by default, which browsers only
-      # accept over HTTPS (localhost being the one exception). Served over
-      # plain HTTP — the normal case for this file, e.g. reaching the UI via a
-      # LAN IP or Tailscale — the browser refuses to store the cookie and
-      # logins silently fail, so Secure is disabled here. If you put a
-      # TLS-terminating reverse proxy in front, set this to "true".
-      NUXT_SESSION_COOKIE_SECURE: "false"
+      # REQUIRED: encrypts login session cookies (min. 32 characters). Coolify
+      # surfaces this interpolation as an editable environment variable on the
+      # resource — set it there. If left empty, a random one is generated at
+      # startup — meaning every restart logs everyone out. Generate one with:
+      # openssl rand -base64 32
+      NUXT_SESSION_PASSWORD: "${NUXT_SESSION_PASSWORD}"
+      # Coolify terminates HTTPS in front of mcsm, so the session cookie keeps
+      # its (secure) default `Secure` attribute. Only flip this to "false" if
+      # you deliberately serve the dashboard over plain HTTP — see
+      # docker-compose.yml for details.
+      # NUXT_SESSION_COOKIE_SECURE: "false"
       # Optional: "Sign in with Microsoft" (Entra ID app registration). The
       # login button only appears when a client id is configured. The redirect
       # URI to register is https://<your-domain>/auth/microsoft
       # NUXT_OAUTH_MICROSOFT_CLIENT_ID: ""
       # NUXT_OAUTH_MICROSOFT_CLIENT_SECRET: ""
       # NUXT_OAUTH_MICROSOFT_TENANT: common
-    # Report healthy only once Nitro is actually listening.
+      # Coolify: generates a domain and routes HTTPS to port 3000.
+      SERVICE_FQDN_MCSM_3000: ""
+    # mcsm is multi-homed (dockerproxy for the Docker API, infrarust for RCON
+    # and server pings). When a container is on several networks, Coolify's
+    # Traefik picks one non-deterministically to route through — and if it picks
+    # one it can't reach (e.g. the `internal` dockerproxy network), every request
+    # hangs until it times out (504). The label below pins Traefik to Coolify's
+    # proxy network, but that only works if mcsm is actually *attached* to it —
+    # and declaring explicit `networks:` stops Coolify from auto-attaching it.
+    # So we attach `coolify` (declared external below) ourselves, which makes
+    # routing deterministic.
+    labels:
+      traefik.docker.network: coolify
+    # Let Coolify/Traefik route only once Nitro is actually listening (also
+    # avoids 504s during a redeploy before the new container is up).
     healthcheck:
       test:
         - CMD
@@ -91,11 +102,9 @@ services:
     volumes:
       - mcsm-data:/app/.data
     networks:
+      - coolify
       - infrarust
       - dockerproxy
-    # Expose the UI on the host.
-    ports:
-      - "3000:3000"
 
   infrarust:
     # Official Infrarust image. As of v2.0.0-alpha.7 ("Compile Docker") the
@@ -142,6 +151,11 @@ services:
       - dockerproxy
 
 networks:
+  # Coolify's Traefik proxy network. Declared external so mcsm is deterministically
+  # attached and Traefik can always reach it (fixes intermittent 504s on this
+  # multi-homed service).
+  coolify:
+    external: true
   # Shared with the Minecraft containers MCSM creates. The explicit name keeps
   # it stable so NUXT_DOCKER_NETWORK matches.
   infrarust:
