@@ -101,6 +101,7 @@ export type ProvisionOptions = {
   labels: Record<string, string>;
   memoryBytes?: number;
   port?: number;
+  hostPort?: number;
   network?: string;
   /** Named volume mounted at /data for world persistence. */
   volume?: string;
@@ -160,6 +161,7 @@ export const useDocker = (event?: H3Event, hostId = "default") => {
         RestartPolicy: { Name: options.restartPolicy ?? "unless-stopped" },
         Binds: options.volume ? [`${options.volume}:/data`] : undefined,
         NetworkMode: network,
+        PortBindings: options.hostPort ? { [`${port}/tcp`]: [{ HostPort: options.hostPort.toString() }] } : undefined,
       },
     });
 

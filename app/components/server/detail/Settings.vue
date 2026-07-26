@@ -36,6 +36,22 @@
             />
           </div>
         </UFormField>
+
+        <UFormField
+          label="Host Port"
+          name="hostPort"
+          help="Optionally publish the server on a host port, reachable at <server-ip>:<port>. Leave empty to route through the proxy only."
+        >
+          <UInput
+            v-model.number="hostPort"
+            type="number"
+            :min="1"
+            :max="65535"
+            placeholder="25566"
+            autocomplete="off"
+            class="w-full"
+          />
+        </UFormField>
       </div>
 
       <p v-else class="text-sm text-muted">
@@ -170,14 +186,29 @@ const toast = useToast();
 
 // --- General (name / domain) --------------------------------------------------
 
-const general = reactive({ name: "", subdomain: "", domain: "" });
+const general = reactive({
+  name: "",
+  subdomain: "",
+  domain: "",
+  hostPort: null as number | null,
+});
 
 function resetGeneral() {
   const config = server.value?.config;
   general.name = config?.name ?? server.value?.name ?? "";
   general.subdomain = config?.subdomain ?? "";
   general.domain = config?.domain ?? "";
+  general.hostPort = config?.hostPort ?? null;
 }
+
+// A cleared number input yields "" (not null), which the server's schema
+// rejects — coerce anything non-numeric back to null.
+const hostPort = computed({
+  get: () => general.hostPort,
+  set(value: number | string | null) {
+    general.hostPort = typeof value === "number" ? value : null;
+  },
+});
 
 watch(server, resetGeneral, { immediate: true });
 
@@ -187,7 +218,8 @@ const generalDirty = computed(() => {
   return (
     general.name !== (config.name ?? "") ||
     general.subdomain !== (config.subdomain ?? "") ||
-    general.domain !== (config.domain ?? "")
+    general.domain !== (config.domain ?? "") ||
+    general.hostPort !== (config.hostPort ?? null)
   );
 });
 
@@ -213,6 +245,7 @@ async function saveGeneral() {
         name: general.name,
         subdomain: general.subdomain || null,
         domain: general.domain,
+        hostPort: general.hostPort,
       },
     });
 

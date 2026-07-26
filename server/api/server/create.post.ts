@@ -14,6 +14,7 @@ export default defineEventHandler(async (event) => {
       labels: spec.labels,
       memoryBytes: spec.memoryBytes,
       port: spec.port,
+      hostPort: spec.hostPort,
       volume: spec.volume,
       restartPolicy: spec.restartPolicy,
     });

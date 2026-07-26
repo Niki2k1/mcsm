@@ -68,6 +68,7 @@
         <ReviewRow label="Address">
           <span class="font-mono">{{ fullAddress || "—" }}</span>
         </ReviewRow>
+        <ReviewRow label="Host Port">{{ form.hostPort || "—" }}</ReviewRow>
       </dl>
     </UCard>
 

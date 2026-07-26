@@ -36,6 +36,7 @@ export async function buildServerSpec(data: ServerConfig, event?: H3Event) {
   const subdomain = sanitize(data.subdomain ?? data.name);
   const domain = `${subdomain}.${data.domain}`;
   const memory = parseMemory(data.memory);
+  const hostPort = data.hostPort ?? undefined;
 
   // Custom env vars go in first so the managed assignments below always win
   // on conflicts — users can't override RCON access, the EULA, the type, etc.
@@ -186,6 +187,7 @@ export async function buildServerSpec(data: ServerConfig, event?: H3Event) {
     labels,
     image,
     memoryBytes: memory.limitBytes,
+    hostPort,
     port: MC_PORT,
     // Auto-stop exits the container on purpose — "unless-stopped" would
     // immediately start it again and defeat the feature.
@@ -227,6 +229,7 @@ export async function recreateServer(
     labels: spec.labels,
     memoryBytes: spec.memoryBytes,
     port: spec.port,
+    hostPort: spec.hostPort,
     volume,
     restartPolicy: spec.restartPolicy,
   });
