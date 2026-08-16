@@ -289,13 +289,16 @@ The repo ships a turnkey stack so you don't have to wire the pieces yourself:
 - **`.github/workflows/docker-publish.yml`** — builds a multi-arch image and
   pushes it to **GHCR** (`ghcr.io/<owner>/mcsm`) on push to `main`, on `v*`
   tags, or via manual dispatch.
-- **`docker-compose.yml`** — runs three services on two networks:
+- **`docker-compose.yml`** (plain `docker compose up`) and
+  **`docker-compose.coolify.yml`** (Coolify) — the same three services on two
+  networks; the Coolify variant additionally joins Coolify's Traefik proxy
+  network instead of publishing port 3000 on the host:
   - `mcsm` (the app), `infrarust` (the proxy) and `docker-socket-proxy`.
   - **Neither MCSM nor Infrarust mounts the raw Docker socket** — both reach it
     through the socket proxy over TCP, restricted to the endpoints they need.
   - The `infrarust` network is shared with the Minecraft containers MCSM
     creates; `dockerproxy` is internal (Docker API only).
-- **Infrarust config** — defined inline (as TOML) in `docker-compose.yml`'s
+- **Infrarust config** — defined inline (as TOML) in each compose file's
   top-level `configs:` block and injected at `/app/config/config.toml`; it
   enables Infrarust's `[docker]` provider against the socket proxy. (Inlined
   rather than bind-mounted because Coolify mishandles single-file bind mounts.)
@@ -305,8 +308,9 @@ The repo ships a turnkey stack so you don't have to wire the pieces yourself:
 1. Push to `main` (or run the workflow manually) so the image publishes to
    GHCR, then make the GHCR package **public** — or add registry credentials in
    Coolify so it can pull.
-2. In Coolify: **New Resource → Docker Compose**, point it at this repo (or
-   paste `docker-compose.yml`).
+2. In Coolify: **New Resource → Docker Compose**, point it at this repo and
+   set the **Docker Compose Location** to `docker-compose.coolify.yml` (or
+   paste that file).
 3. Assign a domain to the **`mcsm`** service on port `3000` (Coolify fills the
    `SERVICE_FQDN_MCSM_3000` magic variable and routes HTTPS to it).
 4. Point the DNS for your Minecraft domain (e.g. a wildcard `*.mc.example.com`)
@@ -319,11 +323,14 @@ The repo ships a turnkey stack so you don't have to wire the pieces yourself:
 ```bash
 git clone https://github.com/Niki2k1/mcsm.git
 cd mcsm
-# uncomment the mcsm `ports:` block in docker-compose.yml to expose the UI
 docker compose up -d
 ```
 
 The MCSM UI is then on `http://localhost:3000` and Minecraft on `:25565`.
+Because there is no HTTPS proxy in this setup, `docker-compose.yml` sets
+`NUXT_SESSION_COOKIE_SECURE: "false"` so logins also work from non-localhost
+addresses (LAN IP, Tailscale) over plain HTTP — set it back to `"true"` if you
+put a TLS-terminating reverse proxy in front.
 
 ## Project structure
 
