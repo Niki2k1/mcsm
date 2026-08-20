@@ -72,6 +72,31 @@
       </template>
     </UCard>
 
+    <!-- Duplicate -->
+    <UCard v-if="server.config">
+      <template #header>
+        <div>
+          <h3 class="font-semibold">Duplicate</h3>
+          <p class="text-sm text-muted">
+            Create an independent copy of this server — handy for testing
+            changes without touching the original.
+          </p>
+        </div>
+      </template>
+
+      <div class="flex flex-wrap items-center justify-between gap-4">
+        <div class="min-w-0">
+          <p class="text-sm font-medium">Duplicate server</p>
+          <p class="text-xs text-muted">
+            The new server gets the same configuration and (optionally) a copy
+            of the world. It runs under its own subdomain; a published host
+            port is not copied.
+          </p>
+        </div>
+        <UButton variant="soft" @click="openDuplicate">Duplicate</UButton>
+      </div>
+    </UCard>
+
     <!-- Danger Zone -->
     <UCard
       class="ring-error/40"
@@ -188,6 +213,54 @@
             @click="runDelete"
           >
             {{ deleteWithVolume ? "Delete everything" : "Delete server" }}
+          </UButton>
+        </div>
+      </template>
+    </UModal>
+
+    <!-- Duplicate -->
+    <UModal
+      v-model:open="duplicateOpen"
+      title="Duplicate server"
+      description="Creates a new server with the same configuration. Copying a large world can take a while."
+    >
+      <template #body>
+        <div class="space-y-4">
+          <UFormField label="Name" name="duplicateName">
+            <UInput
+              v-model="duplicateName"
+              class="w-full"
+              placeholder="My Server Copy"
+              autocomplete="off"
+            />
+          </UFormField>
+
+          <UFormField
+            label="Copy world data"
+            name="duplicateCopyWorld"
+            help="Copies the entire world volume (worlds, plugins/mods, configs). Turn off to start the copy with a fresh world."
+          >
+            <USwitch v-model="duplicateCopyWorld" />
+          </UFormField>
+        </div>
+      </template>
+
+      <template #footer>
+        <div class="flex justify-end gap-2 w-full">
+          <UButton
+            color="neutral"
+            variant="ghost"
+            :disabled="duplicating"
+            @click="duplicateOpen = false"
+          >
+            Cancel
+          </UButton>
+          <UButton
+            :disabled="!duplicateName.trim()"
+            :loading="duplicating"
+            @click="runDuplicate"
+          >
+            Duplicate
           </UButton>
         </div>
       </template>
@@ -358,6 +431,53 @@ async function saveGeneral() {
     });
   } finally {
     saving.value = false;
+  }
+}
+
+// --- Duplicate ------------------------------------------------------------------
+
+const duplicateOpen = ref(false);
+const duplicating = ref(false);
+const duplicateName = ref("");
+const duplicateCopyWorld = ref(true);
+
+function openDuplicate() {
+  duplicateName.value = `${server.value?.name ?? "Server"} Copy`;
+  duplicateCopyWorld.value = true;
+  duplicateOpen.value = true;
+}
+
+async function runDuplicate() {
+  duplicating.value = true;
+  try {
+    const result = await $fetch<{ id: string; name: string }>(
+      `/api/server/${id.value}/duplicate`,
+      {
+        method: "POST",
+        body: {
+          name: duplicateName.value.trim(),
+          copyWorld: duplicateCopyWorld.value,
+        },
+      }
+    );
+
+    toast.add({
+      title: "Server duplicated",
+      description: `“${duplicateName.value.trim()}” is starting.`,
+      color: "success",
+    });
+
+    duplicateOpen.value = false;
+    await refreshNuxtData("servers");
+    await navigateTo(`/server/${result.id}`);
+  } catch (error) {
+    toast.add({
+      title: "Error",
+      description: errorMessage(error, "Failed to duplicate the server."),
+      color: "error",
+    });
+  } finally {
+    duplicating.value = false;
   }
 }
 
