@@ -86,6 +86,22 @@
 
       <div class="divide-y divide-default">
         <div
+          v-if="server.config"
+          class="flex flex-wrap items-center justify-between gap-4 py-4 first:pt-0 last:pb-0"
+        >
+          <div class="min-w-0">
+            <p class="text-sm font-medium">Change server variant</p>
+            <p class="text-xs text-muted">
+              Switch the server software (e.g. Vanilla → Paper) to use plugins
+              or mods. The world is kept and a backup is created first.
+            </p>
+          </div>
+          <UButton color="error" variant="soft" @click="openMigrate">
+            Change variant
+          </UButton>
+        </div>
+
+        <div
           class="flex flex-wrap items-center justify-between gap-4 py-4 first:pt-0 last:pb-0"
         >
           <div class="min-w-0">
@@ -176,10 +192,92 @@
         </div>
       </template>
     </UModal>
+
+    <!-- Variant migration -->
+    <UModal
+      v-model:open="migrateOpen"
+      title="Change server variant"
+      :description="`Currently running ${currentVariantName}. The world is kept — a backup is created before anything changes.`"
+    >
+      <template #body>
+        <div class="space-y-4">
+          <div class="grid grid-cols-1 sm:grid-cols-2 gap-3">
+            <button
+              v-for="variant in variantOptions"
+              :key="variant.value"
+              type="button"
+              class="text-left rounded-lg ring-1 ring-default p-3 flex gap-3 items-center transition-all hover:ring-primary cursor-pointer"
+              :class="{ 'ring-2 ring-primary': migrateTarget === variant.value }"
+              @click="migrateTarget = variant.value"
+            >
+              <img
+                :src="variant.icon"
+                :alt="variant.name"
+                class="size-8 shrink-0"
+              />
+              <div class="min-w-0">
+                <p class="text-sm font-semibold">{{ variant.name }}</p>
+                <p class="text-xs text-muted">{{ variant.description }}</p>
+              </div>
+            </button>
+          </div>
+
+          <UAlert
+            icon="i-heroicons-exclamation-triangle"
+            color="warning"
+            variant="soft"
+            title="Plugins and mods don't carry over"
+            description="Files only the old variant can load (its plugins/mods and loader files) are removed, and world features added by mods stop working. Everything is backed up first, so the old setup stays restorable from the Backups tab. The server starts after the migration to install the new software."
+          />
+
+          <p class="text-sm">
+            Type
+            <span class="font-mono font-semibold">{{ server.name }}</span>
+            to confirm.
+          </p>
+          <UInput
+            v-model="migrateConfirmName"
+            class="w-full"
+            :placeholder="server.name"
+            autocomplete="off"
+          />
+        </div>
+      </template>
+
+      <template #footer>
+        <div class="flex justify-end gap-2 w-full">
+          <UButton
+            color="neutral"
+            variant="ghost"
+            :disabled="migrating"
+            @click="migrateOpen = false"
+          >
+            Cancel
+          </UButton>
+          <UButton
+            color="error"
+            :disabled="!migrateTarget || migrateConfirmName !== server.name"
+            :loading="migrating"
+            @click="runMigrate"
+          >
+            {{
+              migrateTarget
+                ? `Migrate to ${variantName(migrateTarget)}`
+                : "Migrate"
+            }}
+          </UButton>
+        </div>
+      </template>
+    </UModal>
   </div>
 </template>
 
 <script setup lang="ts">
+import vanilla from "~/assets/vanilla.webp";
+import paper from "~/assets/paper.svg";
+import fabric from "~/assets/fabric.png";
+import forge from "~/assets/forge.svg";
+
 const { id, server } = useServerDetail();
 const router = useRouter();
 const toast = useToast();
@@ -260,6 +358,91 @@ async function saveGeneral() {
     });
   } finally {
     saving.value = false;
+  }
+}
+
+// --- Danger zone: variant migration ----------------------------------------------
+
+/**
+ * Variants a server can migrate to. Modpack types are not offered — see the
+ * matching MIGRATION_TARGETS list in the variant endpoint.
+ */
+const VARIANTS = [
+  {
+    value: "VANILLA",
+    name: "Vanilla",
+    icon: vanilla,
+    description: "Plain Minecraft, no plugins or mods.",
+  },
+  {
+    value: "PAPER",
+    name: "Paper",
+    icon: paper,
+    description: "High-performance server with plugin support.",
+  },
+  {
+    value: "FABRIC",
+    name: "Fabric",
+    icon: fabric,
+    description: "Modular, lightweight mod loader.",
+  },
+  {
+    value: "FORGE",
+    name: "Forge",
+    icon: forge,
+    description: "The classic mod loader.",
+  },
+];
+
+const migrateOpen = ref(false);
+const migrating = ref(false);
+const migrateTarget = ref<string | null>(null);
+const migrateConfirmName = ref("");
+
+const variantOptions = computed(() =>
+  VARIANTS.filter((variant) => variant.value !== server.value?.config?.type)
+);
+
+function variantName(value: string) {
+  return VARIANTS.find((variant) => variant.value === value)?.name ?? value;
+}
+
+const currentVariantName = computed(() =>
+  variantName(server.value?.config?.type ?? "")
+);
+
+function openMigrate() {
+  migrateTarget.value = null;
+  migrateConfirmName.value = "";
+  migrateOpen.value = true;
+}
+
+async function runMigrate() {
+  if (!migrateTarget.value) return;
+  migrating.value = true;
+  try {
+    const result = await $fetch<{ id: string; backupId: number }>(
+      `/api/server/${id.value}/variant`,
+      { method: "POST", body: { type: migrateTarget.value } }
+    );
+
+    toast.add({
+      title: "Server variant changed",
+      description: `The server is starting as ${variantName(migrateTarget.value)}. The previous setup was saved as a backup.`,
+      color: "success",
+    });
+
+    migrateOpen.value = false;
+    await refreshNuxtData("servers");
+    await router.replace(`/server/${result.id}/settings`);
+  } catch (error) {
+    toast.add({
+      title: "Error",
+      description: errorMessage(error, "Failed to change the server variant."),
+      color: "error",
+    });
+  } finally {
+    migrating.value = false;
   }
 }
 

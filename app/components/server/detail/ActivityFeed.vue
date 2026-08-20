@@ -154,6 +154,12 @@ const STYLES: Record<
     bg: "bg-warning/10",
     text: "text-warning",
   },
+  "variant-changed": {
+    label: "Variant changed",
+    icon: "i-heroicons-arrows-right-left-20-solid",
+    bg: "bg-warning/10",
+    text: "text-warning",
+  },
   "jars-uploaded": {
     label: "Jars uploaded",
     icon: "i-heroicons-puzzle-piece-20-solid",

@@ -33,7 +33,7 @@
       <div class="space-y-4">
         <UFormField
           label="Type"
-          help="The server type is fixed when the server is created."
+          help="Migrate to a different variant from Settings → Danger Zone."
         >
           <UBadge color="neutral" variant="soft" size="lg">{{
             form.type

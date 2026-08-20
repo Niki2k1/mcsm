@@ -84,6 +84,14 @@ export const ROOT_CONFIG_EXTENSIONS = [".yml", ".yaml", ".toml"] as const;
  */
 const loaderCache = new Map<string, "fabric" | "forge" | "neoforge">();
 
+/**
+ * Forget a volume's cached loader. Needed when the loader *can* change after
+ * all — a variant migration swaps the server type on an existing volume.
+ */
+export function invalidateLoaderCache(volume: string | null | undefined) {
+  if (volume) loaderCache.delete(volume);
+}
+
 export async function detectLoader(
   id: string,
   volume: string | null | undefined

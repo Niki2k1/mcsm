@@ -19,6 +19,7 @@ export type ActivityAction =
   | "pregen-completed"
   | "pregen-cancelled"
   | "world-reset"
+  | "variant-changed"
   | "jars-uploaded"
   | "jars-updated"
   | "jar-deleted"
