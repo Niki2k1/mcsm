@@ -7,6 +7,7 @@ import { activityEvents } from "../db/schema";
 
 export type ActivityAction =
   | "created"
+  | "duplicated"
   | "started"
   | "stopped"
   | "restarted"

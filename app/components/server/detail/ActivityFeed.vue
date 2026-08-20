@@ -82,6 +82,12 @@ const STYLES: Record<
     bg: "bg-primary/10",
     text: "text-primary",
   },
+  duplicated: {
+    label: "Server duplicated",
+    icon: "i-heroicons-square-2-stack-20-solid",
+    bg: "bg-primary/10",
+    text: "text-primary",
+  },
   started: {
     label: "Server started",
     icon: "i-heroicons-play-20-solid",
