@@ -1,5 +1,6 @@
 import type { H3Event } from "h3";
 import type { ServerConfig } from "../schema/server.schema";
+import type { ActivityAction } from "./activity";
 
 export const MC_PORT = 25565;
 
@@ -208,7 +209,8 @@ export async function recreateServer(
   event: H3Event | undefined,
   serverId: string,
   data: ServerConfig,
-  activityDetail: string
+  activityDetail: string,
+  action: ActivityAction = "edited"
 ) {
   const { getServer, removeServer, provisionServer } = useDocker(event);
 
@@ -234,7 +236,7 @@ export async function recreateServer(
     restartPolicy: spec.restartPolicy,
   });
 
-  await recordActivity(volume, "edited", activityDetail);
+  await recordActivity(volume, action, activityDetail);
 
   return {
     id: container.id,
