@@ -37,7 +37,7 @@
     "fflate": "^0.8.3",
     "h3-zod": "^0.5.3",
     "jimp-compact": "0.16.1-2",
-    "minecraft-data": "^3.113.2",
+    "minecraft-data": "^3.116.0",
     "modern-monaco": "^0.4.2",
     "nuxt": "^4.5.2",
     "nuxt-auth-utils": "^0.5.30",

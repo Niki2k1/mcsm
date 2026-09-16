@@ -1,15 +1,18 @@
 import MinecraftData from "minecraft-data";
 
-export default defineEventHandler(async (event) => {
-  return Object.entries(MinecraftData.versionsByMinecraftVersion["pc"])
+// Older entries in minecraft-data carry no releaseType, so releases are
+// detected by name: snapshots are "23w45a", pre-releases "1.20-pre1"/"-rc1",
+// and since the 26.x naming scheme "26.3-snapshot-8".
+const PRE_RELEASE = /w|rc|pre|snapshot/;
+
+export default defineEventHandler(async () => {
+  return Object.values(MinecraftData.versionsByMinecraftVersion["pc"])
     .filter(
-      ([key, value]) =>
+      (value) =>
         value.releaseType === "release" ||
-        (!value.minecraftVersion?.includes("w") &&
-          !value.minecraftVersion?.includes("rc") &&
-          !value.minecraftVersion?.includes("pre"))
+        !PRE_RELEASE.test(value.minecraftVersion ?? "")
     )
-    .map(([key, value]) => ({
+    .map((value) => ({
       label: value.minecraftVersion,
       value: value.version,
     }));
