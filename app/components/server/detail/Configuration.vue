@@ -41,13 +41,15 @@
         </UFormField>
 
         <UFormField
-          v-if="form.type === 'VANILLA'"
+          v-if="supportsVersion"
           label="Version"
           name="VERSION"
+          help="Leave empty for the latest release. Applied on the next save (container recreation)."
         >
           <USelectMenu
             v-model="version"
             :items="versionOptions"
+            placeholder="Latest"
             class="w-full max-w-xs"
           />
         </UFormField>
@@ -745,6 +747,12 @@ const resourcePack = computed({
 const modrinthProjects = nullableField("MODRINTH_PROJECTS");
 const spigetResources = nullableField("SPIGET_RESOURCES");
 const customProperties = nullableField("CUSTOM_SERVER_PROPERTIES");
+
+// Modpack types pin their own Minecraft version, so only the plain server
+// types get a version picker. itzg honours VERSION for all of these.
+const supportsVersion = computed(() =>
+  ["VANILLA", "PAPER", "FABRIC", "FORGE"].includes(form.value?.type ?? "")
+);
 
 const version = computed({
   get: () => form.value?.VERSION ?? undefined,

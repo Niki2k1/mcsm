@@ -77,8 +77,8 @@ importers:
         specifier: 0.16.1-2
         version: 0.16.1-2
       minecraft-data:
-        specifier: ^3.113.2
-        version: 3.113.2
+        specifier: ^3.116.0
+        version: 3.116.0
       modern-monaco:
         specifier: ^0.4.2
         version: 0.4.2(typescript@6.0.3)
@@ -4456,8 +4456,8 @@ packages:
     resolution: {integrity: sha512-vqiC06CuhBTUdZH+RYl8sFrL096vA45Ok5ISO6sE/Mr1jRbGH4Csnhi8f3wKVl7x8mO4Au7Ir9D3Oyv1VYMFJw==}
     engines: {node: '>=12'}
 
-  minecraft-data@3.113.2:
-    resolution: {integrity: sha512-+3/9uO/xHcaY3ZA9iW22EGdGi8SAQKeMvbXZGrsd9zHrNhsx5KDo4nblfdwTFxm2xNJEwF67cFuWGSR8VS13Qw==}
+  minecraft-data@3.116.0:
+    resolution: {integrity: sha512-2XwQjnAqCdCdhEts6cm1nnmzeeCCbsiAhhuOa6rQOTKceGkwZTE8ZJwO3UeJLwvjEAh8S0/irXN1Xqv/lhceNg==}
 
   minimatch@10.2.6:
     resolution: {integrity: sha512-vpLQEs+VLCr1nU0BXS07maYoFwlDAH0gngQuuttxIwutDFEMHq2blX+8vpgxDdK3J1PwjCJiep77OitTZ4Ll1A==}
@@ -10677,7 +10677,7 @@ snapshots:
 
   mimic-fn@4.0.0: {}
 
-  minecraft-data@3.113.2: {}
+  minecraft-data@3.116.0: {}
 
   minimatch@10.2.6:
     dependencies:

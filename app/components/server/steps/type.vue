@@ -38,6 +38,7 @@
           v-if="field.type === 'version'"
           v-model="form.VERSION"
           :items="versionOptions"
+          placeholder="Latest"
           class="w-full"
         />
         <UInput
@@ -67,20 +68,20 @@ const { data: versionOptions } = useFetch("/api/minecraft/versions", {
   default: () => [],
 });
 
+const versionField = {
+  name: "VERSION",
+  label: "Version",
+  required: false,
+  type: "version",
+};
+
 const types = [
   {
     name: "Vanilla",
     value: "VANILLA",
     description: "Vanilla Minecraft server.",
     icon: vanilla,
-    customFields: [
-      {
-        name: "VERSION",
-        label: "Version",
-        required: true,
-        type: "version",
-      },
-    ],
+    customFields: [versionField],
   },
   {
     name: "Feed The Beast",
@@ -135,12 +136,14 @@ const types = [
     description:
       "PaperMC enhances Minecraft with fast, secure software, an expanding API, and reliable support.",
     icon: paper,
+    customFields: [versionField],
   },
   {
     name: "Fabric",
     value: "FABRIC",
     description: "Fabric is a modular, lightweight mod loader for Minecraft",
     icon: fabric,
+    customFields: [versionField],
   },
   {
     name: "Forge",
@@ -148,6 +151,7 @@ const types = [
     description:
       "Minecraft Forge is a free, open-source server that allows players to install and run Minecraft mods.",
     icon: forge,
+    customFields: [versionField],
   },
 ];
 
