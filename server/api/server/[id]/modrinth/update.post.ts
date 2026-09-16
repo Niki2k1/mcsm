@@ -30,7 +30,7 @@ export default defineEventHandler(async (event) => {
   }
 
   const resolvedLoader = await resolveServerLoader(server, loader);
-  const gameVersion = serverGameVersion(server.config);
+  const gameVersion = await serverGameVersion(server.config);
 
   // Re-hash and re-check right before updating — the cached updates response
   // may be stale.

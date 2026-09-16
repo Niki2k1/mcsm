@@ -22,10 +22,12 @@ export const serverConfigSchema = z.object({
   domain: z.string(),
   subdomain: z.string().nullable(),
   hostPort: z.number().int().min(1).max(65535).nullable().default(null),
+  // Older configs stored minecraft-data's numeric version id as the value;
+  // newer ones use the Mojang version id string. Only the label is used.
   VERSION: z
     .object({
       label: z.string(),
-      value: z.number(),
+      value: z.union([z.string(), z.number()]),
     })
     .nullable(),
   /** Heap size, e.g. "2GB", "6GB", "16GB". */

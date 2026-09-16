@@ -32,7 +32,7 @@ export default defineEventHandler(async (event) => {
   }
 
   const resolvedLoader = await resolveServerLoader(server, loader);
-  const gameVersion = serverGameVersion(server.config);
+  const gameVersion = await serverGameVersion(server.config);
 
   // Newest compatible build of the requested project…
   const version = await findCompatibleVersion(
