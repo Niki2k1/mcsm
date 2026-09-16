@@ -1,5 +1,4 @@
 import { createHash } from "node:crypto";
-import MinecraftData from "minecraft-data";
 import type { ServerConfig } from "../../schema/server.schema";
 
 /**
@@ -136,15 +135,12 @@ export function modrinthLoader(
  * The Minecraft version to match Modrinth builds against: the configured
  * version, or the latest release when the server runs "latest" (VERSION null).
  */
-export function serverGameVersion(config: ServerConfig | null | undefined): string {
+export async function serverGameVersion(
+  config: ServerConfig | null | undefined
+): Promise<string> {
   if (config?.VERSION?.label) return config.VERSION.label;
-
-  // Same "stable releases only" filter as /api/minecraft/versions, newest
-  // first by protocol number (monotonic across releases).
-  const versions = Object.values(MinecraftData.versionsByMinecraftVersion["pc"])
-    .filter((version) => version.releaseType === "release")
-    .sort((a, b) => (b.version ?? 0) - (a.version ?? 0));
-  return versions[0]?.minecraftVersion ?? "1.21.1";
+  const releases = await fetchMinecraftReleases();
+  return releases[0] ?? "1.21.1";
 }
 
 /**

@@ -48,11 +48,6 @@ const columns = [
     label: "📚 Libraries",
     children: [
       {
-        label: "minecraft-data",
-        to: "https://github.com/PrismarineJS/minecraft-data",
-        target: "_blank",
-      },
-      {
         label: "minecraft-motd-parser",
         to: "https://github.com/SnowFireWolf/minecraft-motd-parser",
         target: "_blank",

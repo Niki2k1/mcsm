@@ -63,7 +63,7 @@ export default defineEventHandler(async (event) => {
   }
 
   const resolvedLoader = await resolveServerLoader(server, loader);
-  const gameVersion = serverGameVersion(server.config);
+  const gameVersion = await serverGameVersion(server.config);
 
   // Hash every installed jar in one helper run, then ask Modrinth about them.
   const hashes = await jarHashes(id, dir);

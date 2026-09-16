@@ -48,7 +48,7 @@ jobs:
             type=raw,value=latest,enable={{is_default_branch}}
 
       # amd64 only. arm64 was dropped because building it under QEMU emulation
-      # is extremely slow for this app (large minecraft-data dep) and tends to
+      # is extremely slow for this app and tends to
       # hang. To support arm64, build it on a native arm64 runner instead.
       - name: Build and push
         uses: docker/build-push-action@v6

@@ -5,7 +5,7 @@ export type CreateForm = {
   subdomain: string | null;
   hostPort: number | null;
   /** Minecraft version as the option object the version select works with. */
-  VERSION: { label: string; value: number } | null;
+  VERSION: { label: string; value: string | number } | null;
   memory: string | null;
   MOTD: string;
   DIFFICULTY: "peaceful" | "easy" | "normal" | "hard";

@@ -601,7 +601,7 @@ onBeforeRouteLeave(() => {
 
 // --- Select options ------------------------------------------------------------
 
-const { data: versionOptions } = useFetch<{ label: string; value: number }[]>(
+const { data: versionOptions } = useFetch<{ label: string; value: string }[]>(
   "/api/minecraft/versions",
   { default: () => [] }
 );

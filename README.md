@@ -60,8 +60,7 @@ Properties → Review) for creating new servers.
 Edit game rules, difficulty, world settings and more from the Configuration
 tab. The MOTD editor supports `§` color/format codes and 1.16+ hex colors,
 with a live preview in the Minecraft font — including obfuscated-text
-animation. Minecraft versions are pulled from
-[`minecraft-data`](https://github.com/PrismarineJS/minecraft-data), and custom
+animation. Minecraft versions are pulled live from Mojang's version manifest, and custom
 container environment variables can be set on the Environment tab.
 
 ![Configuration tab — world & gameplay settings with the MOTD editor and § code picker](docs/public/screenshots/configuration-motd.png)
@@ -177,7 +176,7 @@ container ID, so they follow the server across edits.
 | Provisioning | [dockerode](https://github.com/apocas/dockerode) → Docker Engine API |
 | Console     | [xterm.js](https://xtermjs.org) + SSE (logs), [rcon-client](https://github.com/janispritzkau/rcon-client) (commands) |
 | MC proxy    | [Infrarust](https://github.com/Shadowner/Infrarust) (Docker-label discovery) |
-| MC data     | `minecraft-data`, `@sfirew/minecraft-motd-parser`, `@ahdg/minecraftstatuspinger`, `jimp` (skin rendering) |
+| MC data     | `@sfirew/minecraft-motd-parser`, `@ahdg/minecraftstatuspinger`, `jimp` (skin rendering) |
 
 ## Self-hosting
 
