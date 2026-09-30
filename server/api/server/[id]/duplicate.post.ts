@@ -17,7 +17,8 @@ export default defineEventHandler(async (event) => {
     copyWorld: z.boolean().default(true),
   });
 
-  const { getServer, docker, ensureImage, provisionServer } = useDocker(event);
+  const { getServer, docker, ensureImage, provisionServer, worldSource, worldExists, removeWorld } =
+    useDocker(event);
 
   let server: Awaited<ReturnType<typeof getServer>>;
   try {
@@ -49,7 +50,7 @@ export default defineEventHandler(async (event) => {
 
   const spec = await buildServerSpec(config, event);
 
-  // The container name and volume must be free — Docker would reject the
+  // The container name and world must be free — Docker would reject the
   // container with a raw 409, and copying into a volume that already holds
   // another world would silently mix two servers' files.
   const nameTaken =
@@ -59,11 +60,7 @@ export default defineEventHandler(async (event) => {
       .inspect()
       .then(() => true)
       .catch(() => false)) ||
-    (await docker
-      .getVolume(spec.volume)
-      .inspect()
-      .then(() => true)
-      .catch(() => false));
+    (await worldExists(spec.volume));
   if (nameTaken) {
     throw createError({
       statusCode: 409,
@@ -71,8 +68,10 @@ export default defineEventHandler(async (event) => {
     });
   }
 
-  if (copyWorld && server.volume) {
-    await docker.createVolume({ Name: spec.volume });
+  const targetSource = worldSource(spec.volume);
+
+  if (copyWorld && server.volumeSource) {
+    if (!targetSource.startsWith("/")) await docker.createVolume({ Name: targetSource });
     await ensureImage(HELPER_IMAGE);
 
     // Same consistency dance as backups: pause world saves (and BlueMap's
@@ -99,12 +98,12 @@ export default defineEventHandler(async (event) => {
           // failure of the reading tar, not just the writing one.
           "set -o pipefail; tar cf - --exclude='*.filepart' -C /src . | tar xf - -C /dst",
         ],
-        [`${server.volume}:/src:ro`, `${spec.volume}:/dst`]
+        [`${server.volumeSource}:/src:ro`, `${targetSource}:/dst`]
       );
 
       if (exitCode !== 0) {
         console.error("[mcsm] Duplicate copy helper failed:", output);
-        await docker.getVolume(spec.volume).remove().catch(() => {});
+        await removeWorld(targetSource);
         throw createError({
           statusCode: 500,
           statusMessage: "Failed to copy the world data",
@@ -130,6 +129,7 @@ export default defineEventHandler(async (event) => {
       port: spec.port,
       hostPort: spec.hostPort,
       volume: spec.volume,
+      volumeSource: targetSource,
       restartPolicy: spec.restartPolicy,
     });
 
@@ -139,7 +139,7 @@ export default defineEventHandler(async (event) => {
   } catch (error) {
     console.error(error);
     // Don't leave an orphaned copy of the world behind.
-    if (copyWorld) await docker.getVolume(spec.volume).remove().catch(() => {});
+    if (copyWorld) await removeWorld(targetSource);
     throw createError({
       statusCode: 500,
       statusMessage: "Failed to create the duplicate server",

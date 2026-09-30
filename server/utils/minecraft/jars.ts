@@ -317,7 +317,7 @@ export async function deleteJar(
     Entrypoint: ["/bin/rm"],
     Cmd: ["-f", `/data/${dir}/${name}`],
     HostConfig: {
-      Binds: [`${server.volume}:/data`],
+      Binds: [`${server.volumeSource}:/data`],
       NetworkMode: "none",
     },
     Labels: { "mcsm.helper": "true" },

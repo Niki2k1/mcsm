@@ -17,7 +17,7 @@ export default defineEventHandler(async (event) => {
   const { getServer } = useDocker(event);
   let volume: string | undefined;
   try {
-    volume = (await getServer(id)).volume;
+    volume = (await getServer(id)).volume ?? undefined;
   } catch {
     throw createError({ statusCode: 404, statusMessage: "Server not found" });
   }

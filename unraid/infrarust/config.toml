@@ -1,0 +1,20 @@
+# Infrarust config for the Unraid template. Copy this file to
+# /mnt/user/appdata/infrarust/config.toml (the folder mapped to /app/config).
+#
+# Routing is driven entirely by Docker labels: MCSM sets `infrarust.enable`,
+# `infrarust.domains` and `infrarust.port` on each server it creates, and the
+# [docker] provider below discovers them. Nothing needs to be edited per server.
+
+bind = "0.0.0.0:25565"
+# Infrarust insists that this directory exists even though routing is
+# label-driven; the container creates it under the mapped config folder.
+servers_dir = "/app/config/servers"
+
+[docker]
+# A unix:// endpoint makes Infrarust use the mounted socket at
+# /var/run/docker.sock; the path itself is not read from this value.
+endpoint = "unix:///var/run/docker.sock"
+# The user-defined network MCSM attaches Minecraft containers to.
+network = "infrarust"
+# Fallback polling interval; real-time updates come from the event stream.
+poll_interval = "10s"

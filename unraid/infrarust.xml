@@ -1,0 +1,35 @@
+<?xml version="1.0"?>
+<Container version="2">
+  <!--
+    Companion template for MCSM: the Infrarust proxy that routes each Minecraft
+    domain to its server container. Optional — MCSM can also publish a host
+    port per server — but required for the "one port, many servers" setup the
+    dashboard is built around.
+  -->
+  <Name>infrarust</Name>
+  <Repository>ghcr.io/shadowner/infrarust:latest</Repository>
+  <Registry>https://github.com/Shadowner/Infrarust/pkgs/container/infrarust</Registry>
+  <Network>infrarust</Network>
+  <MyIP/>
+  <Shell>sh</Shell>
+  <Privileged>false</Privileged>
+  <Support>https://github.com/Niki2k1/mcsm/issues</Support>
+  <Project>https://github.com/Shadowner/Infrarust</Project>
+  <Overview>Infrarust Minecraft proxy, preconfigured for MCSM. Listens on 25565 and routes players to the right server container by the domain they connect with, discovering servers from the Docker labels MCSM sets. No per-server config files.&#xD;
+&#xD;
+Setup: install the "mcsm" template first (it explains the shared "infrarust" network). Copy config.toml from https://github.com/Niki2k1/mcsm/tree/main/unraid/infrarust into the config folder mapped below before starting. Point a DNS wildcard such as *.mc.example.com at your Unraid IP and forward port 25565.</Overview>
+  <Category>GameServers: Network:Proxy</Category>
+  <TemplateURL>https://raw.githubusercontent.com/Niki2k1/mcsm/main/unraid/infrarust.xml</TemplateURL>
+  <Icon>https://raw.githubusercontent.com/Shadowner/Infrarust/main/docs/v2/public/logo.svg</Icon>
+  <ExtraParams>--restart unless-stopped</ExtraParams>
+  <!--
+    The image default CMD points at a config path that does not exist in v2
+    and still passes a flag the v2 binary no longer accepts (servers-dir), so
+    the arguments are overridden here.
+  -->
+  <PostArgs>--config /app/config/config.toml --plugins-dir /app/config/plugins</PostArgs>
+  <Requires>The "mcsm" template, the user-defined Docker network "infrarust", and a config.toml in the config folder (sample in the MCSM repo under unraid/infrarust/).</Requires>
+  <Config Name="Minecraft port" Target="25565" Default="25565" Mode="tcp" Description="Port players connect to. Forward it on your router." Type="Port" Display="always" Required="true" Mask="false">25565</Config>
+  <Config Name="Config folder" Target="/app/config" Default="/mnt/user/appdata/infrarust" Mode="rw" Description="Must contain config.toml (see the MCSM repo, unraid/infrarust/config.toml). The servers/ and plugins/ subfolders are created on first start." Type="Path" Display="always" Required="true" Mask="false">/mnt/user/appdata/infrarust</Config>
+  <Config Name="Docker socket" Target="/var/run/docker.sock" Default="/var/run/docker.sock" Mode="ro" Description="Read-only. Infrarust watches container events to discover MCSM servers." Type="Path" Display="advanced" Required="true" Mask="false">/var/run/docker.sock</Config>
+</Container>

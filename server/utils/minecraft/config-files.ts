@@ -118,7 +118,7 @@ export async function runInVolume(id: string, script: string): Promise<string> {
     Cmd: [script],
     Tty: true, // un-multiplexed stdout, so logs() is plain text
     HostConfig: {
-      Binds: [`${server.volume}:/data:ro`],
+      Binds: [`${server.volumeSource}:/data:ro`],
       NetworkMode: "none",
     },
     Labels: { "mcsm.helper": "true" },

@@ -113,6 +113,12 @@ export default defineNuxtConfig({
       // Shared Docker network that Infrarust is attached to, so it can resolve
       // and reach the created containers.
       network: "infrarust", // NUXT_DOCKER_NETWORK
+      // Absolute path on the Docker host under which new worlds
+      // (`servers/<volume>`) and backups (`backups/`) are stored as plain
+      // directories. Empty = Docker named volumes. Needed on hosts like Unraid,
+      // where named volumes fill the fixed-size Docker vDisk and are invisible
+      // to appdata backups. Existing worlds stay where they are.
+      dataRoot: "", // NUXT_DOCKER_DATA_ROOT
       // Docker daemons MCSM can provision on, keyed by id. Only `default` is
       // wired up today; add more entries for multi-host later.
       hosts: {
