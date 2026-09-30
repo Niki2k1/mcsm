@@ -1,4 +1,4 @@
-# MCSM — Minecraft Server Manager
+# MCSM — a server manager for Minecraft
 
 A self-hostable web app for spinning up and managing Minecraft servers. MCSM
 gives you a guided wizard to configure a server — type, version, memory,
@@ -413,7 +413,13 @@ nuxt.config.ts           # modules, runtimeConfig (docker hosts), NuxtHub
 
 ## License & attribution
 
-MCSM is licensed under the [MIT License](LICENSE).
+MCSM is licensed under the [MIT License](LICENSE). Maintained by Niklas
+Lausch — contact: [info@niki2k1.dev](mailto:info@niki2k1.dev).
+
+> **NOT AN OFFICIAL MINECRAFT PRODUCT. NOT APPROVED BY OR ASSOCIATED WITH
+> MOJANG OR MICROSOFT.** Minecraft is a trademark of Mojang AB. Creating a
+> server requires accepting the
+> [Minecraft EULA](https://aka.ms/MinecraftEULA) in the create dialog.
 
 The MIT license covers the code in this repository, but **not** the Infrarust
 proxy this stack runs as a separate container, which remains AGPL-3.0 (see

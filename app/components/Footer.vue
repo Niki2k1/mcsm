@@ -7,9 +7,19 @@
     </template>
 
     <template #left>
-      <p class="text-gray-500 dark:text-gray-400 text-sm">
-        Built with 🩵 by Niklas
-      </p>
+      <div class="text-gray-500 dark:text-gray-400 text-sm space-y-1">
+        <p>
+          Built with 🩵 by Niklas ·
+          <ULink to="mailto:info@niki2k1.dev" class="hover:text-default">
+            info@niki2k1.dev
+          </ULink>
+        </p>
+        <!-- Required by Mojang's usage guidelines (minecraft.net/usage-guidelines). -->
+        <p class="text-xs">
+          NOT AN OFFICIAL MINECRAFT PRODUCT. NOT APPROVED BY OR ASSOCIATED WITH
+          MOJANG OR MICROSOFT.
+        </p>
+      </div>
     </template>
 
     <template #default>

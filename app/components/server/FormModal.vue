@@ -46,14 +46,28 @@
         >
           Next
         </UButton>
-        <UButton
-          v-else
-          icon="i-heroicons-rocket-launch-20-solid"
-          :loading="loading"
-          @click="submit"
-        >
-          {{ isEdit ? "Save Changes" : "Create Server" }}
-        </UButton>
+        <div v-else class="flex items-center gap-4">
+          <UCheckbox v-if="!isEdit" v-model="eulaAccepted">
+            <template #label>
+              I agree to the
+              <ULink
+                to="https://aka.ms/MinecraftEULA"
+                target="_blank"
+                class="text-primary underline"
+              >
+                Minecraft EULA
+              </ULink>
+            </template>
+          </UCheckbox>
+          <UButton
+            icon="i-heroicons-rocket-launch-20-solid"
+            :loading="loading"
+            :disabled="!isEdit && !eulaAccepted"
+            @click="submit"
+          >
+            {{ isEdit ? "Save Changes" : "Create Server" }}
+          </UButton>
+        </div>
       </div>
     </template>
   </UModal>
@@ -89,6 +103,8 @@ const steps = [
 
 const step = ref(0);
 const loading = ref(false);
+// Minecraft's EULA must be accepted by the user, never on their behalf.
+const eulaAccepted = ref(false);
 
 const isEdit = computed(() => state.value.mode === "edit");
 
@@ -96,7 +112,10 @@ const isEdit = computed(() => state.value.mode === "edit");
 watch(
   () => state.value.open,
   (open) => {
-    if (open) step.value = 0;
+    if (open) {
+      step.value = 0;
+      eulaAccepted.value = false;
+    }
   }
 );
 
@@ -111,7 +130,7 @@ async function submit() {
     } else {
       await $fetch("/api/server/create", {
         method: "POST",
-        body: form.value,
+        body: { ...form.value, eula: eulaAccepted.value },
       });
     }
 

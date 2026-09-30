@@ -126,8 +126,8 @@ const {
 useSeoMeta({
   title: () =>
     server.value
-      ? `${server.value.name} · Minecraft Server Manager`
-      : "Server · Minecraft Server Manager",
+      ? `${server.value.name} · MCSM`
+      : "Server · MCSM",
 });
 
 // --- Live Minecraft ping (status badge + reused by the Overview tab) --------
