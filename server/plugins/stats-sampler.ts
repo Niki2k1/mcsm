@@ -49,7 +49,6 @@ export default defineNitroPlugin(() => {
             const pingPromise = useMinecraftServer({
               host: address.host,
               port: address.port,
-              disableSRV: import.meta.dev,
               timeout: 5_000,
             });
             // Swallow late rejections of a raced-out promise.
@@ -64,12 +63,9 @@ export default defineNitroPlugin(() => {
                 ).unref?.();
               }),
             ]);
-            const status = ping?.status as
-              | { players?: { online?: number; max?: number } }
-              | undefined;
-            players = status?.players?.online ?? null;
-            maxPlayers = status?.players?.max ?? null;
-            latency = (ping as { latency?: number })?.latency ?? null;
+            players = ping.status.players?.online ?? null;
+            maxPlayers = ping.status.players?.max ?? null;
+            latency = ping.latency;
           } catch {
             // Server still booting or ping not possible from here.
           }

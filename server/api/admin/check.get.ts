@@ -133,11 +133,11 @@ export default defineEventHandler(async (event) => {
   if (!isWildcard && tcp.ok) {
     try {
       const result = await useMinecraftServer({ host: target, timeout: 4000 });
-      const status = (result as { status?: any })?.status;
+      const { status } = result;
       mc = {
         ok: true,
-        version: status?.version?.name,
-        players: status?.players
+        version: status.version?.name,
+        players: status.players
           ? { online: status.players.online, max: status.players.max }
           : undefined,
       };

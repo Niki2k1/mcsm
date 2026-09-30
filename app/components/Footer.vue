@@ -58,8 +58,8 @@ const columns = [
         target: "_blank",
       },
       {
-        label: "MinecraftStatusPinger",
-        to: "https://github.com/woodendoors7/MinecraftStatusPinger",
+        label: "mineping",
+        to: "https://github.com/minescope/mineping",
         target: "_blank",
       },
       {

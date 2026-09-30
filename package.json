@@ -17,8 +17,8 @@
     "start": "mkdir -p .data/db && node .output/server/index.mjs"
   },
   "dependencies": {
-    "@ahdg/minecraftstatuspinger": "^1.1.5",
     "@libsql/client": "^0.17.4",
+    "@minescope/mineping": "^2.0.1",
     "@nuxt/ui": "^4.10.0",
     "@nuxthub/core": "^0.10.8",
     "@sfirew/minecraft-motd-parser": "^1.1.6",

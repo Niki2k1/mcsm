@@ -16,12 +16,12 @@ importers:
 
   .:
     dependencies:
-      '@ahdg/minecraftstatuspinger':
-        specifier: ^1.1.5
-        version: 1.1.5
       '@libsql/client':
         specifier: ^0.17.4
         version: 0.17.4
+      '@minescope/mineping':
+        specifier: ^2.0.1
+        version: 2.0.1
       '@nuxt/ui':
         specifier: ^4.10.0
         version: 4.10.0(015cd52684cc45eb2de4f2999d8084c5)
@@ -157,10 +157,6 @@ packages:
         optional: true
       bcrypt:
         optional: true
-
-  '@ahdg/minecraftstatuspinger@1.1.5':
-    resolution: {integrity: sha512-A/urKqyiytILlQaOGYx/WcpvC0qXLD6xWwpKclwvn3D2rTd07anECFe6E2Lge4hhz9gcW+Jyrk5jcKZGETZW0A==}
-    engines: {node: '>=16.0.0'}
 
   '@alloc/quick-lru@5.2.0':
     resolution: {integrity: sha512-UrcABB+4bUrFABwbluTIBErXwvbsU/V7TZWfmbgJfbkwiBuziS9gxdODUyuiecfdGQ85jglMW6juS3+z5TsKLw==}
@@ -1198,6 +1194,10 @@ packages:
   '@mapbox/whoots-js@3.1.0':
     resolution: {integrity: sha512-Es6WcD0nO5l+2BOQS4uLfNPYQaNDfbot3X1XUoloz+x0mPDS3eeORZJl06HXjwBG1fOGwCRnzK88LMdxKRrd6Q==}
     engines: {node: '>=6.0.0'}
+
+  '@minescope/mineping@2.0.1':
+    resolution: {integrity: sha512-1GDGHCT6cHVlRYkqaLNtKbUIru/g8yDy10qUxoiUAy/m7E36LE0f+DcIMtm3fyeZc6bjWZkufl0Niy2jYvu8NQ==}
+    engines: {node: '>=14'}
 
   '@napi-rs/lzma-linux-x64-gnu@1.5.1':
     resolution: {integrity: sha512-oTXEIha4SsuXdTA4Iyskj0kpdx2yVXdhd75c2v3xGrHFfVMsbhTPZU/nMPL4sWKo4pBHm3aucLaqGlF696dTyQ==}
@@ -6132,8 +6132,6 @@ snapshots:
       '@phc/format': 1.0.0
       '@poppinss/utils': 6.10.1
 
-  '@ahdg/minecraftstatuspinger@1.1.5': {}
-
   '@alloc/quick-lru@5.2.0': {}
 
   '@antfu/install-pkg@1.1.0':
@@ -6991,6 +6989,12 @@ snapshots:
       '@mapbox/point-geometry': 0.1.0
 
   '@mapbox/whoots-js@3.1.0': {}
+
+  '@minescope/mineping@2.0.1':
+    dependencies:
+      debug: 4.4.3
+    transitivePeerDependencies:
+      - supports-color
 
   '@napi-rs/lzma-linux-x64-gnu@1.5.1':
     optional: true
