@@ -65,7 +65,7 @@ import { errorMessage } from "~/utils/errors";
 
 definePageMeta({ layout: false });
 
-useSeoMeta({ title: "Setup · Minecraft Server Manager" });
+useSeoMeta({ title: "Setup · MCSM" });
 
 const { fetch: refreshSession } = useUserSession();
 

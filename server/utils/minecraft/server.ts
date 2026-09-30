@@ -1,16 +1,24 @@
-import mc from "@ahdg/minecraftstatuspinger";
+import { pingJava } from "@minescope/mineping";
 
 export interface ServerStatusOptions {
   host: string;
   port?: number;
   timeout?: number;
-  ping?: boolean;
   protocolVersion?: number;
-  throwOnParseError?: boolean;
-  disableSRV?: boolean;
-  disableJSONParse?: boolean;
 }
 
+/**
+ * Server List Ping a Java server. Resolves to `{ status, latency }`: `status`
+ * is the server's raw status JSON (version, players, description, favicon)
+ * and `latency` the wall-clock round trip in ms. mineping skips the SRV
+ * lookup on its own for IPs and localhost (e.g. dev tunnels).
+ */
 export const useMinecraftServer = async (options: ServerStatusOptions) => {
-  return await mc.lookup(options);
+  const started = performance.now();
+  const status = await pingJava(options.host, {
+    port: options.port,
+    timeout: options.timeout,
+    protocolVersion: options.protocolVersion,
+  });
+  return { status, latency: Math.round(performance.now() - started) };
 };

@@ -8,7 +8,6 @@ export default defineEventHandler(async (event) => {
       .string()
       .optional()
       .transform((val) => (val ? parseInt(val) : undefined)),
-    ping: z.boolean().optional(),
     protocolVersion: z.number().optional(),
   });
 
@@ -24,9 +23,8 @@ export default defineEventHandler(async (event) => {
       return await useMinecraftServer({
         timeout: 10000,
         ...options,
+        // 127.0.0.1 is an IP, so the pinger skips the SRV lookup.
         ...tunnel,
-        // 127.0.0.1 has no SRV records — skip the lookup.
-        disableSRV: true,
       });
     }
 

@@ -32,6 +32,14 @@
         <slot />
       </div>
     </UCard>
+
+    <!-- Required by Mojang's usage guidelines (minecraft.net/usage-guidelines). -->
+    <p
+      class="absolute inset-x-0 bottom-4 z-10 px-4 text-center text-xs text-muted"
+    >
+      NOT AN OFFICIAL MINECRAFT PRODUCT. NOT APPROVED BY OR ASSOCIATED WITH
+      MOJANG OR MICROSOFT.
+    </p>
   </div>
 </template>
 

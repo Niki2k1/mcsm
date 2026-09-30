@@ -1,7 +1,13 @@
+import { z } from "zod";
 import { serverConfigSchema } from "../../schema/server.schema";
 
+// The person creating the server must accept the Minecraft EULA themselves;
+// only then does the spec set EULA=true on the container. Edits, duplicates
+// and variants derive from a server whose creator already accepted it.
+const createSchema = serverConfigSchema.extend({ eula: z.literal(true) });
+
 export default defineEventHandler(async (event) => {
-  const data = await useValidatedBody(event, serverConfigSchema);
+  const { eula: _eula, ...data } = await useValidatedBody(event, createSchema);
 
   const { provisionServer } = useDocker(event);
   const spec = await buildServerSpec(data, event);

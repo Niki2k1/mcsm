@@ -1,6 +1,6 @@
 ---
 seo:
-  title: MCSM — Minecraft Server Manager
+  title: MCSM — a server manager for Minecraft
   description: Self-hostable Minecraft server manager — provision, route and
     manage Docker-based Minecraft servers from a web dashboard with backups,
     analytics, mods and a 3D world map built in.

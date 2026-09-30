@@ -1,4 +1,4 @@
-# MCSM — Minecraft Server Manager
+# MCSM — a server manager for Minecraft
 
 A self-hostable web app for spinning up and managing Minecraft servers. MCSM
 gives you a guided wizard to configure a server — type, version, memory,
@@ -176,7 +176,7 @@ container ID, so they follow the server across edits.
 | Provisioning | [dockerode](https://github.com/apocas/dockerode) → Docker Engine API |
 | Console     | [xterm.js](https://xtermjs.org) + SSE (logs), [rcon-client](https://github.com/janispritzkau/rcon-client) (commands) |
 | MC proxy    | [Infrarust](https://github.com/Shadowner/Infrarust) (Docker-label discovery) |
-| MC data     | `@sfirew/minecraft-motd-parser`, `@ahdg/minecraftstatuspinger`, `jimp` (skin rendering) |
+| MC data     | `@sfirew/minecraft-motd-parser`, `@minescope/mineping`, `jimp` (skin rendering) |
 
 ## Self-hosting
 
@@ -390,7 +390,9 @@ server/
     minecraft/           # skin rendering, status pinger, Modrinth client
   routes/map/            # BlueMap proxy (/map/<server>/)
   schema/server.schema.ts # shared zod config schema
-public/                  # Monocraft font, favicon
+public/                  # Monocraft font + OFL.txt, favicon, generated
+                         #   third-party-licenses.txt
+scripts/                 # third-party-licenses.mjs (runs during build)
 docs/                    # screenshots, design notes
 nuxt.config.ts           # modules, runtimeConfig (docker hosts), NuxtHub
 ```
@@ -422,7 +424,13 @@ nuxt.config.ts           # modules, runtimeConfig (docker hosts), NuxtHub
 
 ## License & attribution
 
-MCSM is licensed under the [MIT License](LICENSE).
+MCSM is licensed under the [MIT License](LICENSE). Maintained by Niklas
+Lausch — contact: [info@niki2k1.dev](mailto:info@niki2k1.dev).
+
+> **NOT AN OFFICIAL MINECRAFT PRODUCT. NOT APPROVED BY OR ASSOCIATED WITH
+> MOJANG OR MICROSOFT.** Minecraft is a trademark of Mojang AB. Creating a
+> server requires accepting the
+> [Minecraft EULA](https://aka.ms/MinecraftEULA) in the create dialog.
 
 The MIT license covers the code in this repository, but **not** the Infrarust
 proxy this stack runs as a separate container, which remains AGPL-3.0 (see
@@ -443,3 +451,18 @@ used to ship its own rebuild to add that feature; that's no longer needed.
 MCSM itself only talks to Infrarust over Docker labels and runs it as a
 separate, unmodified container — it doesn't link against or derive from
 Infrarust code.
+
+### Third-party software & assets
+
+- **npm dependencies** — `pnpm build` runs
+  [`scripts/third-party-licenses.mjs`](scripts/third-party-licenses.mjs), which
+  collects the license notice of every production dependency into
+  `public/third-party-licenses.txt`. It ships with the app and is linked from
+  the footer.
+- **Fonts** — [Monocraft](https://github.com/IdreesInc/Monocraft) (bundled in
+  `public/`) and [Poppins](https://github.com/itfoundry/Poppins) are licensed
+  under the SIL Open Font License 1.1 ([`public/OFL.txt`](public/OFL.txt)).
+- **Logos** — the MCSM logo and the Vanilla "V" icon are original artwork. The
+  CurseForge, Feed The Beast, Forge, Paper, Fabric and Modrinth logos are
+  trademarks of their respective owners and are only used to identify the
+  server types MCSM can run.
