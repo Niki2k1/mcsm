@@ -379,7 +379,9 @@ server/
     minecraft/           # skin rendering, status pinger, Modrinth client
   routes/map/            # BlueMap proxy (/map/<server>/)
   schema/server.schema.ts # shared zod config schema
-public/                  # Monocraft font, favicon
+public/                  # Monocraft font + OFL.txt, favicon, generated
+                         #   third-party-licenses.txt
+scripts/                 # third-party-licenses.mjs (runs during build)
 docs/                    # screenshots, design notes
 nuxt.config.ts           # modules, runtimeConfig (docker hosts), NuxtHub
 ```
@@ -432,3 +434,18 @@ used to ship its own rebuild to add that feature; that's no longer needed.
 MCSM itself only talks to Infrarust over Docker labels and runs it as a
 separate, unmodified container — it doesn't link against or derive from
 Infrarust code.
+
+### Third-party software & assets
+
+- **npm dependencies** — `pnpm build` runs
+  [`scripts/third-party-licenses.mjs`](scripts/third-party-licenses.mjs), which
+  collects the license notice of every production dependency into
+  `public/third-party-licenses.txt`. It ships with the app and is linked from
+  the footer.
+- **Fonts** — [Monocraft](https://github.com/IdreesInc/Monocraft) (bundled in
+  `public/`) and [Poppins](https://github.com/itfoundry/Poppins) are licensed
+  under the SIL Open Font License 1.1 ([`public/OFL.txt`](public/OFL.txt)).
+- **Logos** — the MCSM and Vanilla block icons are original artwork. The
+  CurseForge, Feed The Beast, Forge, Paper, Fabric and Modrinth logos are
+  trademarks of their respective owners and are only used to identify the
+  server types MCSM can run.

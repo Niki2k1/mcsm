@@ -67,6 +67,11 @@ const columns = [
         to: "https://github.com/IdreesInc/Monocraft",
         target: "_blank",
       },
+      {
+        label: "All third-party licenses",
+        to: "/third-party-licenses.txt",
+        target: "_blank",
+      },
     ],
   },
   {
