@@ -1,0 +1,54 @@
+<?xml version="1.0"?>
+<Container version="2">
+  <!--
+    Community Applications template for MCSM. Unraid installs one container per
+    template, so the compose stack is split: this file runs the dashboard,
+    infrarust.xml runs the optional Minecraft proxy. Both talk to the Docker
+    socket directly instead of going through docker-socket-proxy — Unraid has
+    no compose-style private network for the proxy, and the socket mount is
+    the platform's usual pattern.
+  -->
+  <Name>mcsm</Name>
+  <Repository>ghcr.io/niki2k1/mcsm:latest</Repository>
+  <Registry>https://github.com/Niki2k1/mcsm/pkgs/container/mcsm</Registry>
+  <!--
+    Must be a user-defined network (create it once with
+    `docker network create infrarust`). MCSM attaches every Minecraft server it
+    creates to this network and Infrarust resolves them by container name on
+    it; the default `bridge` network has no name resolution.
+  -->
+  <Network>infrarust</Network>
+  <MyIP/>
+  <Shell>sh</Shell>
+  <Privileged>false</Privileged>
+  <Support>https://github.com/Niki2k1/mcsm/issues</Support>
+  <Project>https://github.com/Niki2k1/mcsm</Project>
+  <Overview>Minecraft Server Manager: a web dashboard that provisions and manages Minecraft servers (Vanilla, Paper, Fabric, Forge, FTB and CurseForge modpacks) as Docker containers on your Unraid box. Guided create wizard, live console, player management, mod/plugin browser with Modrinth updates, backups, world pre-generation, BlueMap and per-server analytics.&#xD;
+&#xD;
+Before installing: create the shared network once with `docker network create infrarust` and enable "Preserve user defined networks" under Settings &gt; Docker, otherwise Unraid removes it on the next Docker restart. Then set NUXT_SESSION_PASSWORD (any string of 32+ characters) and check the server data root (worlds and backups are stored there, not in the Docker vDisk), open the WebUI and run the first-launch wizard. Install the companion "infrarust" template to route several servers by domain on port 25565; without it, publish a host port per server in the create wizard.&#xD;
+&#xD;
+Turn on Autostart for mcsm (and infrarust) in the Docker tab. Unraid stops containers with docker stop, so the restart policy alone does not bring them back after a reboot or Docker restart.</Overview>
+  <Category>GameServers: Tools:Utilities</Category>
+  <WebUI>http://[IP]:[PORT:3000]</WebUI>
+  <TemplateURL>https://raw.githubusercontent.com/Niki2k1/mcsm/main/unraid/mcsm.xml</TemplateURL>
+  <Icon>https://raw.githubusercontent.com/Niki2k1/mcsm/main/public/favicon.png</Icon>
+  <ExtraParams>--restart unless-stopped</ExtraParams>
+  <DonateText/>
+  <DonateLink/>
+  <Requires>A user-defined Docker network named "infrarust" (docker network create infrarust).</Requires>
+  <Config Name="WebUI port" Target="3000" Default="3000" Mode="tcp" Description="Dashboard and API port." Type="Port" Display="always" Required="true" Mask="false">3000</Config>
+  <Config Name="App data" Target="/app/.data" Default="/mnt/user/appdata/mcsm" Mode="rw" Description="SQLite database, uploaded icons and settings." Type="Path" Display="always" Required="true" Mask="false">/mnt/user/appdata/mcsm</Config>
+  <Config Name="Server data root" Target="NUXT_DOCKER_DATA_ROOT" Default="/mnt/user/appdata/mcsm-data" Mode="" Description="Host folder where worlds (servers/NAME) and backups (backups/) are stored. Keeps them out of the Docker vDisk, which worlds would quickly fill, and makes them visible to appdata backups. Leave empty to use Docker named volumes. Changing it later does not move existing worlds or backups." Type="Variable" Display="always" Required="false" Mask="false">/mnt/user/appdata/mcsm-data</Config>
+  <Config Name="Docker socket" Target="/var/run/docker.sock" Default="/var/run/docker.sock" Mode="rw" Description="MCSM creates, starts and stops the Minecraft server containers through the Docker API." Type="Path" Display="advanced" Required="true" Mask="false">/var/run/docker.sock</Config>
+  <Config Name="Session password" Target="NUXT_SESSION_PASSWORD" Default="" Mode="" Description="Encrypts login cookies. Use at least 32 characters (e.g. openssl rand -base64 32). Keep it stable: changing it logs every user out." Type="Variable" Display="always" Required="true" Mask="true"></Config>
+  <Config Name="RCON password" Target="NUXT_RCON_PASSWORD" Default="minecraft" Mode="" Description="Password MCSM sets on every server it creates and uses for the console. The RCON port is never published. Change the default." Type="Variable" Display="always" Required="true" Mask="true">minecraft</Config>
+  <Config Name="Secure session cookie" Target="NUXT_SESSION_COOKIE_SECURE" Default="false" Mode="" Description="Browsers only store a Secure cookie over HTTPS, so this is off for plain http://[IP]:3000 access. Set to true if you reach MCSM through a TLS-terminating reverse proxy (SWAG, NPM, Traefik)." Type="Variable" Display="always" Required="true" Mask="false">false</Config>
+  <Config Name="Shared Docker network" Target="NUXT_DOCKER_NETWORK" Default="infrarust" Mode="" Description="Network new Minecraft containers join. Must match the network this container and Infrarust run on." Type="Variable" Display="advanced" Required="true" Mask="false">infrarust</Config>
+  <Config Name="Internal URL" Target="NUXT_INTERNAL_URL" Default="http://mcsm:3000" Mode="" Description="How Minecraft containers reach MCSM on the shared network (server icon downloads). Hostname is this container's name; change it if you rename the container." Type="Variable" Display="advanced" Required="true" Mask="false">http://mcsm:3000</Config>
+  <Config Name="Minecraft server image" Target="NUXT_DOCKER_IMAGE" Default="itzg/minecraft-server" Mode="" Description="Image used for every server MCSM creates." Type="Variable" Display="advanced" Required="false" Mask="false">itzg/minecraft-server</Config>
+  <Config Name="RCON port" Target="NUXT_RCON_PORT" Default="25575" Mode="" Description="RCON port inside each server container (not published)." Type="Variable" Display="advanced" Required="false" Mask="false">25575</Config>
+  <Config Name="Session lifetime (seconds)" Target="NUXT_SESSION_MAX_AGE" Default="604800" Mode="" Description="How long a login stays valid. Default one week." Type="Variable" Display="advanced" Required="false" Mask="false">604800</Config>
+  <Config Name="Microsoft OAuth client ID" Target="NUXT_OAUTH_MICROSOFT_CLIENT_ID" Default="" Mode="" Description="Optional. Enables 'Sign in with Microsoft' (Entra ID app registration). Redirect URI: https://your-domain/auth/microsoft" Type="Variable" Display="advanced" Required="false" Mask="false"></Config>
+  <Config Name="Microsoft OAuth client secret" Target="NUXT_OAUTH_MICROSOFT_CLIENT_SECRET" Default="" Mode="" Description="Optional. Secret of the Entra ID app registration." Type="Variable" Display="advanced" Required="false" Mask="true"></Config>
+  <Config Name="Microsoft OAuth tenant" Target="NUXT_OAUTH_MICROSOFT_TENANT" Default="common" Mode="" Description="Optional. 'common' allows personal and work accounts; otherwise your tenant ID." Type="Variable" Display="advanced" Required="false" Mask="false">common</Config>
+</Container>

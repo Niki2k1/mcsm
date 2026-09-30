@@ -51,7 +51,7 @@ export default defineEventHandler(async (event) => {
       "-c",
       `rm -rf "/data/${level}" "/data/${level}_nether" "/data/${level}_the_end"`,
     ],
-    [`${server.volume}:/data`]
+    [`${server.volumeSource}:/data`]
   );
   if (exitCode !== 0) {
     console.error("[mcsm] World reset helper failed:", output);

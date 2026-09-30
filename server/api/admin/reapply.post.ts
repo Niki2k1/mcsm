@@ -36,6 +36,7 @@ export default defineEventHandler(async (event) => {
         port: spec.port,
         hostPort: spec.hostPort,
         volume,
+        volumeSource: existing.volumeSource ?? undefined,
       });
 
       applied++;

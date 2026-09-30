@@ -13,12 +13,12 @@ import { backups } from "../db/schema";
  *
  * The Docker socket proxy in production has no EXEC permission, so we can't
  * `docker exec` into running servers. Instead, every backup operation runs a
- * short-lived alpine container that mounts the world volume and the shared
- * `mcsm-backups` volume, and tars/untars between them. That only needs
+ * short-lived alpine container that mounts the world and the shared backup
+ * store (the `mcsm-backups` volume, or `<dataRoot>/backups`), and tars/untars
+ * between them. That only needs
  * CONTAINERS/VOLUMES/POST permissions, which the proxy allows.
  */
 
-const BACKUP_VOLUME = "mcsm-backups";
 /** Image used for disposable helper containers (also reused by bluemap.ts). */
 export const HELPER_IMAGE = "alpine:3.22";
 
@@ -75,11 +75,6 @@ export async function runHelper(
   }
 }
 
-async function ensureBackupVolume(docker: Docker) {
-  // Creating an existing volume is a no-op in the Docker API.
-  await docker.createVolume({ Name: BACKUP_VOLUME });
-}
-
 // --- Public API -----------------------------------------------------------------
 
 export async function listBackups(volume: string) {
@@ -109,7 +104,8 @@ export async function createBackup(
   serverId: string,
   label?: string
 ) {
-  const { getServer, docker, ensureImage } = useDocker(event);
+  const { getServer, docker, ensureImage, backupSource, ensureBackupStore } =
+    useDocker(event);
   const server = await getServer(serverId);
   if (!server.volume) {
     throw createError({
@@ -118,7 +114,7 @@ export async function createBackup(
     });
   }
 
-  await ensureBackupVolume(docker);
+  await ensureBackupStore();
   await ensureImage(HELPER_IMAGE);
 
   const filename = `${server.volume}/${Date.now()}.tar.gz`;
@@ -155,7 +151,7 @@ export async function createBackup(
         // line so we can record it.
         `mkdir -p "/backups/${server.volume}" && tar czf "/backups/${filename}" --exclude='*.filepart' -C /data . && stat -c %s "/backups/${filename}"`,
       ],
-      [`${server.volume}:/data:ro`, `${BACKUP_VOLUME}:/backups`]
+      [`${server.volumeSource}:/data:ro`, `${backupSource}:/backups`]
     );
 
     if (exitCode !== 0) {
@@ -202,7 +198,7 @@ export async function restoreBackup(
   serverId: string,
   backupId: number
 ) {
-  const { getServer, docker, ensureImage, stopServer, startServer } =
+  const { getServer, docker, ensureImage, stopServer, startServer, backupSource } =
     useDocker(event);
   const server = await getServer(serverId);
   if (!server.volume) {
@@ -228,7 +224,7 @@ export async function restoreBackup(
         // Clear the volume (including dotfiles) before extracting.
         `find /data -mindepth 1 -delete && tar xzf "/backups/${backup.filename}" -C /data`,
       ],
-      [`${server.volume}:/data`, `${BACKUP_VOLUME}:/backups:ro`]
+      [`${server.volumeSource}:/data`, `${backupSource}:/backups:ro`]
     );
 
     if (exitCode !== 0) {
@@ -250,7 +246,7 @@ export async function restoreBackup(
 /**
  * Open a download stream for a backup tarball.
  *
- * The tarball lives on the `mcsm-backups` Docker volume, which MCSM can't
+ * The tarball lives in the backup store on the Docker host, which MCSM can't
  * read directly — so a helper container `cat`s it to stdout and we stream
  * that (demultiplexed) to the caller. The returned `cleanup` must be called
  * once the consumer is done (or has aborted) to remove the helper container.
@@ -260,7 +256,7 @@ export async function openBackupDownload(
   serverId: string,
   backupId: number
 ) {
-  const { getServer, docker, ensureImage } = useDocker(event);
+  const { getServer, docker, ensureImage, backupSource } = useDocker(event);
   const server = await getServer(serverId);
   if (!server.volume) {
     throw createError({ statusCode: 400, statusMessage: "Server has no volume" });
@@ -277,7 +273,7 @@ export async function openBackupDownload(
     Image: HELPER_IMAGE,
     Cmd: ["cat", `/backups/${backup.filename}`],
     HostConfig: {
-      Binds: [`${BACKUP_VOLUME}:/backups:ro`],
+      Binds: [`${backupSource}:/backups:ro`],
       NetworkMode: "none",
     },
     Labels: { "mcsm.helper": "true" },
@@ -327,13 +323,14 @@ export async function uploadBackup(
   body: NodeJS.ReadableStream,
   label?: string
 ) {
-  const { getServer, docker, ensureImage } = useDocker(event);
+  const { getServer, docker, ensureImage, backupSource, ensureBackupStore } =
+    useDocker(event);
   const server = await getServer(serverId);
   if (!server.volume) {
     throw createError({ statusCode: 400, statusMessage: "Server has no volume" });
   }
 
-  await docker.createVolume({ Name: BACKUP_VOLUME });
+  await ensureBackupStore();
   await ensureImage(HELPER_IMAGE);
 
   const filename = `${server.volume}/${Date.now()}.tar.gz`;
@@ -356,7 +353,7 @@ export async function uploadBackup(
     OpenStdin: true,
     StdinOnce: true,
     HostConfig: {
-      Binds: [`${BACKUP_VOLUME}:/backups`],
+      Binds: [`${backupSource}:/backups`],
       NetworkMode: "none",
     },
     Labels: { "mcsm.helper": "true" },
@@ -422,7 +419,7 @@ export async function deleteBackup(
   serverId: string,
   backupId: number
 ) {
-  const { getServer, docker, ensureImage } = useDocker(event);
+  const { getServer, docker, ensureImage, backupSource } = useDocker(event);
   const server = await getServer(serverId);
   if (!server.volume) {
     throw createError({ statusCode: 400, statusMessage: "Server has no volume" });
@@ -438,7 +435,7 @@ export async function deleteBackup(
   const { exitCode, output } = await runHelper(
     docker,
     ["rm", "-f", `/backups/${backup.filename}`],
-    [`${BACKUP_VOLUME}:/backups`]
+    [`${backupSource}:/backups`]
   );
   if (exitCode !== 0) {
     console.error("[mcsm] Backup delete helper failed:", output);

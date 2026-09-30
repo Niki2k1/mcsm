@@ -224,6 +224,7 @@ built server — see [Nuxt runtime config](https://nuxt.com/docs/guide/going-fur
 | `NUXT_DOCKER_HOSTS_DEFAULT_SOCKET_PATH` | ✅     | Path to the Docker socket MCSM provisions on. Defaults to `/var/run/docker.sock`. |
 | `NUXT_DOCKER_NETWORK`                 | ✅       | Shared Docker network Infrarust and the MC containers join. Default `infrarust`. |
 | `NUXT_DOCKER_IMAGE`                   | –        | Server image. Default `itzg/minecraft-server`. |
+| `NUXT_DOCKER_DATA_ROOT`               | –        | Absolute host path for worlds (`servers/<name>`) and backups (`backups/`) as plain directories instead of named volumes. Recommended on Unraid. Doesn't migrate existing data. |
 | `NUXT_RCON_PASSWORD`                  | –        | RCON password set on every server for the console. Default `minecraft`. Change it. |
 | `NUXT_RCON_PORT`                      | –        | RCON port inside the container. Default `25575` (never published). |
 | `NUXT_INTERNAL_URL`                   | –        | URL where the Minecraft containers reach MCSM on the shared Docker network (for icon downloads). Default `http://mcsm:3000`. |
@@ -316,6 +317,19 @@ The repo ships a turnkey stack so you don't have to wire the pieces yourself:
    at the host — Infrarust listens on `25565`.
 5. Deploy, run the first-launch setup wizard, then **add at least one domain**
    in the Admin panel (the create wizard needs it).
+
+### Unraid
+
+Community Applications templates for `mcsm` and `infrarust` live in
+[`unraid/`](unraid/). Create the shared network once
+(`docker network create infrarust`, and enable *Preserve user defined
+networks* under Settings → Docker), add
+`https://github.com/Niki2k1/mcsm` as a template repository under
+**Apps → Settings**, then install both templates and switch **Autostart** on
+for both in the Docker tab (Unraid stops containers with `docker stop`, so
+the restart policy alone won't bring them back after a reboot). Full
+walkthrough in the
+[installation docs](docs/content/1.getting-started/2.installation.md#deploy-on-unraid).
 
 ### Plain Docker
 

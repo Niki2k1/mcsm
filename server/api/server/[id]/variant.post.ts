@@ -82,7 +82,7 @@ export default defineEventHandler(async (event) => {
   const { exitCode, output } = await runHelper(
     docker,
     ["sh", "-c", `rm -rf ${stalePaths.map((path) => `"${path}"`).join(" ")}`],
-    [`${server.volume}:/data`]
+    [`${server.volumeSource}:/data`]
   );
   if (exitCode !== 0) {
     console.error("[mcsm] Variant migration helper failed:", output);

@@ -83,6 +83,24 @@ function connect(host: DockerHostConfig): Docker {
   return new Docker({ socketPath: host.socketPath || "/var/run/docker.sock" });
 }
 
+type DataMount = { Name?: string; Source?: string; Destination?: string; Type?: string };
+
+/**
+ * A server's world identity and the Binds source it is mounted from. Named
+ * volumes are identified by their name; host directories (see `dataRoot`) by
+ * their basename, which is the same sanitized `mc-<name>` a named volume would
+ * have had — so history keyed by volume keeps working either way.
+ */
+function worldMount(mounts: DataMount[] = []) {
+  const mount = mounts.find((entry) => entry.Destination === "/data");
+  if (mount?.Name) return { volume: mount.Name, volumeSource: mount.Name };
+  if (mount?.Type === "bind" && mount.Source) {
+    const volume = mount.Source.replace(/\/+$/, "").split("/").pop() || null;
+    return { volume, volumeSource: volume ? mount.Source : null };
+  }
+  return { volume: null, volumeSource: null };
+}
+
 function parseConfig(labels: Record<string, string> = {}): ServerConfig | null {
   try {
     return labels["mcsm.config"]
@@ -103,8 +121,14 @@ export type ProvisionOptions = {
   port?: number;
   hostPort?: number;
   network?: string;
-  /** Named volume mounted at /data for world persistence. */
+  /** World identity mounted at /data (a named volume unless `dataRoot` is set). */
   volume?: string;
+  /**
+   * Binds source to mount instead of the one derived from `volume` — lets a
+   * recreated container keep the storage its world already lives on, even if
+   * `dataRoot` was changed since.
+   */
+  volumeSource?: string;
   /** Docker restart policy ("unless-stopped" unless auto-stop is enabled). */
   restartPolicy?: string;
 };
@@ -127,6 +151,69 @@ export const useDocker = (event?: H3Event, hostId = "default") => {
   }
 
   const docker = connect(host);
+
+  const dataRoot = (config.docker?.dataRoot ?? "").trim().replace(/\/+$/, "");
+  if (dataRoot && !dataRoot.startsWith("/")) {
+    throw createError({
+      statusCode: 500,
+      statusMessage: "NUXT_DOCKER_DATA_ROOT must be an absolute path on the Docker host",
+    });
+  }
+
+  /**
+   * Binds source for a new world: a host directory under `dataRoot` when set,
+   * otherwise a named volume. Named volumes live inside Docker's own storage,
+   * which on e.g. Unraid is a small fixed-size vDisk that worlds quickly fill.
+   * Docker creates missing bind directories itself.
+   */
+  function worldSource(volume: string) {
+    return dataRoot ? `${dataRoot}/servers/${volume}` : volume;
+  }
+
+  /** Binds source for the shared backup store. */
+  const backupSource = dataRoot ? `${dataRoot}/backups` : "mcsm-backups";
+
+  async function ensureBackupStore() {
+    // Creating an existing volume is a no-op in the Docker API.
+    if (!dataRoot) await docker.createVolume({ Name: backupSource });
+  }
+
+  /** Whether a world with this identity already exists in the current store. */
+  async function worldExists(volume: string) {
+    if (!dataRoot) {
+      return docker
+        .getVolume(volume)
+        .inspect()
+        .then(() => true)
+        .catch(() => false);
+    }
+    await ensureImage(HELPER_IMAGE);
+    const { exitCode } = await runHelper(
+      docker,
+      ["test", "-e", `/servers/${volume}`],
+      [`${dataRoot}/servers:/servers:ro`]
+    );
+    return exitCode === 0;
+  }
+
+  /** Delete a world by the Binds source it is mounted from. Best-effort. */
+  async function removeWorld(source: string) {
+    try {
+      if (!source.startsWith("/")) {
+        await docker.getVolume(source).remove();
+        return;
+      }
+      const slash = source.lastIndexOf("/");
+      const parent = source.slice(0, slash) || "/";
+      const name = source.slice(slash + 1);
+      // Guards the rm -rf against a bind that isn't a world directory.
+      if (!/^[a-z0-9-]+$/.test(name)) return;
+      await ensureImage(HELPER_IMAGE);
+      await runHelper(docker, ["rm", "-rf", `/parent/${name}`], [`${parent}:/parent`]);
+    } catch {
+      // Volume in use or already gone — ignore.
+    }
+  }
 
   /** Pull the image if it is not already present on the host. */
   async function ensureImage(image: string) {
@@ -159,7 +246,9 @@ export const useDocker = (event?: H3Event, hostId = "default") => {
       HostConfig: {
         Memory: options.memoryBytes,
         RestartPolicy: { Name: options.restartPolicy ?? "unless-stopped" },
-        Binds: options.volume ? [`${options.volume}:/data`] : undefined,
+        Binds: options.volume
+          ? [`${options.volumeSource ?? worldSource(options.volume)}:/data`]
+          : undefined,
         NetworkMode: network,
         PortBindings: options.hostPort ? { [`${port}/tcp`]: [{ HostPort: options.hostPort.toString() }] } : undefined,
       },
@@ -187,10 +276,7 @@ export const useDocker = (event?: H3Event, hostId = "default") => {
         type: cfg?.type ?? null,
         running: container.State === "running",
         config: cfg,
-        volume:
-          (container.Mounts ?? []).find(
-            (mount) => mount.Destination === "/data"
-          )?.Name ?? null,
+        volume: worldMount(container.Mounts).volume,
       };
     });
   }
@@ -200,9 +286,7 @@ export const useDocker = (event?: H3Event, hostId = "default") => {
     const info = await docker.getContainer(id).inspect();
     const labels = info.Config?.Labels ?? {};
     const cfg = parseConfig(labels);
-    const volume = (info.Mounts ?? []).find(
-      (mount) => mount.Destination === "/data"
-    )?.Name;
+    const { volume, volumeSource } = worldMount(info.Mounts);
 
     return {
       id: info.Id,
@@ -212,6 +296,8 @@ export const useDocker = (event?: H3Event, hostId = "default") => {
       config: cfg,
       containerName: (info.Name ?? "").replace(/^\//, ""),
       volume,
+      /** Binds source for `volume` — use this, not `volume`, in helper mounts. */
+      volumeSource,
       // When the container started (ISO string) — used for uptime display.
       startedAt: info.State?.Running ? (info.State?.StartedAt ?? null) : null,
       createdAt: info.Created ?? null,
@@ -219,8 +305,8 @@ export const useDocker = (event?: H3Event, hostId = "default") => {
   }
 
   /**
-   * Stop and remove a server. The named volume (the world) is preserved unless
-   * `removeVolume` is set.
+   * Stop and remove a server. The world (volume or data directory) is
+   * preserved unless `removeVolume` is set.
    */
   async function removeServer(id: string, opts?: { removeVolume?: boolean }) {
     const container = docker.getContainer(id);
@@ -234,16 +320,8 @@ export const useDocker = (event?: H3Event, hostId = "default") => {
     await container.remove({ force: true });
 
     if (opts?.removeVolume) {
-      const volume = (info.Mounts ?? []).find(
-        (mount) => mount.Destination === "/data"
-      )?.Name;
-      if (volume) {
-        try {
-          await docker.getVolume(volume).remove();
-        } catch {
-          // Volume in use or already gone — ignore.
-        }
-      }
+      const { volumeSource } = worldMount(info.Mounts);
+      if (volumeSource) await removeWorld(volumeSource);
     }
   }
 
@@ -274,6 +352,12 @@ export const useDocker = (event?: H3Event, hostId = "default") => {
 
   return {
     docker,
+    dataRoot,
+    worldSource,
+    backupSource,
+    ensureBackupStore,
+    worldExists,
+    removeWorld,
     ensureImage,
     provisionServer,
     listServers,

@@ -234,6 +234,7 @@ export async function recreateServer(
     port: spec.port,
     hostPort: spec.hostPort,
     volume,
+    volumeSource: existing.volumeSource ?? undefined,
     restartPolicy: spec.restartPolicy,
   });
 

@@ -110,7 +110,7 @@ export async function acceptMojangDownload(
         `elif grep -Eq "accept-download:[[:space:]]*true" "${conf}"; then echo already-accepted; ` +
         `else sed -i -E "s/accept-download:[[:space:]]*false/accept-download: true/" "${conf}" && echo patched; fi`,
     ],
-    [`${server.volume}:/data`]
+    [`${server.volumeSource}:/data`]
   );
 
   if (exitCode !== 0) {
