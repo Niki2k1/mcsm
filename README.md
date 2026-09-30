@@ -176,7 +176,7 @@ container ID, so they follow the server across edits.
 | Provisioning | [dockerode](https://github.com/apocas/dockerode) → Docker Engine API |
 | Console     | [xterm.js](https://xtermjs.org) + SSE (logs), [rcon-client](https://github.com/janispritzkau/rcon-client) (commands) |
 | MC proxy    | [Infrarust](https://github.com/Shadowner/Infrarust) (Docker-label discovery) |
-| MC data     | `@sfirew/minecraft-motd-parser`, `@ahdg/minecraftstatuspinger`, `jimp` (skin rendering) |
+| MC data     | `@sfirew/minecraft-motd-parser`, `@minescope/mineping`, `jimp` (skin rendering) |
 
 ## Self-hosting
 
