@@ -1,0 +1,7 @@
+<?xml version="1.0"?>
+<CommunityApplications>
+  <Profile>MCSM (Minecraft Server Manager) is a self-hosted web dashboard that creates and manages Minecraft servers (Vanilla, Paper, Fabric, Forge and modpacks) as Docker containers. This repository provides two templates: mcsm, the dashboard, and infrarust, an optional proxy that routes players to each server by domain on a single port 25565. Worlds and backups are stored as plain folders in appdata. Report problems on the GitHub issue tracker.</Profile>
+  <Icon>https://raw.githubusercontent.com/Niki2k1/mcsm/main/public/favicon.png</Icon>
+  <WebPage>https://github.com/Niki2k1/mcsm</WebPage>
+  <Forum>https://github.com/Niki2k1/mcsm/issues</Forum>
+</CommunityApplications>

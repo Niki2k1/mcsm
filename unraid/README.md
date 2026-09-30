@@ -3,6 +3,7 @@
 - `mcsm.xml` — the dashboard. Required.
 - `infrarust.xml` — the Minecraft proxy for domain-based routing on port 25565. Optional.
 - `infrarust/config.toml` — copy to `/mnt/user/appdata/infrarust/config.toml` before starting the proxy.
+- `../ca_profile.xml` — repository profile Community Applications shows on the repo page; required for submission.
 - `infrarust.png` — the Infrarust logo rendered to PNG; Unraid's Docker tab can't show the upstream SVG.
 
 Both containers must run on a user-defined network named `infrarust`
