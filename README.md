@@ -325,7 +325,10 @@ Community Applications templates for `mcsm` and `infrarust` live in
 (`docker network create infrarust`, and enable *Preserve user defined
 networks* under Settings → Docker), add
 `https://github.com/Niki2k1/mcsm` as a template repository under
-**Apps → Settings**, then install both templates. Full walkthrough in the
+**Apps → Settings**, then install both templates and switch **Autostart** on
+for both in the Docker tab (Unraid stops containers with `docker stop`, so
+the restart policy alone won't bring them back after a reboot). Full
+walkthrough in the
 [installation docs](docs/content/1.getting-started/2.installation.md#deploy-on-unraid).
 
 ### Plain Docker

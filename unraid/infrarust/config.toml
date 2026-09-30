@@ -6,8 +6,9 @@
 # [docker] provider below discovers them. Nothing needs to be edited per server.
 
 bind = "0.0.0.0:25565"
-# Infrarust insists that this directory exists even though routing is
-# label-driven; the container creates it under the mapped config folder.
+# Infrarust refuses to start unless this directory exists, even though
+# routing is label-driven. The template maps it as its own path so Unraid
+# creates it; the container does not.
 servers_dir = "/app/config/servers"
 
 [docker]
