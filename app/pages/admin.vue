@@ -16,5 +16,5 @@
 </template>
 
 <script setup lang="ts">
-useSeoMeta({ title: "Admin · Minecraft Server Manager" });
+useSeoMeta({ title: "Admin · MCSM" });
 </script>

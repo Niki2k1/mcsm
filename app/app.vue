@@ -8,7 +8,7 @@
 
 <script setup lang="ts">
 useSeoMeta({
-  title: "Minecraft Server Manager",
+  title: "MCSM – Server Manager for Minecraft",
   description: "Create your own Minecraft server with just a few clicks.",
 });
 

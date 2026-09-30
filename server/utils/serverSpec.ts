@@ -47,6 +47,7 @@ export async function buildServerSpec(data: ServerConfig, event?: H3Event) {
   }
 
   Object.assign(env, {
+    // Accepted by the user in the create dialog (enforced by create.post.ts).
     EULA: "true",
     TYPE: data.type,
     MEMORY: memory.heap,

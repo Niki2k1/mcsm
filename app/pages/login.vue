@@ -1,7 +1,7 @@
 <template>
   <AuthShell
-    title="Minecraft Server Manager"
-    description="Sign in to manage your servers."
+    title="MCSM"
+    description="Sign in to manage your Minecraft servers."
   >
     <div class="flex w-full flex-col gap-4">
       <UAlert
@@ -80,7 +80,7 @@ import { errorMessage } from "~/utils/errors";
 
 definePageMeta({ layout: false });
 
-useSeoMeta({ title: "Sign in · Minecraft Server Manager" });
+useSeoMeta({ title: "Sign in · MCSM" });
 
 const route = useRoute();
 const toast = useToast();
