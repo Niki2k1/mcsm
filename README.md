@@ -445,7 +445,7 @@ Infrarust code.
 - **Fonts** — [Monocraft](https://github.com/IdreesInc/Monocraft) (bundled in
   `public/`) and [Poppins](https://github.com/itfoundry/Poppins) are licensed
   under the SIL Open Font License 1.1 ([`public/OFL.txt`](public/OFL.txt)).
-- **Logos** — the MCSM and Vanilla block icons are original artwork. The
+- **Logos** — the MCSM logo and the Vanilla "V" icon are original artwork. The
   CurseForge, Feed The Beast, Forge, Paper, Fabric and Modrinth logos are
   trademarks of their respective owners and are only used to identify the
   server types MCSM can run.
