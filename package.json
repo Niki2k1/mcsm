@@ -7,7 +7,7 @@
     "node": ">=22"
   },
   "scripts": {
-    "build": "nuxt build",
+    "build": "node scripts/third-party-licenses.mjs && nuxt build",
     "dev": "portless mcsm nuxt dev",
     "dev:docs": "cd docs && portless mcsm-docs pnpm dev",
     "generate": "nuxt generate",
