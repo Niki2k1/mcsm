@@ -149,7 +149,7 @@ const stateText = computed(() => {
 });
 
 // Re-rendered every 30s so the uptime stays fresh without a page reload.
-const now = useTimestamp({ interval: 30_000 });
+const now = useTimestamp({ scheduler: (cb) => useIntervalFn(cb, 30_000) });
 
 const uptime = computed(() => {
   // `now` is referenced so the computed re-evaluates as time passes.
