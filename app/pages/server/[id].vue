@@ -134,10 +134,7 @@ watchEffect(() => {
 });
 
 useSeoMeta({
-  title: () =>
-    server.value
-      ? `${server.value.name} · MCSM`
-      : "Server · MCSM",
+  title: () => (server.value ? `${server.value.name} · MCSM` : "Server · MCSM"),
 });
 
 // --- Live Minecraft ping (status badge + reused by the Overview tab) --------
@@ -329,7 +326,8 @@ watchEffect(() => {
   const tab = allTabs.value.find(
     (entry) => !entry.exact && route.path.startsWith(entry.to)
   );
-  if (tab && !can(tab.role)) navigateTo(`/server/${id.value}`, { replace: true });
+  if (tab && !can(tab.role))
+    navigateTo(`/server/${id.value}`, { replace: true });
 });
 
 // --- Actions ------------------------------------------------------------------

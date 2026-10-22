@@ -171,7 +171,7 @@ container ID, so they follow the server across edits.
 | Framework   | [Nuxt 4](https://nuxt.com) (Vue 3, TypeScript, SPA), Nitro server |
 | UI          | [Nuxt UI v4](https://ui.nuxt.com) (Pro components included, no license), Tailwind CSS v4 |
 | Database    | SQLite via [NuxtHub](https://hub.nuxt.com) + [Drizzle ORM](https://orm.drizzle.team) (analytics, activity, backups, users, domains) |
-| Validation  | [Zod](https://zod.dev) via `h3-zod` |
+| Validation  | [Valibot](https://valibot.dev) via h3 `readValidatedBody` & co. |
 | Auth        | [nuxt-auth-utils](https://github.com/atinux/nuxt-auth-utils) (password, WebAuthn passkeys, Microsoft OAuth) |
 | Provisioning | [dockerode](https://github.com/apocas/dockerode) → Docker Engine API |
 | Console     | [xterm.js](https://xtermjs.org) + SSE (logs), [rcon-client](https://github.com/janispritzkau/rcon-client) (commands) |
@@ -401,7 +401,7 @@ server/
     bluemap.ts pregen.ts # BlueMap / Chunky integrations
     minecraft/           # skin rendering, status pinger, Modrinth client
   routes/map/            # BlueMap proxy (/map/<server>/)
-  schema/server.schema.ts # shared zod config schema
+  schema/server.schema.ts # shared valibot config schema
 public/                  # Monocraft font + OFL.txt, favicon, generated
                          #   third-party-licenses.txt
 scripts/                 # third-party-licenses.mjs (runs during build)

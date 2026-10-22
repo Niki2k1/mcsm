@@ -121,9 +121,7 @@
             >
               <UCheckbox
                 :model-value="allJarsSelected"
-                :indeterminate="
-                  selectedJars.length > 0 && !allJarsSelected
-                "
+                :indeterminate="selectedJars.length > 0 && !allJarsSelected"
                 aria-label="Select all"
                 @update:model-value="toggleSelectAll"
               />
@@ -223,8 +221,8 @@
             <div>
               <h3 class="font-semibold">Configuration files</h3>
               <p class="text-sm text-muted">
-                Edit {{ kindLabel.toLowerCase() }} and server config files
-                right in the browser.
+                Edit {{ kindLabel.toLowerCase() }} and server config files right
+                in the browser.
               </p>
             </div>
             <div class="flex items-center gap-2">
@@ -709,10 +707,10 @@ function jarMenuItems(jar: JarInfo): DropdownMenuItem[] {
 }
 
 async function deleteOne(name: string, restart: boolean) {
-  await $fetch(
-    `/api/server/${id.value}/jars/${encodeURIComponent(name)}`,
-    { method: "DELETE", query: { restart: String(restart) } }
-  );
+  await $fetch(`/api/server/${id.value}/jars/${encodeURIComponent(name)}`, {
+    method: "DELETE",
+    query: { restart: String(restart) },
+  });
 }
 
 async function runDelete() {

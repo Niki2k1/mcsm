@@ -55,9 +55,24 @@ export interface MotdFormat {
 export const MOTD_FORMATS: MotdFormat[] = [
   { code: "l", name: "Bold", mark: "bold", icon: "i-heroicons-bold" },
   { code: "o", name: "Italic", mark: "italic", icon: "i-heroicons-italic" },
-  { code: "n", name: "Underline", mark: "underline", icon: "i-heroicons-underline" },
-  { code: "m", name: "Strikethrough", mark: "strike", icon: "i-heroicons-strikethrough" },
-  { code: "k", name: "Obfuscated", mark: "obfuscated", icon: "i-heroicons-sparkles" },
+  {
+    code: "n",
+    name: "Underline",
+    mark: "underline",
+    icon: "i-heroicons-underline",
+  },
+  {
+    code: "m",
+    name: "Strikethrough",
+    mark: "strike",
+    icon: "i-heroicons-strikethrough",
+  },
+  {
+    code: "k",
+    name: "Obfuscated",
+    mark: "obfuscated",
+    icon: "i-heroicons-sparkles",
+  },
 ];
 
 const colorByCode = new Map(MOTD_COLORS.map((c) => [c.code, c]));
@@ -211,7 +226,11 @@ function readHexSequence(chars: string[], i: number): string | null {
   return hex;
 }
 
-function textNode(text: string, colorHex: string, formats: Set<string>): TipTapNode {
+function textNode(
+  text: string,
+  colorHex: string,
+  formats: Set<string>
+): TipTapNode {
   const marks: TipTapMark[] = [];
   if (colorHex) marks.push({ type: "textStyle", attrs: { color: colorHex } });
   for (const f of formats) {
@@ -291,7 +310,10 @@ function emitColor(hex: string): string {
   return "§x" + [...digits].map((d) => "§" + d).join("");
 }
 
-function readMarks(marks: TipTapMark[] | undefined): { color: string; formats: Set<string> } {
+function readMarks(marks: TipTapMark[] | undefined): {
+  color: string;
+  formats: Set<string>;
+} {
   let color = "";
   const formats = new Set<string>();
 
@@ -351,7 +373,8 @@ function mergeChatStyle(parent: ChatStyle, node: ChatComponent): ChatStyle {
   if (typeof node.bold === "boolean") style.bold = node.bold;
   if (typeof node.italic === "boolean") style.italic = node.italic;
   if (typeof node.underlined === "boolean") style.underline = node.underlined;
-  if (typeof node.strikethrough === "boolean") style.strike = node.strikethrough;
+  if (typeof node.strikethrough === "boolean")
+    style.strike = node.strikethrough;
   if (typeof node.obfuscated === "boolean") style.obf = node.obfuscated;
   return style;
 }

@@ -60,7 +60,25 @@
 <script setup lang="ts">
 import MotdEditor from "~/components/server/motd/MotdEditor.vue";
 
-const formFields = ref([
+type KeysOfType<V> = {
+  [K in keyof CreateForm]-?: CreateForm[K] extends V ? K : never;
+}[keyof CreateForm];
+
+// A union per input type, so the template can index the form with
+// field.name and still get the matching value type after narrowing.
+type FormField = { label: string; required: boolean; placeholder?: string } & (
+  | { type: "text"; name: KeysOfType<string> }
+  | { type: "number"; name: KeysOfType<number> }
+  | { type: "checkbox"; name: KeysOfType<boolean> }
+  | {
+      type: "select";
+      name: "DIFFICULTY";
+      options: { label: string; value: CreateForm["DIFFICULTY"] }[];
+    }
+  | { type: "user-list"; name: "operators" | "whitelist" }
+);
+
+const formFields: FormField[] = [
   {
     name: "MOTD",
     label: "Message of the Day (MOTD)",
@@ -85,7 +103,6 @@ const formFields = ref([
       { label: "Normal", value: "normal" },
       { label: "Hard", value: "hard" },
     ],
-    default: "normal",
     required: true,
   },
   {
@@ -125,7 +142,7 @@ const formFields = ref([
     type: "checkbox",
     required: false,
   },
-]);
+];
 
 const form = useCreateForm();
 

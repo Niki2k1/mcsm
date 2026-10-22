@@ -1,15 +1,22 @@
-import { z } from "zod";
+import * as v from "valibot";
 
 export default defineEventHandler(async (event) => {
-  const options = await useValidatedQuery(event, {
-    host: z.string(),
-    port: z.number().optional(),
-    timeout: z
-      .string()
-      .optional()
-      .transform((val) => (val ? parseInt(val) : undefined)),
-    protocolVersion: z.number().optional(),
-  });
+  const options = await getValidatedQuery(
+    event,
+    v.parser(
+      v.object({
+        host: v.string(),
+        port: v.optional(v.pipe(v.string(), v.toNumber(), v.integer())),
+        timeout: v.pipe(
+          v.optional(v.string()),
+          v.transform((val) => (val ? parseInt(val) : undefined))
+        ),
+        protocolVersion: v.optional(
+          v.pipe(v.string(), v.toNumber(), v.integer())
+        ),
+      })
+    )
+  );
 
   try {
     // Local dev: server domains have no DNS — when the host matches a managed
@@ -21,16 +28,16 @@ export default defineEventHandler(async (event) => {
     );
     if (tunnel) {
       return await useMinecraftServer({
-        timeout: 10000,
         ...options,
+        timeout: options.timeout ?? 10000,
         // 127.0.0.1 is an IP, so the pinger skips the SRV lookup.
         ...tunnel,
       });
     }
 
     return await useMinecraftServer({
-      timeout: 10000,
       ...options,
+      timeout: options.timeout ?? 10000,
     });
   } catch (error) {
     return createError(error as Error);

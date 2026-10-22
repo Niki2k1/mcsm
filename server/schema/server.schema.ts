@@ -1,11 +1,11 @@
-import { z } from "zod";
+import * as v from "valibot";
 
 /** Custom env vars users can add on top of the managed fields. */
-export const customEnvSchema = z.array(
-  z.object({
+export const customEnvSchema = v.array(
+  v.object({
     // Standard env var naming; also blocks shell/RCON injection vectors.
-    key: z.string().regex(/^[A-Za-z_][A-Za-z0-9_]*$/),
-    value: z.string().max(4096),
+    key: v.pipe(v.string(), v.regex(/^[A-Za-z_][A-Za-z0-9_]*$/)),
+    value: v.pipe(v.string(), v.maxLength(4096)),
   })
 );
 
@@ -16,102 +16,130 @@ export const customEnvSchema = z.array(
  * stored by older versions (read back from the `mcsm.config` Docker label)
  * still validate when they are re-submitted on edit.
  */
-export const serverConfigSchema = z.object({
-  type: z.enum(["VANILLA", "FTBA", "AUTO_CURSEFORGE", "PAPER", "FABRIC", "FORGE"]),
-  name: z.string(),
-  domain: z.string(),
-  subdomain: z.string().nullable(),
-  hostPort: z.number().int().min(1).max(65535).nullable().default(null),
+export const serverConfigSchema = v.object({
+  type: v.picklist([
+    "VANILLA",
+    "FTBA",
+    "AUTO_CURSEFORGE",
+    "PAPER",
+    "FABRIC",
+    "FORGE",
+  ]),
+  name: v.string(),
+  domain: v.string(),
+  subdomain: v.nullable(v.string()),
+  hostPort: v.nullish(
+    v.pipe(v.number(), v.integer(), v.minValue(1), v.maxValue(65535)),
+    null
+  ),
   // Older configs stored minecraft-data's numeric version id as the value;
   // newer ones use the Mojang version id string. Only the label is used.
-  VERSION: z
-    .object({
-      label: z.string(),
-      value: z.union([z.string(), z.number()]),
+  VERSION: v.nullable(
+    v.object({
+      label: v.string(),
+      value: v.union([v.string(), v.number()]),
     })
-    .nullable(),
+  ),
   /** Heap size, e.g. "2GB", "6GB", "16GB". */
-  memory: z.string().regex(/^\d+GB$/i),
-  MOTD: z.string(),
-  DIFFICULTY: z.string(),
-  MAX_PLAYERS: z.number(),
-  ONLINE_MODE: z.boolean(),
-  ALLOW_FLIGHT: z.boolean(),
-  operators: z.array(z.object({ name: z.string(), uuid: z.string() })),
-  whitelist: z.array(z.object({ name: z.string(), uuid: z.string() })),
-  HARDCORE: z.boolean(),
-  LEVEL: z.string(),
-  FTB_MODPACK_ID: z.string().nullable(),
-  FTB_MODPACK_VERSION_ID: z.string().nullable(),
-  CF_SLUG: z.string().nullable(),
-  CF_API_KEY: z.string().nullable(),
-  CF_FILE_ID: z.string().nullable(),
+  memory: v.pipe(v.string(), v.regex(/^\d+GB$/i)),
+  MOTD: v.string(),
+  DIFFICULTY: v.string(),
+  MAX_PLAYERS: v.number(),
+  ONLINE_MODE: v.boolean(),
+  ALLOW_FLIGHT: v.boolean(),
+  operators: v.array(v.object({ name: v.string(), uuid: v.string() })),
+  whitelist: v.array(v.object({ name: v.string(), uuid: v.string() })),
+  HARDCORE: v.boolean(),
+  LEVEL: v.string(),
+  FTB_MODPACK_ID: v.nullable(v.string()),
+  FTB_MODPACK_VERSION_ID: v.nullable(v.string()),
+  CF_SLUG: v.nullable(v.string()),
+  CF_API_KEY: v.nullable(v.string()),
+  CF_FILE_ID: v.nullable(v.string()),
 
   // --- Gameplay --------------------------------------------------------------
-  MODE: z
-    .enum(["survival", "creative", "adventure", "spectator"])
-    .default("survival"),
+  MODE: v.optional(
+    v.picklist(["survival", "creative", "adventure", "spectator"]),
+    "survival"
+  ),
   /** World seed — only affects newly generated worlds. */
-  SEED: z.string().max(100).nullable().default(null),
-  PVP: z.boolean().default(true),
-  LEVEL_TYPE: z
-    .enum([
+  SEED: v.nullish(v.pipe(v.string(), v.maxLength(100)), null),
+  PVP: v.optional(v.boolean(), true),
+  LEVEL_TYPE: v.optional(
+    v.picklist([
       "minecraft:normal",
       "minecraft:flat",
       "minecraft:large_biomes",
       "minecraft:amplified",
       "minecraft:single_biome_surface",
-    ])
-    .default("minecraft:normal"),
-  SPAWN_PROTECTION: z.number().int().min(0).max(1000).default(16),
-  ENABLE_COMMAND_BLOCK: z.boolean().default(false),
+    ]),
+    "minecraft:normal"
+  ),
+  SPAWN_PROTECTION: v.optional(
+    v.pipe(v.number(), v.integer(), v.minValue(0), v.maxValue(1000)),
+    16
+  ),
+  ENABLE_COMMAND_BLOCK: v.optional(v.boolean(), false),
   /**
    * Whitelist on/off. `null` keeps itzg's automatic behaviour (enabled when
    * the whitelist has entries) so configs from before this field existed
    * don't change behaviour.
    */
-  ENABLE_WHITELIST: z.boolean().nullable().default(null),
-  ENFORCE_WHITELIST: z.boolean().default(false),
+  ENABLE_WHITELIST: v.nullish(v.boolean(), null),
+  ENFORCE_WHITELIST: v.optional(v.boolean(), false),
 
   /**
    * itzg image Java variant — old Minecraft/modpacks need old Java:
    * ≤1.16 → java8, 1.17–1.20.4 → java17, 1.20.5+ → java21/latest.
    */
-  JAVA_VERSION: z
-    .enum(["latest", "java21", "java17", "java11", "java8-multiarch"])
-    .default("latest"),
+  JAVA_VERSION: v.optional(
+    v.picklist(["latest", "java21", "java17", "java11", "java8-multiarch"]),
+    "latest"
+  ),
 
   // --- Performance & cost ------------------------------------------------------
-  VIEW_DISTANCE: z.number().int().min(2).max(32).default(10),
-  SIMULATION_DISTANCE: z.number().int().min(2).max(32).default(10),
+  VIEW_DISTANCE: v.optional(
+    v.pipe(v.number(), v.integer(), v.minValue(2), v.maxValue(32)),
+    10
+  ),
+  SIMULATION_DISTANCE: v.optional(
+    v.pipe(v.number(), v.integer(), v.minValue(2), v.maxValue(32)),
+    10
+  ),
   /** Kick players idle for this many minutes (0 = never). */
-  PLAYER_IDLE_TIMEOUT: z.number().int().min(0).default(0),
+  PLAYER_IDLE_TIMEOUT: v.optional(
+    v.pipe(v.number(), v.integer(), v.minValue(0)),
+    0
+  ),
   /** Aikar's well-tested JVM GC flags. */
-  USE_AIKAR_FLAGS: z.boolean().default(false),
+  USE_AIKAR_FLAGS: v.optional(v.boolean(), false),
   /**
    * What to do when nobody is online: pause the JVM (near-zero CPU, instant
    * wake on connect) or stop the container entirely. Mutually exclusive
    * behaviours of the itzg image, hence one field.
    */
-  IDLE_BEHAVIOR: z.enum(["none", "pause", "stop"]).default("none"),
+  IDLE_BEHAVIOR: v.optional(v.picklist(["none", "pause", "stop"]), "none"),
   /** Seconds without players before the idle behaviour kicks in. */
-  IDLE_TIMEOUT: z.number().int().min(60).default(3600),
+  IDLE_TIMEOUT: v.optional(
+    v.pipe(v.number(), v.integer(), v.minValue(60)),
+    3600
+  ),
 
   // --- Presentation & QoL -------------------------------------------------------
   /** URL of a 64x64 server icon. */
-  ICON: z.string().nullable().default(null),
-  RESOURCE_PACK: z.string().nullable().default(null),
+  ICON: v.nullish(v.string(), null),
+  RESOURCE_PACK: v.nullish(v.string(), null),
   /** SHA1 of the pack — clients re-download when it changes. Auto-set on upload. */
-  RESOURCE_PACK_SHA1: z.string().nullable().default(null),
-  RESOURCE_PACK_ENFORCE: z.boolean().default(false),
-  HIDE_ONLINE_PLAYERS: z.boolean().default(false),
+  RESOURCE_PACK_SHA1: v.nullish(v.string(), null),
+  RESOURCE_PACK_ENFORCE: v.optional(v.boolean(), false),
+  HIDE_ONLINE_PLAYERS: v.optional(v.boolean(), false),
   /** Container timezone, e.g. Europe/Berlin (affects log timestamps). */
-  TZ: z.string().nullable().default(null),
-  SPAWN_ANIMALS: z.boolean().default(true),
-  SPAWN_MONSTERS: z.boolean().default(true),
-  SPAWN_NPCS: z.boolean().default(true),
-  ALLOW_NETHER: z.boolean().default(true),
-  GENERATE_STRUCTURES: z.boolean().default(true),
+  TZ: v.nullish(v.string(), null),
+  SPAWN_ANIMALS: v.optional(v.boolean(), true),
+  SPAWN_MONSTERS: v.optional(v.boolean(), true),
+  SPAWN_NPCS: v.optional(v.boolean(), true),
+  ALLOW_NETHER: v.optional(v.boolean(), true),
+  GENERATE_STRUCTURES: v.optional(v.boolean(), true),
 
   // --- Integrations ----------------------------------------------------------------
   /**
@@ -119,17 +147,20 @@ export const serverConfigSchema = z.object({
    * Modrinth and served through MCSM at /map/<volume>/. Only applies to
    * plugin/mod-capable types (Paper/Fabric/Forge).
    */
-  BLUEMAP: z.boolean().default(false),
+  BLUEMAP: v.optional(v.boolean(), false),
 
   // --- Advanced -------------------------------------------------------------------
   /** Comma/newline-separated Modrinth project slugs to install (mods/plugins). */
-  MODRINTH_PROJECTS: z.string().nullable().default(null),
+  MODRINTH_PROJECTS: v.nullish(v.string(), null),
   /** Comma-separated SpigotMC resource IDs to install (Paper/Spigot only). */
-  SPIGET_RESOURCES: z.string().nullable().default(null),
+  SPIGET_RESOURCES: v.nullish(v.string(), null),
   /** Newline-delimited raw server.properties entries. */
-  CUSTOM_SERVER_PROPERTIES: z.string().max(8192).nullable().default(null),
+  CUSTOM_SERVER_PROPERTIES: v.nullish(
+    v.pipe(v.string(), v.maxLength(8192)),
+    null
+  ),
   /** Free-form env vars passed to the container (managed keys always win). */
-  customEnv: customEnvSchema.default([]),
+  customEnv: v.optional(customEnvSchema, []),
 });
 
-export type ServerConfig = z.infer<typeof serverConfigSchema>;
+export type ServerConfig = v.InferOutput<typeof serverConfigSchema>;

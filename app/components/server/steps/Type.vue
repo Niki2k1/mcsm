@@ -36,16 +36,18 @@
       >
         <USelectMenu
           v-if="field.type === 'version'"
-          v-model="form.VERSION"
+          v-model="version"
           :items="versionOptions"
           placeholder="Latest"
           class="w-full"
         />
         <UInput
           v-else
-          v-model="form[field.name]"
+          :model-value="form[field.name] ?? undefined"
           :type="field.type"
+          :placeholder="field.placeholder"
           class="w-full"
+          @update:model-value="form[field.name] = String($event) || null"
         />
       </UFormField>
     </div>
@@ -64,18 +66,38 @@ import forge from "~/assets/forge.svg";
 
 const form = useCreateForm();
 
-const { data: versionOptions } = useFetch("/api/minecraft/versions", {
-  default: () => [],
+const { data: versionOptions } = useFetch<VersionOption[]>(
+  "/api/minecraft/versions",
+  { default: () => [] }
+);
+
+const version = computed({
+  get: () => form.value.VERSION ?? undefined,
+  set: (value) => {
+    form.value.VERSION = value ?? null;
+  },
 });
 
-const versionField = {
+type CustomField = { label: string; required?: boolean } & (
+  | { type: "version"; name: "VERSION" }
+  | { type: "text"; name: NullableStringKey; placeholder?: string }
+);
+
+const versionField: CustomField = {
   name: "VERSION",
   label: "Version",
   required: false,
   type: "version",
 };
 
-const types = [
+const types: {
+  name: string;
+  value: string;
+  description: string;
+  icon: string;
+  disabled?: boolean;
+  customFields?: CustomField[];
+}[] = [
   {
     name: "Vanilla",
     value: "VANILLA",
@@ -106,7 +128,8 @@ const types = [
   {
     name: "CurseForge",
     value: "AUTO_CURSEFORGE",
-    description: "CurseForge modpack server. Set the API key once in Admin → Secrets.",
+    description:
+      "CurseForge modpack server. Set the API key once in Admin → Secrets.",
     icon: curseforge,
     customFields: [
       {

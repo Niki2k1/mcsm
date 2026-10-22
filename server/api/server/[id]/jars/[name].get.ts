@@ -1,17 +1,23 @@
-import { z } from "zod";
+import * as v from "valibot";
 
 /** Download a single mod/plugin jar. */
 
-const nameSchema = z
-  .string()
-  .regex(/^[^/\\]+\.jar$/i, "Invalid jar name")
-  .refine((name) => !name.includes(".."), "Invalid jar name");
+const nameSchema = v.pipe(
+  v.string(),
+  v.regex(/^[^/\\]+\.jar$/i, "Invalid jar name"),
+  v.check((name) => !name.includes(".."), "Invalid jar name")
+);
 
 export default defineEventHandler(async (event) => {
-  const { id, name } = await useValidatedParams(event, {
-    id: z.string(),
-    name: nameSchema,
-  });
+  const { id, name } = await getValidatedRouterParams(
+    event,
+    v.parser(
+      v.object({
+        id: v.string(),
+        name: nameSchema,
+      })
+    )
+  );
 
   const { getServer } = useDocker(event);
   let server: Awaited<ReturnType<typeof getServer>>;

@@ -41,7 +41,10 @@
                 :key="color.code"
                 type="button"
                 class="size-5 rounded-sm ring-1 ring-inset ring-white/10 transition hover:scale-110"
-                :class="{ 'ring-2 ring-primary': activeColor?.toLowerCase() === color.hex.toLowerCase() }"
+                :class="{
+                  'ring-2 ring-primary':
+                    activeColor?.toLowerCase() === color.hex.toLowerCase(),
+                }"
                 :style="{ backgroundColor: color.hex }"
                 :title="`${color.name} (§${color.code})`"
                 @click="setColor(color.hex)"
@@ -162,8 +165,12 @@
     </div>
 
     <!-- Live preview -->
-    <div class="rounded-md bg-black/60 px-3 py-2 ring-1 ring-inset ring-white/5">
-      <p class="mb-1 text-[11px] font-medium uppercase tracking-wide text-dimmed">
+    <div
+      class="rounded-md bg-black/60 px-3 py-2 ring-1 ring-inset ring-white/5"
+    >
+      <p
+        class="mb-1 text-[11px] font-medium uppercase tracking-wide text-dimmed"
+      >
         Preview
       </p>
       <MotdPreview v-if="model" :motd="model" />

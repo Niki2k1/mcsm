@@ -1,4 +1,4 @@
-import { z } from "zod";
+import * as v from "valibot";
 
 /**
  * Install a Modrinth project: resolve the newest build compatible with the
@@ -7,13 +7,23 @@ import { z } from "zod";
  * mods/plugins directory.
  */
 export default defineEventHandler(async (event) => {
-  const { id } = await useValidatedParams(event, { id: z.string() });
-  const { project, loader, restart } = await useValidatedBody(event, {
-    /** Modrinth project id or slug. */
-    project: z.string().min(1).max(128),
-    loader: z.enum(["paper", "fabric", "forge", "neoforge"]).optional(),
-    restart: z.boolean().default(true),
-  });
+  const { id } = await getValidatedRouterParams(
+    event,
+    v.parser(v.object({ id: v.string() }))
+  );
+  const { project, loader, restart } = await readValidatedBody(
+    event,
+    v.parser(
+      v.object({
+        /** Modrinth project id or slug. */
+        project: v.pipe(v.string(), v.minLength(1), v.maxLength(128)),
+        loader: v.optional(
+          v.picklist(["paper", "fabric", "forge", "neoforge"])
+        ),
+        restart: v.optional(v.boolean(), true),
+      })
+    )
+  );
 
   const { getServer, restartServer } = useDocker(event);
   let server: Awaited<ReturnType<typeof getServer>>;

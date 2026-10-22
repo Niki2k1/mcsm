@@ -118,11 +118,7 @@
           help="Heap size for the Minecraft server. The container gets 1 GB extra headroom."
         >
           <div class="flex items-center gap-3 flex-wrap">
-            <UTabs
-              v-model="memory"
-              :items="memoryOptions"
-              :content="false"
-            />
+            <UTabs v-model="memory" :items="memoryOptions" :content="false" />
             <div class="flex items-center gap-1.5">
               <UInput
                 v-model.number="memoryGb"
@@ -361,7 +357,9 @@
       <template #header>
         <div>
           <h3 class="font-semibold">Presentation</h3>
-          <p class="text-sm text-muted">Server icon, resource pack and locale.</p>
+          <p class="text-sm text-muted">
+            Server icon, resource pack and locale.
+          </p>
         </div>
       </template>
 
@@ -600,7 +598,7 @@ onBeforeRouteLeave(() => {
 
 // --- Select options ------------------------------------------------------------
 
-const { data: versionOptions } = useFetch<{ label: string; value: string }[]>(
+const { data: versionOptions } = useFetch<VersionOption[]>(
   "/api/minecraft/versions",
   { default: () => [] }
 );
@@ -647,59 +645,62 @@ type BooleanKey =
   | "ALLOW_NETHER"
   | "GENERATE_STRUCTURES";
 
-const gameplayToggles: { key: BooleanKey; label: string; description: string }[] =
-  [
-    {
-      key: "PVP",
-      label: "PvP",
-      description: "Players can damage each other.",
-    },
-    {
-      key: "HARDCORE",
-      label: "Hardcore",
-      description: "One life per player — death means spectator mode.",
-    },
-    {
-      key: "ONLINE_MODE",
-      label: "Online Mode",
-      description: "Verify players against Mojang's servers (recommended).",
-    },
-    {
-      key: "ALLOW_FLIGHT",
-      label: "Allow Flight",
-      description: "Don't kick survival players that appear to be flying.",
-    },
-    {
-      key: "ENABLE_COMMAND_BLOCK",
-      label: "Command Blocks",
-      description: "Allow command blocks to run commands.",
-    },
-    {
-      key: "SPAWN_ANIMALS",
-      label: "Spawn Animals",
-      description: "Animals spawn naturally.",
-    },
-    {
-      key: "SPAWN_MONSTERS",
-      label: "Spawn Monsters",
-      description: "Hostile mobs spawn at night and in the dark.",
-    },
-    {
-      key: "SPAWN_NPCS",
-      label: "Spawn Villagers",
-      description: "Villagers populate villages.",
-    },
-    {
-      key: "ALLOW_NETHER",
-      label: "Allow Nether",
-      description: "Nether portals work.",
-    },
-    {
-      key: "GENERATE_STRUCTURES",
-      label: "Generate Structures",
-      description: "Villages, temples, etc. (newly generated chunks only).",
-    },
-  ];
+const gameplayToggles: {
+  key: BooleanKey;
+  label: string;
+  description: string;
+}[] = [
+  {
+    key: "PVP",
+    label: "PvP",
+    description: "Players can damage each other.",
+  },
+  {
+    key: "HARDCORE",
+    label: "Hardcore",
+    description: "One life per player — death means spectator mode.",
+  },
+  {
+    key: "ONLINE_MODE",
+    label: "Online Mode",
+    description: "Verify players against Mojang's servers (recommended).",
+  },
+  {
+    key: "ALLOW_FLIGHT",
+    label: "Allow Flight",
+    description: "Don't kick survival players that appear to be flying.",
+  },
+  {
+    key: "ENABLE_COMMAND_BLOCK",
+    label: "Command Blocks",
+    description: "Allow command blocks to run commands.",
+  },
+  {
+    key: "SPAWN_ANIMALS",
+    label: "Spawn Animals",
+    description: "Animals spawn naturally.",
+  },
+  {
+    key: "SPAWN_MONSTERS",
+    label: "Spawn Monsters",
+    description: "Hostile mobs spawn at night and in the dark.",
+  },
+  {
+    key: "SPAWN_NPCS",
+    label: "Spawn Villagers",
+    description: "Villagers populate villages.",
+  },
+  {
+    key: "ALLOW_NETHER",
+    label: "Allow Nether",
+    description: "Nether portals work.",
+  },
+  {
+    key: "GENERATE_STRUCTURES",
+    label: "Generate Structures",
+    description: "Villages, temples, etc. (newly generated chunks only).",
+  },
+];
 
 // --- Nullable string field helpers ------------------------------------------------
 
@@ -767,8 +768,16 @@ const memoryOptions = [
   { label: "2GB", value: "2GB", icon: "i-heroicons-user-16-solid" },
   { label: "4GB", value: "4GB", icon: "i-heroicons-users-16-solid" },
   { label: "8GB", value: "8GB", icon: "i-heroicons-user-group-16-solid" },
-  { label: "12GB", value: "12GB", icon: "i-heroicons-building-storefront-16-solid" },
-  { label: "16GB", value: "16GB", icon: "i-heroicons-building-office-2-16-solid" },
+  {
+    label: "12GB",
+    value: "12GB",
+    icon: "i-heroicons-building-storefront-16-solid",
+  },
+  {
+    label: "16GB",
+    value: "16GB",
+    icon: "i-heroicons-building-office-2-16-solid",
+  },
 ];
 
 const memory = computed({
@@ -849,7 +858,13 @@ async function fileToIconPng(file: File): Promise<Blob> {
     const scale = Math.max(64 / bitmap.width, 64 / bitmap.height);
     const width = bitmap.width * scale;
     const height = bitmap.height * scale;
-    context.drawImage(bitmap, (64 - width) / 2, (64 - height) / 2, width, height);
+    context.drawImage(
+      bitmap,
+      (64 - width) / 2,
+      (64 - height) / 2,
+      width,
+      height
+    );
 
     return await new Promise<Blob>((resolve, reject) =>
       canvas.toBlob(

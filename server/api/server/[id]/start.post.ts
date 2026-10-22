@@ -1,7 +1,10 @@
-import { z } from "zod";
+import * as v from "valibot";
 
 export default defineEventHandler(async (event) => {
-  const { id } = await useValidatedParams(event, { id: z.string() });
+  const { id } = await getValidatedRouterParams(
+    event,
+    v.parser(v.object({ id: v.string() }))
+  );
 
   try {
     const { startServer, getServer } = useDocker(event);

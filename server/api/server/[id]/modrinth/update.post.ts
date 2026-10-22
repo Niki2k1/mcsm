@@ -1,4 +1,4 @@
-import { z } from "zod";
+import * as v from "valibot";
 
 /**
  * Update installed jars to their latest Modrinth builds: download the new
@@ -6,12 +6,26 @@ import { z } from "zod";
  * restart once at the end if requested.
  */
 export default defineEventHandler(async (event) => {
-  const { id } = await useValidatedParams(event, { id: z.string() });
-  const { filenames, loader, restart } = await useValidatedBody(event, {
-    filenames: z.array(z.string().regex(/^[^/\\]+\.jar$/i)).min(1).max(100),
-    loader: z.enum(["paper", "fabric", "forge", "neoforge"]).optional(),
-    restart: z.boolean().default(true),
-  });
+  const { id } = await getValidatedRouterParams(
+    event,
+    v.parser(v.object({ id: v.string() }))
+  );
+  const { filenames, loader, restart } = await readValidatedBody(
+    event,
+    v.parser(
+      v.object({
+        filenames: v.pipe(
+          v.array(v.pipe(v.string(), v.regex(/^[^/\\]+\.jar$/i))),
+          v.minLength(1),
+          v.maxLength(100)
+        ),
+        loader: v.optional(
+          v.picklist(["paper", "fabric", "forge", "neoforge"])
+        ),
+        restart: v.optional(v.boolean(), true),
+      })
+    )
+  );
 
   const { getServer, restartServer } = useDocker(event);
   let server: Awaited<ReturnType<typeof getServer>>;

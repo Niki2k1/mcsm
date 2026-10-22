@@ -1,4 +1,4 @@
-import { z } from "zod";
+import * as v from "valibot";
 
 /**
  * Live player management via RCON — no container recreation needed.
@@ -8,12 +8,26 @@ import { z } from "zod";
  * `mcsm.config` label; that's what the Configuration tab is for.
  */
 export default defineEventHandler(async (event) => {
-  const { id } = await useValidatedParams(event, { id: z.string() });
-  const { action, name } = await useValidatedBody(event, {
-    action: z.enum(["op", "deop", "whitelist-add", "whitelist-remove", "kick"]),
-    // Strict Minecraft username pattern — also prevents command injection.
-    name: z.string().regex(/^[A-Za-z0-9_]{1,16}$/),
-  });
+  const { id } = await getValidatedRouterParams(
+    event,
+    v.parser(v.object({ id: v.string() }))
+  );
+  const { action, name } = await readValidatedBody(
+    event,
+    v.parser(
+      v.object({
+        action: v.picklist([
+          "op",
+          "deop",
+          "whitelist-add",
+          "whitelist-remove",
+          "kick",
+        ]),
+        // Strict Minecraft username pattern — also prevents command injection.
+        name: v.pipe(v.string(), v.regex(/^[A-Za-z0-9_]{1,16}$/)),
+      })
+    )
+  );
 
   const commands: Record<typeof action, string> = {
     op: `op ${name}`,

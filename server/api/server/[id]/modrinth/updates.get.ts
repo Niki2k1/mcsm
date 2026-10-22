@@ -1,4 +1,4 @@
-import { z } from "zod";
+import * as v from "valibot";
 
 /**
  * Hash-based update check for a server's installed jars.
@@ -34,11 +34,21 @@ type UpdatesResponse = {
 const cache = new Map<string, { at: number; data: UpdatesResponse }>();
 
 export default defineEventHandler(async (event) => {
-  const { id } = await useValidatedParams(event, { id: z.string() });
-  const { refresh, loader } = await useValidatedQuery(event, {
-    refresh: z.enum(["true", "false"]).default("false"),
-    loader: z.enum(["paper", "fabric", "forge", "neoforge"]).optional(),
-  });
+  const { id } = await getValidatedRouterParams(
+    event,
+    v.parser(v.object({ id: v.string() }))
+  );
+  const { refresh, loader } = await getValidatedQuery(
+    event,
+    v.parser(
+      v.object({
+        refresh: v.optional(v.picklist(["true", "false"]), "false"),
+        loader: v.optional(
+          v.picklist(["paper", "fabric", "forge", "neoforge"])
+        ),
+      })
+    )
+  );
 
   const { getServer } = useDocker(event);
   let server: Awaited<ReturnType<typeof getServer>>;

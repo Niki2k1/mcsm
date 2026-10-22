@@ -139,9 +139,7 @@ export function parseChunkyProgress(response: string): ChunkyProgress {
     percent: percent ? Number(percent[1]) : null,
     etaSeconds: eta ? parseEta(eta[1]!) : null,
     rate: rate ? Number(rate[1]) : null,
-    current: current
-      ? { x: Number(current[1]), z: Number(current[2]) }
-      : null,
+    current: current ? { x: Number(current[1]), z: Number(current[2]) } : null,
     raw: text.trim(),
   };
 }

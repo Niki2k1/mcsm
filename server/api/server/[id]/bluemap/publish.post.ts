@@ -1,4 +1,4 @@
-import { z } from "zod";
+import * as v from "valibot";
 
 /**
  * Publish / unpublish a server's BlueMap. Published maps are viewable at
@@ -7,10 +7,18 @@ import { z } from "zod";
  * recreation), and the auth middleware checks it for /map requests.
  */
 export default defineEventHandler(async (event) => {
-  const { id } = await useValidatedParams(event, { id: z.string() });
-  const { public: publish } = await useValidatedBody(event, {
-    public: z.boolean(),
-  });
+  const { id } = await getValidatedRouterParams(
+    event,
+    v.parser(v.object({ id: v.string() }))
+  );
+  const { public: publish } = await readValidatedBody(
+    event,
+    v.parser(
+      v.object({
+        public: v.boolean(),
+      })
+    )
+  );
 
   const { getServer } = useDocker(event);
 

@@ -1,4 +1,4 @@
-import { z } from "zod";
+import * as v from "valibot";
 
 /**
  * Upload mod/plugin jars (raw .jar files or .zip bundles of jars).
@@ -11,10 +11,18 @@ import { z } from "zod";
 const MAX_UPLOAD_BYTES = 100 * 1024 * 1024; // 100 MB
 
 export default defineEventHandler(async (event) => {
-  const { id } = await useValidatedParams(event, { id: z.string() });
-  const { restart } = await useValidatedQuery(event, {
-    restart: z.enum(["true", "false"]).default("true"),
-  });
+  const { id } = await getValidatedRouterParams(
+    event,
+    v.parser(v.object({ id: v.string() }))
+  );
+  const { restart } = await getValidatedQuery(
+    event,
+    v.parser(
+      v.object({
+        restart: v.optional(v.picklist(["true", "false"]), "true"),
+      })
+    )
+  );
 
   const { getServer, restartServer } = useDocker(event);
 
@@ -52,7 +60,10 @@ export default defineEventHandler(async (event) => {
   }
 
   // Guard again on the buffered size in case Content-Length was absent/spoofed.
-  const totalBytes = uploads.reduce((sum, upload) => sum + upload.data.length, 0);
+  const totalBytes = uploads.reduce(
+    (sum, upload) => sum + upload.data.length,
+    0
+  );
   if (totalBytes > MAX_UPLOAD_BYTES) {
     throw createError({
       statusCode: 413,

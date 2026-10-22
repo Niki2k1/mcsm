@@ -2,7 +2,9 @@
   <div
     ref="root"
     class="font-[Monocraft]"
-    :class="size === 'mc' ? 'text-[16px] leading-[18px]' : 'text-sm leading-snug'"
+    :class="
+      size === 'mc' ? 'text-[16px] leading-[18px]' : 'text-sm leading-snug'
+    "
   >
     <div
       v-for="(line, li) in lines"

@@ -1,5 +1,5 @@
 allowBuilds:
-  '@parcel/watcher': true
+  "@parcel/watcher": true
   cpu-features: true
   esbuild: true
   # maplibre-gl is pulled in by nuxt-charts (vue-chrts) for map charts, which
@@ -19,9 +19,9 @@ minimumReleaseAgeExclude:
 # ReDoS-class in build tooling). Each bump stays within the same major, so it
 # only lifts the old duplicate the tree still pins — newer copies are untouched.
 overrides:
-  'cross-spawn@<7.0.6': '^7.0.6'
-  'glob@10': '^10.5.0'
-  'minimatch@5': '^5.1.8'
-  'minimatch@9': '^9.0.7'
-  'picomatch@2': '^2.3.2'
-  'brace-expansion@2': '^2.0.3'
+  "cross-spawn@<7.0.6": "^7.0.6"
+  "glob@10": "^10.5.0"
+  "minimatch@5": "^5.1.8"
+  "minimatch@9": "^9.0.7"
+  "picomatch@2": "^2.3.2"
+  "brace-expansion@2": "^2.0.3"

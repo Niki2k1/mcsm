@@ -1,4 +1,4 @@
-import { z } from "zod";
+import * as v from "valibot";
 import Jimp from "jimp-compact";
 import { mkdir, readdir, unlink, writeFile } from "node:fs/promises";
 import { join } from "node:path";
@@ -16,7 +16,10 @@ const ICONS_DIR = ".data/icons";
 const MAX_ICON_BYTES = 5 * 1024 * 1024;
 
 export default defineEventHandler(async (event) => {
-  const { id } = await useValidatedParams(event, { id: z.string() });
+  const { id } = await getValidatedRouterParams(
+    event,
+    v.parser(v.object({ id: v.string() }))
+  );
 
   const { getServer } = useDocker(event);
   let server: Awaited<ReturnType<typeof getServer>>;
@@ -26,7 +29,10 @@ export default defineEventHandler(async (event) => {
     throw createError({ statusCode: 404, statusMessage: "Server not found" });
   }
   if (!server.volume) {
-    throw createError({ statusCode: 400, statusMessage: "Server has no volume" });
+    throw createError({
+      statusCode: 400,
+      statusMessage: "Server has no volume",
+    });
   }
 
   const body = await readRawBody(event, false);

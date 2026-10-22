@@ -1,9 +1,14 @@
-import { z } from "zod";
+import * as v from "valibot";
 
 export default defineEventHandler(async (event) => {
-  const { username } = await useValidatedParams(event, {
-    username: z.string(),
-  });
+  const { username } = await getValidatedRouterParams(
+    event,
+    v.parser(
+      v.object({
+        username: v.string(),
+      })
+    )
+  );
 
   const profile = await $fetch<MinecraftProfile>(
     `https://api.mojang.com/users/profiles/minecraft/${username}`

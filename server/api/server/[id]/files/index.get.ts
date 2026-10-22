@@ -1,8 +1,11 @@
-import { z } from "zod";
+import * as v from "valibot";
 
 /** List the editable config files on a server. */
 export default defineEventHandler(async (event) => {
-  const { id } = await useValidatedParams(event, { id: z.string() });
+  const { id } = await getValidatedRouterParams(
+    event,
+    v.parser(v.object({ id: v.string() }))
+  );
 
   const { getServer } = useDocker(event);
   let server: Awaited<ReturnType<typeof getServer>>;

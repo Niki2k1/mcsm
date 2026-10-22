@@ -107,7 +107,11 @@ export async function detectLoader(
   );
 
   const detected = out.trim().split("\n").pop()?.trim();
-  if (detected === "fabric" || detected === "forge" || detected === "neoforge") {
+  if (
+    detected === "fabric" ||
+    detected === "forge" ||
+    detected === "neoforge"
+  ) {
     if (volume) loaderCache.set(volume, detected);
     return detected;
   }

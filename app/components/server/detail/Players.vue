@@ -164,38 +164,41 @@
             <UBadge color="neutral" variant="soft" size="sm">baseline</UBadge>
           </div>
 
-          <p v-if="!data?.ops?.length" class="text-sm text-muted py-2 text-center">
+          <p
+            v-if="!data?.ops?.length"
+            class="text-sm text-muted py-2 text-center"
+          >
             No baseline operators configured.
           </p>
 
           <template v-if="canAct">
-          <UInput
-            v-model.trim="opName"
-            placeholder="Player name"
-            autocomplete="off"
-            class="w-full"
-            :disabled="data?.offline"
-            @keyup.enter="runAction('op', opName).then(() => (opName = ''))"
-          />
-          <div class="flex gap-2">
-            <UButton
-              variant="soft"
-              size="sm"
-              :disabled="data?.offline || !opName"
-              @click="runAction('op', opName).then(() => (opName = ''))"
-            >
-              Op
-            </UButton>
-            <UButton
-              variant="soft"
-              color="warning"
-              size="sm"
-              :disabled="data?.offline || !opName"
-              @click="runAction('deop', opName).then(() => (opName = ''))"
-            >
-              De-op
-            </UButton>
-          </div>
+            <UInput
+              v-model.trim="opName"
+              placeholder="Player name"
+              autocomplete="off"
+              class="w-full"
+              :disabled="data?.offline"
+              @keyup.enter="runAction('op', opName).then(() => (opName = ''))"
+            />
+            <div class="flex gap-2">
+              <UButton
+                variant="soft"
+                size="sm"
+                :disabled="data?.offline || !opName"
+                @click="runAction('op', opName).then(() => (opName = ''))"
+              >
+                Op
+              </UButton>
+              <UButton
+                variant="soft"
+                color="warning"
+                size="sm"
+                :disabled="data?.offline || !opName"
+                @click="runAction('deop', opName).then(() => (opName = ''))"
+              >
+                De-op
+              </UButton>
+            </div>
           </template>
 
           <p class="text-xs text-muted pt-1">
@@ -238,7 +241,12 @@ onUnmounted(() => {
 
 // --- Actions -------------------------------------------------------------------
 
-type PlayerAction = "op" | "deop" | "whitelist-add" | "whitelist-remove" | "kick";
+type PlayerAction =
+  | "op"
+  | "deop"
+  | "whitelist-add"
+  | "whitelist-remove"
+  | "kick";
 
 const ACTION_LABELS: Record<PlayerAction, string> = {
   op: "Made operator",

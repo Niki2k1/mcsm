@@ -71,6 +71,9 @@ export default defineNuxtConfig({
   runtimeConfig: {
     // Login session cookie lifetime (seconds), read by nuxt-auth-utils.
     session: {
+      // Typed as required, but nuxt-auth-utils fills it from
+      // NUXT_SESSION_PASSWORD at runtime (and generates one in dev).
+      password: "",
       maxAge: 60 * 60 * 24 * 7, // 1 week, NUXT_SESSION_MAX_AGE
       cookie: {
         // Browsers only accept `Secure` cookies over HTTPS (or on localhost),
@@ -168,14 +171,6 @@ export default defineNuxtConfig({
 
     imports: {
       presets: [
-        {
-          from: "h3-zod",
-          imports: [
-            "useValidatedQuery",
-            "useValidatedBody",
-            "useValidatedParams",
-          ],
-        },
         {
           from: "consola",
           imports: ["consola"],

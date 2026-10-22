@@ -6,7 +6,10 @@
   >
     <template #body>
       <div class="space-y-3">
-        <div v-if="!passkeys.length" class="text-sm text-muted text-center py-4">
+        <div
+          v-if="!passkeys.length"
+          class="text-sm text-muted text-center py-4"
+        >
           No passkeys yet. Add one to sign in without a password.
         </div>
 

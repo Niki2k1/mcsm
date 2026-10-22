@@ -6,8 +6,7 @@
         <div>
           <h3 class="font-semibold">General</h3>
           <p class="text-sm text-muted">
-            Server identity. Saving recreates the container — the world is
-            kept.
+            Server identity. Saving recreates the container — the world is kept.
           </p>
         </div>
       </template>
@@ -55,8 +54,8 @@
       </div>
 
       <p v-else class="text-sm text-muted">
-        This server has no stored configuration, so its identity can't be
-        edited here.
+        This server has no stored configuration, so its identity can't be edited
+        here.
       </p>
 
       <template v-if="server.config" #footer>
@@ -89,8 +88,8 @@
           <p class="text-sm font-medium">Duplicate server</p>
           <p class="text-xs text-muted">
             The new server gets the same configuration and (optionally) a copy
-            of the world. It runs under its own subdomain; a published host
-            port is not copied.
+            of the world. It runs under its own subdomain; a published host port
+            is not copied.
           </p>
         </div>
         <UButton variant="soft" @click="openDuplicate">Duplicate</UButton>
@@ -104,8 +103,8 @@
           <h3 class="font-semibold">Storage</h3>
           <p class="text-sm text-muted">
             This world was created before the data root
-            (<code>NUXT_DOCKER_DATA_ROOT</code>) changed and still lives in
-            the old location.
+            (<code>NUXT_DOCKER_DATA_ROOT</code>) changed and still lives in the
+            old location.
           </p>
         </div>
       </template>
@@ -114,11 +113,15 @@
         <dl class="min-w-0 text-xs space-y-1">
           <div>
             <dt class="text-muted inline">Current:</dt>
-            <dd class="font-mono inline ms-1 break-all">{{ server.volumeSource }}</dd>
+            <dd class="font-mono inline ms-1 break-all">
+              {{ server.volumeSource }}
+            </dd>
           </div>
           <div>
             <dt class="text-muted inline">Configured:</dt>
-            <dd class="font-mono inline ms-1 break-all">{{ server.targetSource }}</dd>
+            <dd class="font-mono inline ms-1 break-all">
+              {{ server.targetSource }}
+            </dd>
           </div>
         </dl>
         <UButton variant="soft" @click="relocateOpen = true">
@@ -128,10 +131,7 @@
     </UCard>
 
     <!-- Danger Zone -->
-    <UCard
-      class="ring-error/40"
-      :ui="{ header: 'bg-error/5 rounded-t-lg' }"
-    >
+    <UCard class="ring-error/40" :ui="{ header: 'bg-error/5 rounded-t-lg' }">
       <template #header>
         <div>
           <h3 class="font-semibold text-error">Danger Zone</h3>
@@ -193,9 +193,7 @@
     <!-- Delete confirmation -->
     <UModal
       v-model:open="deleteOpen"
-      :title="
-        deleteWithVolume ? 'Delete server and world' : 'Delete server'
-      "
+      :title="deleteWithVolume ? 'Delete server and world' : 'Delete server'"
       :description="
         deleteWithVolume
           ? 'The container and the world volume will be permanently deleted.'
@@ -351,7 +349,9 @@
               :key="variant.value"
               type="button"
               class="text-left rounded-lg ring-1 ring-default p-3 flex gap-3 items-center transition-all hover:ring-primary cursor-pointer"
-              :class="{ 'ring-2 ring-primary': migrateTarget === variant.value }"
+              :class="{
+                'ring-2 ring-primary': migrateTarget === variant.value,
+              }"
               @click="migrateTarget = variant.value"
             >
               <img
@@ -564,10 +564,11 @@ const relocating = ref(false);
 async function runRelocate() {
   relocating.value = true;
   try {
-    const result = await $fetch<{ id: string; mode: "same" | "copied"; from: string }>(
-      `/api/server/${id.value}/relocate`,
-      { method: "POST" }
-    );
+    const result = await $fetch<{
+      id: string;
+      mode: "same" | "copied";
+      from: string;
+    }>(`/api/server/${id.value}/relocate`, { method: "POST" });
 
     toast.add({
       title: "World moved",

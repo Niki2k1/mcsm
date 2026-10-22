@@ -1,14 +1,19 @@
-import { z } from "zod";
+import * as v from "valibot";
 
 /**
  * Download a backup tarball. The file is streamed out of the backup volume
  * through a disposable helper container (see openBackupDownload).
  */
 export default defineEventHandler(async (event) => {
-  const { id, backupId } = await useValidatedParams(event, {
-    id: z.string(),
-    backupId: z.coerce.number().int(),
-  });
+  const { id, backupId } = await getValidatedRouterParams(
+    event,
+    v.parser(
+      v.object({
+        id: v.string(),
+        backupId: v.pipe(v.string(), v.toNumber(), v.integer()),
+      })
+    )
+  );
 
   const { backup, stream, cleanup } = await openBackupDownload(
     event,
@@ -24,11 +29,7 @@ export default defineEventHandler(async (event) => {
   const filename = `${backup.volume}-${date}.tar.gz`;
 
   setHeader(event, "Content-Type", "application/gzip");
-  setHeader(
-    event,
-    "Content-Disposition",
-    `attachment; filename="${filename}"`
-  );
+  setHeader(event, "Content-Disposition", `attachment; filename="${filename}"`);
   // Exact size recorded at backup creation — gives the browser a progress bar.
   if (backup.sizeBytes) {
     setHeader(event, "Content-Length", backup.sizeBytes);

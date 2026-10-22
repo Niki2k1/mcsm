@@ -44,7 +44,9 @@
     </div>
 
     <!-- Docker daemon spanning both lanes -->
-    <div class="rounded-lg border border-dashed border-accented bg-elevated/50 p-4">
+    <div
+      class="rounded-lg border border-dashed border-accented bg-elevated/50 p-4"
+    >
       <div class="mb-3 flex items-center gap-2 text-sm font-medium text-muted">
         <UIcon name="i-lucide-container" class="size-4" />
         Docker daemon

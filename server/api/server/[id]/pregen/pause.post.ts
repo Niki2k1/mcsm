@@ -1,8 +1,11 @@
-import { z } from "zod";
+import * as v from "valibot";
 
 /** Pause the running pre-generation task (Chunky saves its progress). */
 export default defineEventHandler(async (event) => {
-  const { id } = await useValidatedParams(event, { id: z.string() });
+  const { id } = await getValidatedRouterParams(
+    event,
+    v.parser(v.object({ id: v.string() }))
+  );
 
   const { getServer } = useDocker(event);
   const server = await getServer(id).catch(() => {

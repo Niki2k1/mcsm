@@ -1,3 +1,5 @@
+export type VersionOption = { label: string; value: string | number };
+
 export type CreateForm = {
   type: string | null;
   name: string | null;
@@ -5,7 +7,7 @@ export type CreateForm = {
   subdomain: string | null;
   hostPort: number | null;
   /** Minecraft version as the option object the version select works with. */
-  VERSION: { label: string; value: string | number } | null;
+  VERSION: VersionOption | null;
   memory: string | null;
   MOTD: string;
   DIFFICULTY: "peaceful" | "easy" | "normal" | "hard";
@@ -148,5 +150,28 @@ export const useCreateForm = () => {
 /** Reset the shared form to defaults (create) or to an existing config (edit). */
 export const setCreateForm = (initial?: Partial<CreateForm> | null) => {
   const form = useCreateForm();
-  form.value = { ...defaultCreateForm(), ...(initial ?? {}) };
+  form.value = { ...defaultCreateForm(), ...initial };
+};
+
+/** Form keys holding an optional string, where null means "unset". */
+export type NullableStringKey = {
+  [K in keyof CreateForm]-?: CreateForm[K] extends string | null
+    ? null extends CreateForm[K]
+      ? K
+      : never
+    : never;
+}[keyof CreateForm];
+
+/**
+ * Nuxt UI inputs reject null as a v-model value, while the form uses null for
+ * "unset" — bridge null <-> undefined, and store cleared inputs as null again.
+ */
+export const useNullableFormField = (key: NullableStringKey) => {
+  const form = useCreateForm();
+  return computed({
+    get: () => form.value[key] ?? undefined,
+    set: (value: string | undefined) => {
+      form.value[key] = value || null;
+    },
+  });
 };

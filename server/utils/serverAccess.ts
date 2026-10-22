@@ -77,7 +77,10 @@ export async function currentUser(event: H3Event) {
     user = row ?? null;
     if (!user) {
       await clearUserSession(event);
-    } else if (user.admin !== session.user.admin || user.name !== session.user.name) {
+    } else if (
+      user.admin !== session.user.admin ||
+      user.name !== session.user.name
+    ) {
       // Keeps the client UI (admin links etc.) in sync with the DB.
       await setUserSession(event, {
         user: sessionUser(user),
@@ -107,7 +110,9 @@ export async function accessLevel(
   const [row] = await db
     .select({ role: serverAccess.role })
     .from(serverAccess)
-    .where(and(eq(serverAccess.userId, user.id), eq(serverAccess.volume, volume)))
+    .where(
+      and(eq(serverAccess.userId, user.id), eq(serverAccess.volume, volume))
+    )
     .limit(1);
   return (row?.role as ServerRole | undefined) ?? null;
 }
@@ -123,7 +128,10 @@ export async function assertServerAccess(
     // Servers the user can't see at all look nonexistent, like in the list.
     throw createError(
       level
-        ? { statusCode: 403, statusMessage: "Insufficient permissions for this server" }
+        ? {
+            statusCode: 403,
+            statusMessage: "Insufficient permissions for this server",
+          }
         : { statusCode: 404, statusMessage: "Server not found" }
     );
   }

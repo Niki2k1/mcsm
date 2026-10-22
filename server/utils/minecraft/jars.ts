@@ -246,7 +246,7 @@ export async function readJar(
         return next();
       }
       const chunks: Uint8Array[] = [];
-      entry.on("data", (chunk: Uint8Array) => chunks.push(chunk));
+      entry.on("data", (chunk) => chunks.push(chunk as Uint8Array));
       entry.on("end", () => {
         found = Buffer.concat(chunks);
         next();
@@ -255,7 +255,9 @@ export async function readJar(
 
     tar.on("finish", () => {
       if (!found) {
-        reject(createError({ statusCode: 404, statusMessage: "Jar not found" }));
+        reject(
+          createError({ statusCode: 404, statusMessage: "Jar not found" })
+        );
       } else {
         resolve(found);
       }

@@ -1,6 +1,5 @@
 import type { ServerSummary } from "../../utils/useDocker";
 
-
 /**
  * Lists the managed Minecraft servers straight from Docker — the source of
  * truth now that provisioning is direct. Non-admins only see the servers they
@@ -9,7 +8,10 @@ import type { ServerSummary } from "../../utils/useDocker";
 export default defineEventHandler(async (event) => {
   const user = await currentUser(event);
   if (!user) {
-    throw createError({ statusCode: 401, statusMessage: "Authentication required" });
+    throw createError({
+      statusCode: 401,
+      statusMessage: "Authentication required",
+    });
   }
 
   let servers: ServerSummary[];

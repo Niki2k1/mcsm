@@ -79,9 +79,7 @@ export default defineNuxtModule({
             target
           );
           await cp(bindingDir, dest, { recursive: true, dereference: true });
-          logger.success(
-            `Copied @libsql/${target} native binding into output`
-          );
+          logger.success(`Copied @libsql/${target} native binding into output`);
         } catch (error) {
           logger.error("Failed to copy libsql native binding:", error);
           throw error;
