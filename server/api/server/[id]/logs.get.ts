@@ -1,4 +1,4 @@
-import { z } from "zod";
+import * as v from "valibot";
 import { PassThrough } from "node:stream";
 
 /**
@@ -6,7 +6,10 @@ import { PassThrough } from "node:stream";
  * Server-Sent Events: the last 200 lines, then live output as it arrives.
  */
 export default defineEventHandler(async (event) => {
-  const { id } = await useValidatedParams(event, { id: z.string() });
+  const { id } = await getValidatedRouterParams(
+    event,
+    v.parser(v.object({ id: v.string() }))
+  );
 
   const { docker } = useDocker(event);
   const container = docker.getContainer(id);

@@ -1,4 +1,4 @@
-import { z } from "zod";
+import * as v from "valibot";
 
 /**
  * Removes a server's container. By default the named volume (the world) is
@@ -6,13 +6,21 @@ import { z } from "zod";
  * (used by the danger zone on the server settings tab).
  */
 export default defineEventHandler(async (event) => {
-  const { id } = await useValidatedParams(event, { id: z.string() });
-  const { removeVolume } = await useValidatedQuery(event, {
-    removeVolume: z
-      .enum(["true", "false"])
-      .optional()
-      .transform((value) => value === "true"),
-  });
+  const { id } = await getValidatedRouterParams(
+    event,
+    v.parser(v.object({ id: v.string() }))
+  );
+  const { removeVolume } = await getValidatedQuery(
+    event,
+    v.parser(
+      v.object({
+        removeVolume: v.pipe(
+          v.optional(v.picklist(["true", "false"])),
+          v.transform((value) => value === "true")
+        ),
+      })
+    )
+  );
 
   try {
     const { removeServer, getServer } = useDocker(event);

@@ -1,4 +1,4 @@
-import { z } from "zod";
+import * as v from "valibot";
 import { createReadStream } from "node:fs";
 import { stat } from "node:fs/promises";
 import { join } from "node:path";
@@ -9,10 +9,15 @@ import { join } from "node:path";
  * same URL for previews.
  */
 export default defineEventHandler(async (event) => {
-  const { file } = await useValidatedParams(event, {
-    // <volume>-<timestamp>.png — also blocks any path traversal.
-    file: z.string().regex(/^[a-z0-9-]+-\d+\.png$/),
-  });
+  const { file } = await getValidatedRouterParams(
+    event,
+    v.parser(
+      v.object({
+        // <volume>-<timestamp>.png — also blocks any path traversal.
+        file: v.pipe(v.string(), v.regex(/^[a-z0-9-]+-\d+\.png$/)),
+      })
+    )
+  );
 
   const filePath = join(".data/icons", file);
 

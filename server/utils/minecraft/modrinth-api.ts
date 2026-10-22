@@ -139,7 +139,7 @@ export async function serverGameVersion(
   config: ServerConfig | null | undefined
 ): Promise<string> {
   if (config?.VERSION?.label) return config.VERSION.label;
-  const releases = await fetchMinecraftReleases();
+  const releases = (await fetchMinecraftReleases()) ?? [];
   return releases[0] ?? "1.21.1";
 }
 
@@ -269,7 +269,13 @@ export async function resolveRequiredDeps(
 
     resolved.push(depVersion);
     resolved.push(
-      ...(await resolveRequiredDeps(depVersion, loader, gameVersion, seen, depth + 1))
+      ...(await resolveRequiredDeps(
+        depVersion,
+        loader,
+        gameVersion,
+        seen,
+        depth + 1
+      ))
     );
   }
 

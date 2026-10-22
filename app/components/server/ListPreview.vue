@@ -53,7 +53,9 @@
       <div class="min-w-0 flex-1 font-[Monocraft] text-[16px] leading-[18px]">
         <div class="flex items-start justify-between gap-2 pt-[2px]">
           <!-- Name: 0xFFFFFF -->
-          <span class="truncate text-white">{{ name || "Minecraft Server" }}</span>
+          <span class="truncate text-white">{{
+            name || "Minecraft Server"
+          }}</span>
 
           <span class="flex shrink-0 items-start gap-[6px]">
             <!-- Player count: gray numbers, dark-gray slash -->

@@ -2,7 +2,9 @@
   <div
     ref="root"
     class="font-[Monocraft]"
-    :class="size === 'mc' ? 'text-[16px] leading-[18px]' : 'text-sm leading-snug'"
+    :class="
+      size === 'mc' ? 'text-[16px] leading-[18px]' : 'text-sm leading-snug'
+    "
   >
     <div
       v-for="(line, li) in lines"
@@ -91,7 +93,9 @@ const animate = () => {
     const len = span.textContent?.length ?? 0;
     let scrambled = "";
     for (let x = 0; x < len; x++) {
-      scrambled += String.fromCharCode(Math.floor(Math.random() * (95 - 64 + 1)) + 64);
+      scrambled += String.fromCharCode(
+        Math.floor(Math.random() * (95 - 64 + 1)) + 64
+      );
     }
     span.textContent = scrambled;
   }

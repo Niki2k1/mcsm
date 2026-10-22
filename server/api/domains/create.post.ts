@@ -1,9 +1,14 @@
-import { z } from "zod";
+import * as v from "valibot";
 
 export default defineEventHandler(async (event) => {
-  const { domain } = await useValidatedBody(event, {
-    domain: z.string().min(1),
-  });
+  const { domain } = await readValidatedBody(
+    event,
+    v.parser(
+      v.object({
+        domain: v.pipe(v.string(), v.minLength(1)),
+      })
+    )
+  );
 
   const domains = useDomains();
 

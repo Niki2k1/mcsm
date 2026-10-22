@@ -1,4 +1,4 @@
-import { z } from "zod";
+import * as v from "valibot";
 
 /** Values that should never be shown in clear text in the UI. */
 const SENSITIVE_KEY = /PASSWORD|TOKEN|API_KEY|SECRET/i;
@@ -15,7 +15,10 @@ export type EnvVarSource = "managed" | "custom" | "image";
  *   can be overridden by adding a custom variable with the same name
  */
 export default defineEventHandler(async (event) => {
-  const { id } = await useValidatedParams(event, { id: z.string() });
+  const { id } = await getValidatedRouterParams(
+    event,
+    v.parser(v.object({ id: v.string() }))
+  );
   const { getServer, docker } = useDocker(event);
 
   let server: Awaited<ReturnType<typeof getServer>>;

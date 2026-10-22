@@ -1,4 +1,4 @@
-import { z } from "zod";
+import * as v from "valibot";
 import { serverConfigSchema } from "../../../schema/server.schema";
 
 /**
@@ -19,10 +19,18 @@ const MIGRATION_TARGETS = ["VANILLA", "PAPER", "FABRIC", "FORGE"] as const;
  * setup stays restorable from the Backups tab.
  */
 export default defineEventHandler(async (event) => {
-  const { id } = await useValidatedParams(event, { id: z.string() });
-  const { type } = await useValidatedBody(event, {
-    type: z.enum(MIGRATION_TARGETS),
-  });
+  const { id } = await getValidatedRouterParams(
+    event,
+    v.parser(v.object({ id: v.string() }))
+  );
+  const { type } = await readValidatedBody(
+    event,
+    v.parser(
+      v.object({
+        type: v.picklist(MIGRATION_TARGETS),
+      })
+    )
+  );
 
   const { getServer, docker, ensureImage, stopServer } = useDocker(event);
 
@@ -95,7 +103,7 @@ export default defineEventHandler(async (event) => {
 
   // 4. Switch the type and drop settings other variants can't use. Re-parse so
   //    configs stored by older versions pick up current defaults.
-  const config = serverConfigSchema.parse({
+  const config = v.parse(serverConfigSchema, {
     ...server.config,
     type,
     FTB_MODPACK_ID: null,

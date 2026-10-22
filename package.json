@@ -4,9 +4,6 @@
   "private": true,
   "license": "MIT",
   "type": "module",
-  "engines": {
-    "node": ">=22"
-  },
   "scripts": {
     "build": "node scripts/third-party-licenses.mjs && nuxt build",
     "dev": "portless mcsm nuxt dev",
@@ -15,7 +12,10 @@
     "preview": "nuxt preview",
     "postinstall": "nuxt prepare",
     "db:generate": "nuxt-db generate",
-    "start": "mkdir -p .data/db && node .output/server/index.mjs"
+    "start": "mkdir -p .data/db && node .output/server/index.mjs",
+    "lint": "oxlint && oxfmt --check",
+    "lint:fix": "oxlint --fix && oxfmt",
+    "typecheck": "vue-tsc --noEmit"
   },
   "dependencies": {
     "@libsql/client": "^0.18.0",
@@ -36,7 +36,6 @@
     "dockerode": "^5.0.1",
     "drizzle-orm": "^0.45.3",
     "fflate": "^0.8.3",
-    "h3-zod": "^0.5.3",
     "jimp-compact": "0.16.1-2",
     "modern-monaco": "^0.4.2",
     "nuxt": "^4.5.2",
@@ -48,11 +47,10 @@
     "tar-stream": "^3.2.1",
     "typescript": "^6.0.3",
     "unstorage": "^1.17.5",
+    "valibot": "^1.5.0",
     "vue": "^3.5.43",
-    "yaml": "^2.9.1",
-    "zod": "^4.6.5"
+    "yaml": "^2.9.1"
   },
-  "packageManager": "pnpm@11.5.0+sha512.dbfcc4f81cf48597afd4bc391ffdf12c11f1a9fb83a395bfa6b0a2d9cc2fd8ffebafdb1ccbd529632153f793904c2615b7f09fe1a345473fd1c35845172a8eb1",
   "devDependencies": {
     "@iconify-json/heroicons": "^1.2.3",
     "@iconify-json/lucide": "^1.2.137",
@@ -62,6 +60,13 @@
     "@types/tar-stream": "^3.1.5",
     "@vueuse/core": "^15.0.0",
     "@vueuse/nuxt": "^15.0.0",
-    "drizzle-kit": "^0.31.11"
-  }
+    "drizzle-kit": "^0.31.11",
+    "oxfmt": "^0.74.0",
+    "oxlint": "^1.89.0",
+    "vue-tsc": "3.3.10"
+  },
+  "engines": {
+    "node": ">=22"
+  },
+  "packageManager": "pnpm@11.5.0+sha512.dbfcc4f81cf48597afd4bc391ffdf12c11f1a9fb83a395bfa6b0a2d9cc2fd8ffebafdb1ccbd529632153f793904c2615b7f09fe1a345473fd1c35845172a8eb1"
 }

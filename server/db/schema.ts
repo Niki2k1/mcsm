@@ -137,7 +137,9 @@ export const credentials = sqliteTable(
     name: text("name"),
     publicKey: text("public_key").notNull(),
     counter: integer("counter").notNull().default(0),
-    backedUp: integer("backed_up", { mode: "boolean" }).notNull().default(false),
+    backedUp: integer("backed_up", { mode: "boolean" })
+      .notNull()
+      .default(false),
     /** JSON array of WebAuthn transports, e.g. ["internal","hybrid"]. */
     transports: text("transports"),
     createdAt: integer("created_at").notNull(),

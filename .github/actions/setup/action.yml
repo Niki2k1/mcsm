@@ -1,0 +1,26 @@
+name: Setup
+description: Install Node, pnpm and the project dependencies
+
+runs:
+  using: composite
+  steps:
+    # pnpm comes from corepack (pinned by packageManager in package.json); the
+    # repo's action policy doesn't allow pnpm/action-setup.
+    - uses: actions/setup-node@949feb2413d6458794dcd2491c4babbbce0c15c1 # v7.1.0
+      with:
+        node-version-file: .nvmrc
+        package-manager-cache: false
+
+    - run: corepack enable
+      shell: bash
+
+    # Second pass only wires up the pnpm store cache, which needs pnpm on PATH.
+    - uses: actions/setup-node@949feb2413d6458794dcd2491c4babbbce0c15c1 # v7.1.0
+      with:
+        node-version-file: .nvmrc
+        cache: pnpm
+
+    # postinstall runs `nuxt prepare`, which generates the .nuxt types that
+    # typecheck and lint rely on.
+    - run: pnpm install --frozen-lockfile
+      shell: bash

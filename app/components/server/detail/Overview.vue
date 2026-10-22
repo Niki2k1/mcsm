@@ -28,9 +28,7 @@
               <p class="text-xs text-muted mb-1">Players</p>
               <p class="text-sm font-medium">
                 <template v-if="ping?.status?.players">
-                  {{ ping.status.players.online }}/{{
-                    ping.status.players.max
-                  }}
+                  {{ ping.status.players.online }}/{{ ping.status.players.max }}
                 </template>
                 <template v-else>—</template>
               </p>
@@ -117,8 +115,7 @@
 import { chatToMotd } from "~/utils/motd";
 import { durationSince } from "~/utils/time";
 
-const { id, server, ping, pingStatus, displayFavicon, can } =
-  useServerDetail();
+const { id, server, ping, pingStatus, displayFavicon, can } = useServerDetail();
 
 const motd = computed(() => chatToMotd(ping.value?.status?.description));
 
@@ -166,7 +163,8 @@ const about = computed(() => {
     { label: "Type", value: config?.type ?? "Unknown" },
     {
       label: "Version",
-      value: ping.value?.status?.version?.name ?? config?.VERSION?.label ?? "Latest",
+      value:
+        ping.value?.status?.version?.name ?? config?.VERSION?.label ?? "Latest",
     },
     { label: "Memory", value: config?.memory ?? "—" },
     { label: "World", value: config?.LEVEL ?? "world" },

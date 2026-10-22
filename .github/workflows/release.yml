@@ -3,7 +3,7 @@ name: release
 on:
   push:
     # release/v* picks up hand edits to an open release PR
-    branches: [main, 'release/v*']
+    branches: [main, "release/v*"]
   pull_request:
     types: [closed]
     branches: [main]
@@ -12,15 +12,15 @@ on:
   workflow_dispatch:
     inputs:
       prerelease:
-        description: 'Cut a prerelease instead of a normal release, e.g. `beta`, `rc`, or `0`'
+        description: "Cut a prerelease instead of a normal release, e.g. `beta`, `rc`, or `0`"
         required: false
-        default: ''
+        default: ""
       # Unused (no npm publish), but uppt/release passes it when releasing from
       # a maintenance branch, and dispatching an undeclared input fails.
       npm-tag:
-        description: 'Set by uppt/release for maintenance lines; ignored'
+        description: "Set by uppt/release for maintenance lines; ignored"
         required: false
-        default: ''
+        default: ""
 
 permissions: {}
 

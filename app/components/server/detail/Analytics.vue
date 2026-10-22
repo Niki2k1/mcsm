@@ -24,14 +24,8 @@
     </div>
 
     <!-- Empty state -->
-    <div
-      v-if="!samples.length"
-      class="py-16 text-center text-muted space-y-3"
-    >
-      <UIcon
-        name="i-heroicons-chart-bar"
-        class="size-8 mx-auto opacity-60"
-      />
+    <div v-if="!samples.length" class="py-16 text-center text-muted space-y-3">
+      <UIcon name="i-heroicons-chart-bar" class="size-8 mx-auto opacity-60" />
       <p>No data for this time range yet.</p>
       <p class="text-xs">
         Metrics are collected once a minute while the server runs — check back
@@ -236,9 +230,7 @@ const memData = computed(() =>
 const memCategories = { used: { name: "Used", color: "#8b5cf6" } };
 
 const memLimitLabel = computed(() => {
-  const limit = samples.value.findLast?.(
-    (sample) => sample.memLimit
-  )?.memLimit;
+  const limit = samples.value.findLast?.((sample) => sample.memLimit)?.memLimit;
   if (!limit) return "";
   return `${Math.round((limit / MIB / 1024) * 10) / 10} GiB`;
 });

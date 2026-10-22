@@ -39,7 +39,10 @@
               fill="#7d7d7d"
               transform="translate(1,1)"
             />
-            <path d="M4 1h2v2h2v2h2v2H8v2H6v2H4V9h2V7h2V5H6V3H4z" fill="#dddddd" />
+            <path
+              d="M4 1h2v2h2v2h2v2H8v2H6v2H4V9h2V7h2V5H6V3H4z"
+              fill="#dddddd"
+            />
           </svg>
         </div>
       </div>

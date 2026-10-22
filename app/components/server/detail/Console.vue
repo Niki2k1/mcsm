@@ -12,8 +12,8 @@
     <ServerTerminal :server-id="id" class="h-[max(24rem,calc(100dvh-28rem))]" />
 
     <p class="shrink-0 text-xs text-muted">
-      Streaming the server console. Type a command and press Enter to run it
-      via RCON (the server must be running).
+      Streaming the server console. Type a command and press Enter to run it via
+      RCON (the server must be running).
     </p>
   </div>
 </template>

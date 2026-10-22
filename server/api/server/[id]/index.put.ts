@@ -1,4 +1,4 @@
-import { z } from "zod";
+import * as v from "valibot";
 import { serverConfigSchema } from "../../../schema/server.schema";
 
 /**
@@ -8,8 +8,11 @@ import { serverConfigSchema } from "../../../schema/server.schema";
  * world data is preserved.
  */
 export default defineEventHandler(async (event) => {
-  const { id } = await useValidatedParams(event, { id: z.string() });
-  const data = await useValidatedBody(event, serverConfigSchema);
+  const { id } = await getValidatedRouterParams(
+    event,
+    v.parser(v.object({ id: v.string() }))
+  );
+  const data = await readValidatedBody(event, v.parser(serverConfigSchema));
 
   try {
     const result = await recreateServer(

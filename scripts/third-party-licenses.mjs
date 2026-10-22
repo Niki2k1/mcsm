@@ -2,7 +2,13 @@
 // production dependency (walked through node_modules, so it matches exactly
 // what the build bundles) plus bundled fonts and trademark notices. Runs as
 // part of `build`; the output is generated, not committed.
-import { existsSync, readdirSync, readFileSync, realpathSync, writeFileSync } from "node:fs";
+import {
+  existsSync,
+  readdirSync,
+  readFileSync,
+  realpathSync,
+  writeFileSync,
+} from "node:fs";
 import { dirname, join } from "node:path";
 import { fileURLToPath } from "node:url";
 
@@ -21,7 +27,8 @@ function resolvePackage(fromDir, name) {
   let dir = fromDir;
   while (true) {
     const candidate = join(dir, "node_modules", name);
-    if (existsSync(join(candidate, "package.json"))) return realpathSync(candidate);
+    if (existsSync(join(candidate, "package.json")))
+      return realpathSync(candidate);
     // pnpm places a package's deps as siblings of the package itself.
     const parent = dirname(dir);
     if (parent === dir) return null;
@@ -53,10 +60,14 @@ while (queue.length) {
           LICENSE_OVERRIDES[pkg.name] ??
           (typeof pkg.license === "string"
             ? pkg.license
-            : pkg.license?.type ?? pkg.licenses?.map((l) => l.type).join(" OR ") ?? "UNKNOWN"),
+            : (pkg.license?.type ??
+              pkg.licenses?.map((l) => l.type).join(" OR ") ??
+              "UNKNOWN")),
         author: typeof pkg.author === "string" ? pkg.author : pkg.author?.name,
         repository:
-          typeof pkg.repository === "string" ? pkg.repository : pkg.repository?.url,
+          typeof pkg.repository === "string"
+            ? pkg.repository
+            : pkg.repository?.url,
         texts: files.map((f) => readFileSync(join(dir, f), "utf8").trim()),
       });
     }
@@ -124,4 +135,6 @@ for (const p of sorted) {
 }
 
 writeFileSync(outFile, out);
-console.info(`[licenses] Wrote ${sorted.length} package notices to public/third-party-licenses.txt`);
+console.info(
+  `[licenses] Wrote ${sorted.length} package notices to public/third-party-licenses.txt`
+);

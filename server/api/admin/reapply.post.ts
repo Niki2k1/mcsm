@@ -8,7 +8,8 @@
  */
 export default defineEventHandler(async (event) => {
   const config = useRuntimeConfig(event);
-  const { listServers, getServer, removeServer, provisionServer } = useDocker(event);
+  const { listServers, getServer, removeServer, provisionServer } =
+    useDocker(event);
   const image = config.docker?.image || "itzg/minecraft-server";
 
   const servers = await listServers();

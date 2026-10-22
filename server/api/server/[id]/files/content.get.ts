@@ -1,15 +1,23 @@
-import { z } from "zod";
+import * as v from "valibot";
 
 /**
  * Read a single config file as text. With ?download=true the content is sent
  * as a file attachment instead of JSON.
  */
 export default defineEventHandler(async (event) => {
-  const { id } = await useValidatedParams(event, { id: z.string() });
-  const { path, download } = await useValidatedQuery(event, {
-    path: z.string(),
-    download: z.enum(["true", "false"]).default("false"),
-  });
+  const { id } = await getValidatedRouterParams(
+    event,
+    v.parser(v.object({ id: v.string() }))
+  );
+  const { path, download } = await getValidatedQuery(
+    event,
+    v.parser(
+      v.object({
+        path: v.string(),
+        download: v.optional(v.picklist(["true", "false"]), "false"),
+      })
+    )
+  );
 
   const { getServer } = useDocker(event);
   let server: Awaited<ReturnType<typeof getServer>>;
@@ -37,7 +45,11 @@ export default defineEventHandler(async (event) => {
     if (download === "true") {
       const filename = file.path.split("/").pop() ?? "config";
       setHeader(event, "Content-Type", "text/plain; charset=utf-8");
-      setHeader(event, "Content-Disposition", `attachment; filename="${filename}"`);
+      setHeader(
+        event,
+        "Content-Disposition",
+        `attachment; filename="${filename}"`
+      );
       return file.content;
     }
 

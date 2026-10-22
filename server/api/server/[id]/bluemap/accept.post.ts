@@ -1,4 +1,4 @@
-import { z } from "zod";
+import * as v from "valibot";
 
 /**
  * Accept BlueMap's Mojang asset download on the user's behalf: patch
@@ -6,7 +6,10 @@ import { z } from "zod";
  * the socket proxy) and apply it with `bluemap reload` over RCON.
  */
 export default defineEventHandler(async (event) => {
-  const { id } = await useValidatedParams(event, { id: z.string() });
+  const { id } = await getValidatedRouterParams(
+    event,
+    v.parser(v.object({ id: v.string() }))
+  );
 
   const result = await acceptMojangDownload(event, id);
 

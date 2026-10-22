@@ -1,4 +1,4 @@
-import { z } from "zod";
+import * as v from "valibot";
 
 /**
  * Live pre-generation progress as Server-Sent Events.
@@ -12,7 +12,10 @@ import { z } from "zod";
 const POLL_INTERVAL_MS = 2_000;
 
 export default defineEventHandler(async (event) => {
-  const { id } = await useValidatedParams(event, { id: z.string() });
+  const { id } = await getValidatedRouterParams(
+    event,
+    v.parser(v.object({ id: v.string() }))
+  );
 
   const { getServer } = useDocker(event);
   let volume: string | undefined;
@@ -45,8 +48,7 @@ export default defineEventHandler(async (event) => {
       }
     } catch (error) {
       if (closed) return;
-      const statusCode =
-        (error as { statusCode?: number })?.statusCode ?? 502;
+      const statusCode = (error as { statusCode?: number })?.statusCode ?? 502;
       await eventStream
         .push(JSON.stringify({ ok: false, statusCode }))
         .catch(() => {});

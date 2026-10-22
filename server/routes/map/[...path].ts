@@ -25,9 +25,7 @@ type ResolvedTarget = {
 const CACHE_TTL_MS = 10_000;
 const cache = new Map<string, { at: number; target: ResolvedTarget | null }>();
 
-async function resolveTarget(
-  volume: string
-): Promise<ResolvedTarget | null> {
+async function resolveTarget(volume: string): Promise<ResolvedTarget | null> {
   const cached = cache.get(volume);
   if (cached && Date.now() - cached.at < CACHE_TTL_MS) return cached.target;
 

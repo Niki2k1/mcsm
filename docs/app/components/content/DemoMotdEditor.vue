@@ -1,5 +1,7 @@
 <template>
-  <div class="not-prose space-y-3 rounded-lg border border-default bg-default p-4">
+  <div
+    class="not-prose space-y-3 rounded-lg border border-default bg-default p-4"
+  >
     <!-- Toolbar — applies TipTap marks in the WYSIWYG tab, inserts §-codes in the code tab -->
     <div
       class="flex flex-wrap items-center gap-1 rounded-md border border-default bg-elevated/50 p-1"
@@ -21,7 +23,13 @@
 
       <!-- Color picker -->
       <UPopover>
-        <UButton color="neutral" variant="ghost" size="xs" square aria-label="Text color">
+        <UButton
+          color="neutral"
+          variant="ghost"
+          size="xs"
+          square
+          aria-label="Text color"
+        >
           <span
             class="size-4 rounded-sm ring-1 ring-inset ring-white/15"
             :style="{ backgroundColor: activeColor }"
@@ -36,7 +44,10 @@
                 :key="color.code"
                 type="button"
                 class="size-5 rounded-sm ring-1 ring-inset ring-white/10 transition hover:scale-110"
-                :class="{ 'ring-2 ring-primary': activeColor?.toLowerCase() === color.hex.toLowerCase() }"
+                :class="{
+                  'ring-2 ring-primary':
+                    activeColor?.toLowerCase() === color.hex.toLowerCase(),
+                }"
                 :style="{ backgroundColor: color.hex }"
                 :title="`${color.name} (§${color.code})`"
                 @click="applyColor(color)"
@@ -52,7 +63,12 @@
                 aria-label="Custom hex color"
                 class="size-7 shrink-0 cursor-pointer rounded border border-default bg-transparent p-0"
               />
-              <UButton size="xs" color="neutral" variant="soft" @click="applyCustomHex">
+              <UButton
+                size="xs"
+                color="neutral"
+                variant="soft"
+                @click="applyCustomHex"
+              >
                 Insert hex color
               </UButton>
             </div>
@@ -110,7 +126,9 @@
           Type your MOTD…
         </span>
         <template #fallback>
-          <div class="rounded-md border border-default px-3 py-2 font-mono text-sm text-dimmed">
+          <div
+            class="rounded-md border border-default px-3 py-2 font-mono text-sm text-dimmed"
+          >
             Loading editor…
           </div>
         </template>
@@ -134,7 +152,13 @@
       <p class="mb-1.5 text-xs font-medium uppercase tracking-wide text-dimmed">
         Live preview — exactly what players see
       </p>
-      <DemoServerList name="My Awesome Server" :motd="motd" :players-online="7" :players-max="20" :latency="31" />
+      <DemoServerList
+        name="My Awesome Server"
+        :motd="motd"
+        :players-online="7"
+        :players-max="20"
+        :latency="31"
+      />
     </div>
   </div>
 </template>
@@ -212,7 +236,10 @@ const editor = useEditor({
     Obfuscated,
   ],
   editorProps: {
-    attributes: { class: "motd-surface focus:outline-none", spellcheck: "false" },
+    attributes: {
+      class: "motd-surface focus:outline-none",
+      spellcheck: "false",
+    },
     // Minecraft renders at most two MOTD lines → cap the editor at two paragraphs.
     handleKeyDown: (view, event) => {
       if (event.key !== "Enter") return false;
@@ -246,7 +273,9 @@ const isActive = (mark: string) =>
 
 // --- Toolbar actions (branch by active tab) -----------------------------------
 
-const sourceInput = useTemplateRef<{ textareaRef?: HTMLTextAreaElement }>("sourceInput");
+const sourceInput = useTemplateRef<{ textareaRef?: HTMLTextAreaElement }>(
+  "sourceInput"
+);
 const customHex = ref("#ff7f50");
 
 /** Insert a §-code at the cursor of the raw source textarea. */

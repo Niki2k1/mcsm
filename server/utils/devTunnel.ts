@@ -133,7 +133,11 @@ async function ensureTunnel(
 }
 
 function publishedPort(
-  info: { NetworkSettings?: { Ports?: Record<string, { HostPort?: string }[] | null> } },
+  info: {
+    NetworkSettings?: {
+      Ports?: Record<string, { HostPort?: string }[] | null>;
+    };
+  },
   targetPort: number
 ): number | null {
   const bindings = info.NetworkSettings?.Ports?.[`${targetPort}/tcp`];

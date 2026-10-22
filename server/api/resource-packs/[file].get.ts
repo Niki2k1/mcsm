@@ -1,4 +1,4 @@
-import { z } from "zod";
+import * as v from "valibot";
 import { createReadStream } from "node:fs";
 import { stat } from "node:fs/promises";
 import { join } from "node:path";
@@ -8,10 +8,15 @@ import { join } from "node:path";
  * game clients download the pack from here when joining the server.
  */
 export default defineEventHandler(async (event) => {
-  const { file } = await useValidatedParams(event, {
-    // mc-<volume>-<timestamp>.zip — also blocks any path traversal.
-    file: z.string().regex(/^[a-z0-9-]+-\d+\.zip$/),
-  });
+  const { file } = await getValidatedRouterParams(
+    event,
+    v.parser(
+      v.object({
+        // mc-<volume>-<timestamp>.zip — also blocks any path traversal.
+        file: v.pipe(v.string(), v.regex(/^[a-z0-9-]+-\d+\.zip$/)),
+      })
+    )
+  );
 
   const filePath = join(".data/resource-packs", file);
 

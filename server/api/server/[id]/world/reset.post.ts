@@ -1,4 +1,4 @@
-import { z } from "zod";
+import * as v from "valibot";
 
 /** World folder names must stay shell-safe inside the helper command. */
 const SAFE_LEVEL = /^[A-Za-z0-9 _.-]+$/;
@@ -11,7 +11,10 @@ const SAFE_LEVEL = /^[A-Za-z0-9 _.-]+$/;
  * fresh world. The old run stays restorable from the Backups tab.
  */
 export default defineEventHandler(async (event) => {
-  const { id } = await useValidatedParams(event, { id: z.string() });
+  const { id } = await getValidatedRouterParams(
+    event,
+    v.parser(v.object({ id: v.string() }))
+  );
 
   const { getServer, docker, ensureImage, stopServer, startServer } =
     useDocker(event);

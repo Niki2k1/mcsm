@@ -74,7 +74,10 @@ function safeRelPath(input: string, scope: ConfigScope): string {
 
   // Root-level server config (bukkit.yml, spigot.yml, *.toml, ...).
   const lower = path.toLowerCase();
-  if (!path.includes("/") && scope.rootExts.some((ext) => lower.endsWith(ext))) {
+  if (
+    !path.includes("/") &&
+    scope.rootExts.some((ext) => lower.endsWith(ext))
+  ) {
     return path;
   }
 
@@ -219,7 +222,8 @@ export async function readConfigFile(
       }
       const chunks: Uint8Array[] = [];
       let size = 0;
-      entry.on("data", (chunk: Uint8Array) => {
+      entry.on("data", (raw) => {
+        const chunk = raw as Uint8Array;
         size += chunk.length;
         if (size > MAX_FILE_BYTES) {
           tar.destroy();
@@ -241,7 +245,9 @@ export async function readConfigFile(
 
     tar.on("finish", () => {
       if (!found) {
-        reject(createError({ statusCode: 404, statusMessage: "File not found" }));
+        reject(
+          createError({ statusCode: 404, statusMessage: "File not found" })
+        );
       } else {
         resolve(found);
       }
@@ -302,7 +308,10 @@ export async function writeConfigFile(
     parent += `${segment}/`;
     tar.entry({ name: parent, type: "directory", mode: 0o755, uid, gid });
   }
-  tar.entry({ name: path, mode: 0o644, uid, gid }, Buffer.from(content, "utf8"));
+  tar.entry(
+    { name: path, mode: 0o644, uid, gid },
+    Buffer.from(content, "utf8")
+  );
   tar.finalize();
 
   await container.putArchive(tar as unknown as NodeJS.ReadableStream, {

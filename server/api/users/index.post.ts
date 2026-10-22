@@ -1,4 +1,4 @@
-import { z } from "zod";
+import * as v from "valibot";
 import { db } from "@nuxthub/db";
 import { users } from "../../db/schema";
 
@@ -10,12 +10,19 @@ import { users } from "../../db/schema";
 export default defineEventHandler(async (event) => {
   await requireAdmin(event);
 
-  const body = await useValidatedBody(event, {
-    name: z.string().min(1).max(100),
-    email: z.string().email(),
-    password: z.string().min(8).max(255).optional(),
-    admin: z.boolean().default(false),
-  });
+  const body = await readValidatedBody(
+    event,
+    v.parser(
+      v.object({
+        name: v.pipe(v.string(), v.minLength(1), v.maxLength(100)),
+        email: v.pipe(v.string(), v.email()),
+        password: v.optional(
+          v.pipe(v.string(), v.minLength(8), v.maxLength(255))
+        ),
+        admin: v.optional(v.boolean(), false),
+      })
+    )
+  );
 
   const email = body.email.toLowerCase().trim();
 

@@ -19,18 +19,26 @@
               class="w-44"
               :disabled="creating"
             />
-            <UButton icon="i-lucide-archive" :loading="creating" @click="create">
+            <UButton
+              icon="i-lucide-archive"
+              :loading="creating"
+              @click="create"
+            >
               Create backup
             </UButton>
           </div>
         </div>
       </template>
 
-      <div v-if="!backups.length" class="text-sm text-muted py-10 text-center space-y-2">
+      <div
+        v-if="!backups.length"
+        class="text-sm text-muted py-10 text-center space-y-2"
+      >
         <UIcon name="i-lucide-archive" class="size-8 mx-auto opacity-60" />
         <p>No backups yet.</p>
         <p class="text-xs">
-          Backups snapshot the whole world volume and can be restored at any time.
+          Backups snapshot the whole world volume and can be restored at any
+          time.
         </p>
       </div>
 
@@ -46,7 +54,8 @@
               {{ backup.label || formatDate(backup.createdAt) }}
             </p>
             <p class="text-xs text-muted">
-              {{ formatDate(backup.createdAt) }} · {{ formatSize(backup.sizeBytes) }}
+              {{ formatDate(backup.createdAt) }} ·
+              {{ formatSize(backup.sizeBytes) }}
             </p>
           </div>
           <div class="flex gap-2 shrink-0">
@@ -101,7 +110,12 @@
       </template>
       <template #footer>
         <div class="flex justify-end gap-2 w-full">
-          <UButton color="neutral" variant="ghost" :disabled="restoring" @click="restoreOpen = false">
+          <UButton
+            color="neutral"
+            variant="ghost"
+            :disabled="restoring"
+            @click="restoreOpen = false"
+          >
             Cancel
           </UButton>
           <UButton color="warning" :loading="restoring" @click="runRestore">
@@ -119,7 +133,12 @@
     >
       <template #footer>
         <div class="flex justify-end gap-2 w-full">
-          <UButton color="neutral" variant="ghost" :disabled="deleting" @click="deleteOpen = false">
+          <UButton
+            color="neutral"
+            variant="ghost"
+            :disabled="deleting"
+            @click="deleteOpen = false"
+          >
             Cancel
           </UButton>
           <UButton color="error" :loading="deleting" @click="runDelete">
@@ -153,9 +172,24 @@ onMounted(() => {
   const now = Date.now();
   const hour = 60 * 60 * 1000;
   backups.value = [
-    { id: nextId++, label: "Before the dragon fight", sizeBytes: 142 * 1024 * 1024, createdAt: now - 26 * hour },
-    { id: nextId++, label: null, sizeBytes: 121 * 1024 * 1024, createdAt: now - 3 * 24 * hour },
-    { id: nextId++, label: "Season 3 final", sizeBytes: 96 * 1024 * 1024, createdAt: now - 9 * 24 * hour },
+    {
+      id: nextId++,
+      label: "Before the dragon fight",
+      sizeBytes: 142 * 1024 * 1024,
+      createdAt: now - 26 * hour,
+    },
+    {
+      id: nextId++,
+      label: null,
+      sizeBytes: 121 * 1024 * 1024,
+      createdAt: now - 3 * 24 * hour,
+    },
+    {
+      id: nextId++,
+      label: "Season 3 final",
+      sizeBytes: 96 * 1024 * 1024,
+      createdAt: now - 9 * 24 * hour,
+    },
   ];
 });
 
@@ -197,7 +231,9 @@ const deleteOpen = ref(false);
 const restoring = ref(false);
 const deleting = ref(false);
 
-const busy = computed(() => creating.value || restoring.value || deleting.value);
+const busy = computed(
+  () => creating.value || restoring.value || deleting.value
+);
 
 function confirmRestore(backup: Backup) {
   pending.value = backup;
@@ -225,7 +261,9 @@ async function runDelete() {
   if (!pending.value) return;
   deleting.value = true;
   await new Promise((resolve) => setTimeout(resolve, 600));
-  backups.value = backups.value.filter((backup) => backup.id !== pending.value!.id);
+  backups.value = backups.value.filter(
+    (backup) => backup.id !== pending.value!.id
+  );
   deleting.value = false;
   deleteOpen.value = false;
   toast.add({ title: "Backup deleted", color: "success" });

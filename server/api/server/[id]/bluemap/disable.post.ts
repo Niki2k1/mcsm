@@ -1,4 +1,4 @@
-import { z } from "zod";
+import * as v from "valibot";
 import { serverConfigSchema } from "../../../../schema/server.schema";
 
 /**
@@ -7,7 +7,10 @@ import { serverConfigSchema } from "../../../../schema/server.schema";
  * picks up where it left off.
  */
 export default defineEventHandler(async (event) => {
-  const { id } = await useValidatedParams(event, { id: z.string() });
+  const { id } = await getValidatedRouterParams(
+    event,
+    v.parser(v.object({ id: v.string() }))
+  );
 
   const { getServer } = useDocker(event);
 
@@ -22,7 +25,10 @@ export default defineEventHandler(async (event) => {
     return { id: existing.id, alreadyDisabled: true };
   }
 
-  const data = serverConfigSchema.parse({ ...existing.config, BLUEMAP: false });
+  const data = v.parse(serverConfigSchema, {
+    ...existing.config,
+    BLUEMAP: false,
+  });
 
   try {
     const result = await recreateServer(

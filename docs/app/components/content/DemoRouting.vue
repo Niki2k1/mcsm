@@ -1,5 +1,7 @@
 <template>
-  <div class="not-prose space-y-4 rounded-lg border border-default bg-default p-4">
+  <div
+    class="not-prose space-y-4 rounded-lg border border-default bg-default p-4"
+  >
     <!-- Domain → container rows -->
     <div class="space-y-2">
       <div
@@ -24,7 +26,9 @@
           />
 
           <!-- Routed to -->
-          <span class="ml-auto flex shrink-0 items-center gap-1.5 text-xs text-muted">
+          <span
+            class="ml-auto flex shrink-0 items-center gap-1.5 text-xs text-muted"
+          >
             <UIcon name="i-lucide-move-right" class="size-4 text-dimmed" />
             <UIcon name="i-lucide-container" class="size-3.5" />
             mc-{{ server.name }}
@@ -32,8 +36,12 @@
         </div>
 
         <!-- The mechanism: one Docker label, no config files -->
-        <p v-if="server.isNew" class="mt-1.5 truncate font-mono text-[11px] text-primary">
-          + infrarust.domains="{{ server.name }}.mc.example.com" · infrarust.port="25565"
+        <p
+          v-if="server.isNew"
+          class="mt-1.5 truncate font-mono text-[11px] text-primary"
+        >
+          + infrarust.domains="{{ server.name }}.mc.example.com" ·
+          infrarust.port="25565"
         </p>
       </div>
     </div>
@@ -44,7 +52,8 @@
     >
       <UIcon name="i-lucide-route" class="size-4 text-primary" />
       <span>
-        All domains share <code class="font-semibold text-highlighted">port 25565</code> —
+        All domains share
+        <code class="font-semibold text-highlighted">port 25565</code> —
         Infrarust routes each one to its container by Docker label.
       </span>
     </div>
@@ -59,7 +68,12 @@
         :ui="{ base: 'lowercase' }"
         aria-label="New server name"
       />
-      <UButton type="submit" size="sm" icon="i-lucide-plus" :disabled="!cleanName">
+      <UButton
+        type="submit"
+        size="sm"
+        icon="i-lucide-plus"
+        :disabled="!cleanName"
+      >
         Add server
       </UButton>
     </form>
@@ -105,7 +119,10 @@ function add() {
   const name = cleanName.value;
   if (!name) return;
   if (servers.value.some((server) => server.name === name)) {
-    toast.add({ title: `${name}.mc.example.com already exists`, color: "warning" });
+    toast.add({
+      title: `${name}.mc.example.com already exists`,
+      color: "warning",
+    });
     return;
   }
   // Mark only the latest addition as new so the label callout moves with it.
@@ -114,7 +131,8 @@ function add() {
   newName.value = "";
   toast.add({
     title: `${name}.mc.example.com is live`,
-    description: "In MCSM, Infrarust starts routing the moment the container gets its labels.",
+    description:
+      "In MCSM, Infrarust starts routing the moment the container gets its labels.",
     color: "success",
   });
 }
