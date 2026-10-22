@@ -1,0 +1,149 @@
+name: release
+
+on:
+  push:
+    # release/v* picks up hand edits to an open release PR
+    branches: [main, 'release/v*']
+  pull_request:
+    types: [closed]
+    branches: [main]
+  # merged release PRs (dispatched on the vX.Y.Z tag), image rebuilds, and
+  # prereleases all arrive here
+  workflow_dispatch:
+    inputs:
+      prerelease:
+        description: 'Cut a prerelease instead of a normal release, e.g. `beta`, `rc`, or `0`'
+        required: false
+        default: ''
+      # Unused (no npm publish), but uppt/release passes it when releasing from
+      # a maintenance branch, and dispatching an undeclared input fails.
+      npm-tag:
+        description: 'Set by uppt/release for maintenance lines; ignored'
+        required: false
+        default: ''
+
+permissions: {}
+
+env:
+  REGISTRY: ghcr.io
+  IMAGE_NAME: ${{ github.repository }}
+
+jobs:
+  # open or update a draft release PR from conventional commits
+  pr:
+    if: |
+      !github.event.repository.fork
+      && (
+        (
+          github.event_name == 'push'
+          && (
+            github.ref == format('refs/heads/{0}', github.event.repository.default_branch)
+            || startsWith(github.ref, 'refs/heads/release/v')
+          )
+        ) || (
+          github.event_name == 'workflow_dispatch'
+          && !startsWith(github.ref, 'refs/tags/')
+        )
+      )
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+      pull-requests: write
+    steps:
+      - uses: danielroe/uppt/pr@6ec27140623aa835e362f866d8ab0018ab057f4d # v0.6.11
+        with:
+          token: ${{ secrets.GITHUB_TOKEN }}
+          prerelease: ${{ inputs.prerelease }}
+
+  # release PR merged: tag it, cut a GitHub release, dispatch this workflow on
+  # the new tag (a tag pushed with GITHUB_TOKEN wouldn't trigger a push event)
+  release:
+    if: |
+      github.event_name == 'pull_request'
+      && github.event.pull_request.merged == true
+      && startsWith(github.event.pull_request.head.ref, 'release/v')
+      && github.event.pull_request.head.repo.full_name == github.repository
+      && !github.event.repository.fork
+    runs-on: ubuntu-latest
+    concurrency:
+      group: release-${{ github.event.pull_request.number }}
+      cancel-in-progress: false
+    permissions:
+      contents: write
+      actions: write
+    steps:
+      - uses: danielroe/uppt/release@6ec27140623aa835e362f866d8ab0018ab057f4d # v0.6.11
+        with:
+          token: ${{ secrets.GITHUB_TOKEN }}
+
+  # main → :canary, vX.Y.Z tag → :X.Y.Z, :X.Y, :X and :latest
+  docker:
+    if: |
+      !github.event.repository.fork
+      && (
+        (
+          github.event_name == 'push'
+          && github.ref == format('refs/heads/{0}', github.event.repository.default_branch)
+        ) || (
+          github.event_name == 'workflow_dispatch'
+          && startsWith(github.ref, 'refs/tags/v')
+        )
+      )
+    runs-on: ubuntu-latest
+    # Tag builds publish :latest, so they wait for a manual approval; canary
+    # builds stay unattended.
+    environment: ${{ github.ref_type == 'tag' && 'release' || '' }}
+    # Rapid pushes to main only need the newest canary, but a release build
+    # must never be cancelled halfway.
+    concurrency:
+      group: docker-${{ github.ref }}
+      cancel-in-progress: ${{ github.ref_type == 'branch' }}
+    permissions:
+      contents: read
+      packages: write
+    steps:
+      - name: Checkout
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          persist-credentials: false
+
+      - name: Set up Buildx
+        uses: docker/setup-buildx-action@f87e5991a6d7451dcb8d9637bfbc97413f497069 # v4.4.1
+
+      - name: Log in to GHCR
+        uses: docker/login-action@dbcb813823bdd20940b903addbd779551569679f # v4.6.0
+        with:
+          registry: ${{ env.REGISTRY }}
+          username: ${{ github.actor }}
+          password: ${{ secrets.GITHUB_TOKEN }}
+
+      # semver's {{major}}/{{major}}.{{minor}} already skip prereleases;
+      # latest is gated the same way so a beta never becomes :latest.
+      - name: Extract metadata
+        id: meta
+        uses: docker/metadata-action@dc802804100637a589fabce1cb79ff13a1411302 # v6.2.0
+        with:
+          images: ${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}
+          flavor: |
+            latest=false
+          tags: |
+            type=raw,value=canary,enable=${{ github.ref_type == 'branch' }}
+            type=sha,enable=${{ github.ref_type == 'branch' }}
+            type=semver,pattern={{version}}
+            type=semver,pattern={{major}}.{{minor}}
+            type=semver,pattern={{major}}
+            type=raw,value=latest,enable=${{ github.ref_type == 'tag' && !contains(github.ref_name, '-') }}
+
+      # amd64 only. arm64 was dropped because building it under QEMU emulation
+      # is extremely slow for this app and tends to
+      # hang. To support arm64, build it on a native arm64 runner instead.
+      - name: Build and push
+        uses: docker/build-push-action@c3c9e263c25d99ce0380d002d59b67737d91b0dc # v7.4.0
+        with:
+          context: .
+          platforms: linux/amd64
+          push: true
+          tags: ${{ steps.meta.outputs.tags }}
+          labels: ${{ steps.meta.outputs.labels }}
+          cache-from: type=gha
+          cache-to: type=gha,mode=max

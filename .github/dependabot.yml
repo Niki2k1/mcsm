@@ -1,0 +1,15 @@
+version: 2
+updates:
+  # Actions are pinned to commit SHAs; Dependabot bumps the SHA and the
+  # trailing version comment together.
+  - package-ecosystem: github-actions
+    directory: /
+    schedule:
+      interval: weekly
+    # A hijacked release is usually spotted and pulled within days; waiting
+    # keeps it from landing here first.
+    cooldown:
+      default-days: 7
+    groups:
+      actions:
+        patterns: ['*']

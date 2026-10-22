@@ -292,9 +292,12 @@ The wizard's domain options come from the database. After logging in, open the
 The repo ships a turnkey stack so you don't have to wire the pieces yourself:
 
 - **`Dockerfile`** — builds the MCSM image.
-- **`.github/workflows/docker-publish.yml`** — builds a multi-arch image and
-  pushes it to **GHCR** (`ghcr.io/<owner>/mcsm`) on push to `main`, on `v*`
-  tags, or via manual dispatch.
+- **`.github/workflows/release.yml`** — releases via
+  [uppt](https://github.com/danielroe/uppt) and pushes the image to **GHCR**
+  (`ghcr.io/<owner>/mcsm`). Every push to `main` updates a draft release PR
+  from the conventional commits and publishes `:canary`. Merging the release PR
+  tags `vX.Y.Z` and publishes `:X.Y.Z`, `:X.Y`, `:X` and `:latest`, so pin a
+  version tag if you want controlled updates.
 - **`docker-compose.yml`** (plain `docker compose up`) and
   **`docker-compose.coolify.yml`** (Coolify) — the same three services on two
   networks; the Coolify variant additionally joins Coolify's Traefik proxy

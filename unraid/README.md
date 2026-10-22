@@ -17,7 +17,7 @@ them with `docker stop`, which the `unless-stopped` restart policy doesn't
 undo after a reboot.
 
 Only submit after this folder is merged to `main`: the templates install
-`ghcr.io/niki2k1/mcsm:latest`, which is built from `main`, and their
+`ghcr.io/niki2k1/mcsm:latest`, which points at the newest release, and their
 `TemplateURL`s and links point there too. Submit the repository to Community Applications at
 <https://ca.unraid.net/submit/new> with `https://github.com/Niki2k1/mcsm` as
 the repository URL.
