@@ -111,10 +111,7 @@
         </div>
 
         <!-- States -->
-        <div
-          v-else-if="searching"
-          class="py-12 text-center text-muted"
-        >
+        <div v-else-if="searching" class="py-12 text-center text-muted">
           <UIcon
             name="i-heroicons-arrow-path-20-solid"
             class="size-6 mx-auto animate-spin opacity-60"
@@ -132,8 +129,8 @@
             class="size-8 mx-auto opacity-60"
           />
           <p>
-            Search Modrinth — results are filtered to builds that work with
-            this server's loader and Minecraft version.
+            Search Modrinth — results are filtered to builds that work with this
+            server's loader and Minecraft version.
           </p>
         </div>
 
@@ -272,7 +269,11 @@ async function install(hit: SearchHit) {
   installing.value = hit.project_id;
   try {
     const result = await $fetch<{
-      added: { filename: string; version_number: string; dependency: boolean }[];
+      added: {
+        filename: string;
+        version_number: string;
+        dependency: boolean;
+      }[];
       restarted: boolean;
     }>(`/api/server/${id.value}/modrinth/install`, {
       method: "POST",

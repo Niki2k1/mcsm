@@ -37,7 +37,11 @@ export default defineEventHandler(async (event) => {
     if (download === "true") {
       const filename = file.path.split("/").pop() ?? "config";
       setHeader(event, "Content-Type", "text/plain; charset=utf-8");
-      setHeader(event, "Content-Disposition", `attachment; filename="${filename}"`);
+      setHeader(
+        event,
+        "Content-Disposition",
+        `attachment; filename="${filename}"`
+      );
       return file.content;
     }
 

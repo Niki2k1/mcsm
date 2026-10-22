@@ -31,8 +31,14 @@ echo copied
 
 export default defineEventHandler(async (event) => {
   const { id } = await useValidatedParams(event, { id: z.string() });
-  const { getServer, docker, ensureImage, stopServer, startServer, removeWorld } =
-    useDocker(event);
+  const {
+    getServer,
+    docker,
+    ensureImage,
+    stopServer,
+    startServer,
+    removeWorld,
+  } = useDocker(event);
 
   let server: Awaited<ReturnType<typeof getServer>>;
   try {
@@ -75,7 +81,10 @@ export default defineEventHandler(async (event) => {
     );
     const result = output.trim().split("\n").pop();
 
-    if (exitCode !== 0 || (result !== "same" && result !== "copied" && result !== "conflict")) {
+    if (
+      exitCode !== 0 ||
+      (result !== "same" && result !== "copied" && result !== "conflict")
+    ) {
       console.error("[mcsm] Relocate helper failed:", output);
       // Only clean up after a started copy: before that, the target may be
       // the very directory the world lives in.

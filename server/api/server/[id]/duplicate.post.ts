@@ -17,8 +17,15 @@ export default defineEventHandler(async (event) => {
     copyWorld: z.boolean().default(true),
   });
 
-  const { getServer, docker, ensureImage, provisionServer, worldSource, worldExists, removeWorld } =
-    useDocker(event);
+  const {
+    getServer,
+    docker,
+    ensureImage,
+    provisionServer,
+    worldSource,
+    worldExists,
+    removeWorld,
+  } = useDocker(event);
 
   let server: Awaited<ReturnType<typeof getServer>>;
   try {
@@ -71,7 +78,8 @@ export default defineEventHandler(async (event) => {
   const targetSource = worldSource(spec.volume);
 
   if (copyWorld && server.volumeSource) {
-    if (!targetSource.startsWith("/")) await docker.createVolume({ Name: targetSource });
+    if (!targetSource.startsWith("/"))
+      await docker.createVolume({ Name: targetSource });
     await ensureImage(HELPER_IMAGE);
 
     // Same consistency dance as backups: pause world saves (and BlueMap's

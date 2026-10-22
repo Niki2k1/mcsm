@@ -35,10 +35,7 @@
 
       <USeparator />
 
-      <div
-        v-if="!domains.length"
-        class="text-sm text-muted text-center py-4"
-      >
+      <div v-if="!domains.length" class="text-sm text-muted text-center py-4">
         No domains yet. Add one below.
       </div>
 
@@ -100,8 +97,8 @@
     <UModal v-model:open="confirmOpen" title="Delete domain">
       <template #body>
         <p class="text-sm">
-          Delete <span class="font-mono">{{ pending }}</span>? It will no longer
-          be offered in the wizard.
+          Delete <span class="font-mono">{{ pending }}</span
+          >? It will no longer be offered in the wizard.
         </p>
         <p
           v-if="pending && usage(pending) > 0"

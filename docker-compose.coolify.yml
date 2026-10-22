@@ -143,7 +143,13 @@ services:
     # old `--servers-dir` flag (it crashes on startup with "unexpected argument
     # '--servers-dir'"). The config is parsed as TOML, so we ship it as
     # config.toml rather than the image default path it can't find.
-    command: ["--config", "/app/config/config.toml", "--plugins-dir", "/app/config/plugins"]
+    command:
+      [
+        "--config",
+        "/app/config/config.toml",
+        "--plugins-dir",
+        "/app/config/plugins",
+      ]
     ports:
       - "25565:25565"
     networks:

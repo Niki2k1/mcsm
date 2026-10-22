@@ -128,7 +128,8 @@ const types: {
   {
     name: "CurseForge",
     value: "AUTO_CURSEFORGE",
-    description: "CurseForge modpack server. Set the API key once in Admin → Secrets.",
+    description:
+      "CurseForge modpack server. Set the API key once in Admin → Secrets.",
     icon: curseforge,
     customFields: [
       {

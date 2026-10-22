@@ -52,7 +52,10 @@ export default defineEventHandler(async (event) => {
   }
 
   // Guard again on the buffered size in case Content-Length was absent/spoofed.
-  const totalBytes = uploads.reduce((sum, upload) => sum + upload.data.length, 0);
+  const totalBytes = uploads.reduce(
+    (sum, upload) => sum + upload.data.length,
+    0
+  );
   if (totalBytes > MAX_UPLOAD_BYTES) {
     throw createError({
       statusCode: 413,

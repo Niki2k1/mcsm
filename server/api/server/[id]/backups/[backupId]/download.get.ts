@@ -24,11 +24,7 @@ export default defineEventHandler(async (event) => {
   const filename = `${backup.volume}-${date}.tar.gz`;
 
   setHeader(event, "Content-Type", "application/gzip");
-  setHeader(
-    event,
-    "Content-Disposition",
-    `attachment; filename="${filename}"`
-  );
+  setHeader(event, "Content-Disposition", `attachment; filename="${filename}"`);
   // Exact size recorded at backup creation — gives the browser a progress bar.
   if (backup.sizeBytes) {
     setHeader(event, "Content-Length", backup.sizeBytes);

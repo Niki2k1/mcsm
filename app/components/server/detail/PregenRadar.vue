@@ -118,11 +118,16 @@
         class="fill-white/90 font-semibold"
         style="font-size: 14px"
       >
-        {{ percent.toFixed(state === 'completed' ? 0 : 1) }}%
+        {{ percent.toFixed(state === "completed" ? 0 : 1) }}%
       </text>
 
       <!-- Corner coordinates for scale -->
-      <text :x="PAD + 1.5" :y="PAD + 4" class="fill-white/30" style="font-size: 3.5px">
+      <text
+        :x="PAD + 1.5"
+        :y="PAD + 4"
+        class="fill-white/30"
+        style="font-size: 3.5px"
+      >
         {{ cornerLabel(-1) }}
       </text>
       <text
@@ -137,9 +142,12 @@
     </svg>
 
     <!-- Caption -->
-    <div class="mt-2 flex flex-wrap items-center justify-between gap-2 text-xs text-muted">
+    <div
+      class="mt-2 flex flex-wrap items-center justify-between gap-2 text-xs text-muted"
+    >
       <span>
-        {{ (radiusBlocks * 2).toLocaleString() }} × {{ (radiusBlocks * 2).toLocaleString() }}
+        {{ (radiusBlocks * 2).toLocaleString() }} ×
+        {{ (radiusBlocks * 2).toLocaleString() }}
         blocks · grid = 512-block regions
       </span>
       <span v-if="state === 'running' && current" class="font-mono">
@@ -149,9 +157,14 @@
     </div>
 
     <!-- Legend -->
-    <div class="mt-1.5 flex flex-wrap items-center gap-x-4 gap-y-1 text-xs text-muted">
+    <div
+      class="mt-1.5 flex flex-wrap items-center gap-x-4 gap-y-1 text-xs text-muted"
+    >
       <span class="flex items-center gap-1.5">
-        <span class="size-2.5 rounded-full" :style="{ backgroundColor: 'var(--ui-primary)' }" />
+        <span
+          class="size-2.5 rounded-full"
+          :style="{ backgroundColor: 'var(--ui-primary)' }"
+        />
         Chunky's position
       </span>
       <span class="flex items-center gap-1.5">
@@ -225,13 +238,22 @@ const currentPoint = computed(() => {
 });
 
 /** Region grid lines at absolute 512-block boundaries inside the area. */
-const regionGridX = computed(() => gridLines(props.centerX ?? 0, (x) => blockToSvg(x, 0).x));
-const regionGridZ = computed(() => gridLines(props.centerZ ?? 0, (z) => blockToSvg(0, z).y));
+const regionGridX = computed(() =>
+  gridLines(props.centerX ?? 0, (x) => blockToSvg(x, 0).x)
+);
+const regionGridZ = computed(() =>
+  gridLines(props.centerZ ?? 0, (z) => blockToSvg(0, z).y)
+);
 
 function gridLines(center: number, toSvg: (block: number) => number): number[] {
   const lines: number[] = [];
-  const first = Math.ceil((center - radius.value) / REGION_BLOCKS) * REGION_BLOCKS;
-  for (let block = first; block <= center + radius.value; block += REGION_BLOCKS) {
+  const first =
+    Math.ceil((center - radius.value) / REGION_BLOCKS) * REGION_BLOCKS;
+  for (
+    let block = first;
+    block <= center + radius.value;
+    block += REGION_BLOCKS
+  ) {
     lines.push(toSvg(block));
   }
   return lines;
@@ -270,7 +292,13 @@ const currentRegionKey = computed(() =>
 );
 
 const visitedRects = computed(() => {
-  const rects: { key: string; x: number; y: number; size: number; current: boolean }[] = [];
+  const rects: {
+    key: string;
+    x: number;
+    y: number;
+    size: number;
+    current: boolean;
+  }[] = [];
   const size = REGION_BLOCKS * scale.value;
   for (const key of visited.value) {
     const [rx = 0, rz = 0] = key.split(",").map(Number);

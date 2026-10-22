@@ -269,7 +269,13 @@ export async function resolveRequiredDeps(
 
     resolved.push(depVersion);
     resolved.push(
-      ...(await resolveRequiredDeps(depVersion, loader, gameVersion, seen, depth + 1))
+      ...(await resolveRequiredDeps(
+        depVersion,
+        loader,
+        gameVersion,
+        seen,
+        depth + 1
+      ))
     );
   }
 

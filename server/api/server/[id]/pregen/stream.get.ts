@@ -45,8 +45,7 @@ export default defineEventHandler(async (event) => {
       }
     } catch (error) {
       if (closed) return;
-      const statusCode =
-        (error as { statusCode?: number })?.statusCode ?? 502;
+      const statusCode = (error as { statusCode?: number })?.statusCode ?? 502;
       await eventStream
         .push(JSON.stringify({ ok: false, statusCode }))
         .catch(() => {});

@@ -27,9 +27,15 @@
               </UBadge>
             </div>
             <p class="text-sm text-muted mt-0.5">{{ secret.description }}</p>
-            <div class="flex flex-wrap items-center gap-x-3 gap-y-1 mt-1 text-xs text-dimmed">
-              <span v-if="secret.set" class="font-mono">{{ secret.preview }}</span>
-              <span v-if="secret.envVar" class="font-mono">→ {{ secret.envVar }}</span>
+            <div
+              class="flex flex-wrap items-center gap-x-3 gap-y-1 mt-1 text-xs text-dimmed"
+            >
+              <span v-if="secret.set" class="font-mono">{{
+                secret.preview
+              }}</span>
+              <span v-if="secret.envVar" class="font-mono"
+                >→ {{ secret.envVar }}</span
+              >
               <ULink
                 v-if="secret.docsUrl"
                 :to="secret.docsUrl"
@@ -59,7 +65,9 @@
             v-model="drafts[secret.key]"
             type="password"
             autocomplete="off"
-            :placeholder="secret.set ? 'Enter a new value to replace' : 'Paste value'"
+            :placeholder="
+              secret.set ? 'Enter a new value to replace' : 'Paste value'
+            "
             class="flex-1"
           />
           <UButton
@@ -76,8 +84,8 @@
     <template #footer>
       <p class="text-xs text-dimmed">
         Changing a secret only affects new or recreated servers. Use
-        <span class="font-medium">Re-apply to all servers</span> below to push it
-        to servers that already exist.
+        <span class="font-medium">Re-apply to all servers</span> below to push
+        it to servers that already exist.
       </p>
     </template>
   </UCard>

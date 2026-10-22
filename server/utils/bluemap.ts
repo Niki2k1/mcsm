@@ -95,7 +95,10 @@ export async function acceptMojangDownload(
   const { getServer, docker, ensureImage } = useDocker(event);
   const server = await getServer(serverId);
   if (!server.volume) {
-    throw createError({ statusCode: 400, statusMessage: "Server has no volume" });
+    throw createError({
+      statusCode: 400,
+      statusMessage: "Server has no volume",
+    });
   }
 
   await ensureImage(HELPER_IMAGE);

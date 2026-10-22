@@ -40,7 +40,9 @@
             v-model="envVar.key"
             placeholder="VARIABLE_NAME"
             class="w-64 font-mono"
-            :color="envVar.key && !isValidEnvKey(envVar.key) ? 'error' : undefined"
+            :color="
+              envVar.key && !isValidEnvKey(envVar.key) ? 'error' : undefined
+            "
           />
           <UInput
             v-model="envVar.value"
@@ -114,9 +116,10 @@
             {{ SOURCE_BADGES[envVar.source].label }}
           </UBadge>
 
-          <code class="text-xs font-mono font-semibold shrink-0 w-56 truncate">{{
-            envVar.key
-          }}</code>
+          <code
+            class="text-xs font-mono font-semibold shrink-0 w-56 truncate"
+            >{{ envVar.key }}</code
+          >
 
           <code
             class="text-xs font-mono text-muted flex-1 min-w-0 truncate"

@@ -2,7 +2,12 @@
   <div class="not-prose space-y-4">
     <div class="flex flex-wrap items-center justify-between gap-3">
       <div class="flex items-center gap-3">
-        <UTabs v-model="range" :items="rangeOptions" :content="false" size="sm" />
+        <UTabs
+          v-model="range"
+          :items="rangeOptions"
+          :content="false"
+          size="sm"
+        />
         <UButton
           icon="i-lucide-refresh-cw"
           variant="ghost"
@@ -162,7 +167,12 @@ function generate() {
 
     // Latency: stable LAN-ish with occasional hiccups.
     const latency =
-      Math.round((1.2 + Math.random() * 0.8 + (Math.random() < 0.03 ? 4 + Math.random() * 6 : 0)) * 10) / 10;
+      Math.round(
+        (1.2 +
+          Math.random() * 0.8 +
+          (Math.random() < 0.03 ? 4 + Math.random() * 6 : 0)) *
+          10
+      ) / 10;
 
     result.push({ t, players, cpu, mem: memRounded, latency });
   }
@@ -179,9 +189,15 @@ function formatTick(timestamp: number | undefined) {
   if (!timestamp) return "";
   const date = new Date(timestamp);
   if (range.value === "7d") {
-    return date.toLocaleDateString(undefined, { month: "short", day: "numeric" });
+    return date.toLocaleDateString(undefined, {
+      month: "short",
+      day: "numeric",
+    });
   }
-  return date.toLocaleTimeString(undefined, { hour: "2-digit", minute: "2-digit" });
+  return date.toLocaleTimeString(undefined, {
+    hour: "2-digit",
+    minute: "2-digit",
+  });
 }
 
 const xFormatter = (i: number) => formatTick(samples.value[i]?.t);
@@ -202,10 +218,14 @@ const playersCategories = {
   players: { name: "Players", color: "var(--ui-primary)" },
 };
 
-const cpuData = computed(() => samples.value.map((s) => ({ t: s.t, cpu: s.cpu })));
+const cpuData = computed(() =>
+  samples.value.map((s) => ({ t: s.t, cpu: s.cpu }))
+);
 const cpuCategories = { cpu: { name: "CPU", color: "#f97316" } };
 
-const memData = computed(() => samples.value.map((s) => ({ t: s.t, used: s.mem })));
+const memData = computed(() =>
+  samples.value.map((s) => ({ t: s.t, used: s.mem }))
+);
 const memCategories = { used: { name: "Used", color: "#8b5cf6" } };
 
 const latencyData = computed(() =>

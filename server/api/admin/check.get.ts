@@ -14,7 +14,11 @@ import net from "node:net";
 
 const MC_PORT = 25565;
 
-function withTimeout<T>(promise: Promise<T>, ms: number, fallback: T): Promise<T> {
+function withTimeout<T>(
+  promise: Promise<T>,
+  ms: number,
+  fallback: T
+): Promise<T> {
   return Promise.race([
     promise,
     new Promise<T>((resolve) => setTimeout(() => resolve(fallback), ms)),
@@ -53,23 +57,25 @@ async function resolveExpected(value: string): Promise<string[]> {
 }
 
 function tcpCheck(host: string, port: number, timeoutMs = 3000) {
-  return new Promise<{ ok: boolean; ms?: number; error?: string }>((resolve) => {
-    const socket = new net.Socket();
-    const start = Date.now();
-    let settled = false;
-    const done = (result: { ok: boolean; ms?: number; error?: string }) => {
-      if (settled) return;
-      settled = true;
-      socket.destroy();
-      resolve(result);
-    };
+  return new Promise<{ ok: boolean; ms?: number; error?: string }>(
+    (resolve) => {
+      const socket = new net.Socket();
+      const start = Date.now();
+      let settled = false;
+      const done = (result: { ok: boolean; ms?: number; error?: string }) => {
+        if (settled) return;
+        settled = true;
+        socket.destroy();
+        resolve(result);
+      };
 
-    socket.setTimeout(timeoutMs);
-    socket.once("connect", () => done({ ok: true, ms: Date.now() - start }));
-    socket.once("timeout", () => done({ ok: false, error: "Timed out" }));
-    socket.once("error", (err) => done({ ok: false, error: err.message }));
-    socket.connect(port, host);
-  });
+      socket.setTimeout(timeoutMs);
+      socket.once("connect", () => done({ ok: true, ms: Date.now() - start }));
+      socket.once("timeout", () => done({ ok: false, error: "Timed out" }));
+      socket.once("error", (err) => done({ ok: false, error: err.message }));
+      socket.connect(port, host);
+    }
+  );
 }
 
 export default defineEventHandler(async (event) => {
@@ -106,7 +112,11 @@ export default defineEventHandler(async (event) => {
     | undefined;
   const { publicHost } = await useSettings().get();
   if (publicHost) {
-    const expectedIps = await withTimeout(resolveExpected(publicHost), 4000, []);
+    const expectedIps = await withTimeout(
+      resolveExpected(publicHost),
+      4000,
+      []
+    );
     expected = {
       host: publicHost,
       addresses: expectedIps,
@@ -122,14 +132,12 @@ export default defineEventHandler(async (event) => {
     : { ok: false, error: "Skipped — DNS did not resolve" };
 
   // Only a real server domain has a backend to answer a Minecraft ping.
-  let mc:
-    | {
-        ok: boolean;
-        version?: string;
-        players?: { online: number; max: number };
-        error?: string;
-      }
-    | null = null;
+  let mc: {
+    ok: boolean;
+    version?: string;
+    players?: { online: number; max: number };
+    error?: string;
+  } | null = null;
   if (!isWildcard && tcp.ok) {
     try {
       const result = await useMinecraftServer({ host: target, timeout: 4000 });

@@ -29,7 +29,9 @@ export default defineEventHandler(async (event) => {
 
   // Published = viewable at /map/<volume>/ without logging in.
   const { publicMaps = [] } = await useSettings().get();
-  const published = Boolean(server.volume && publicMaps.includes(server.volume));
+  const published = Boolean(
+    server.volume && publicMaps.includes(server.volume)
+  );
 
   return {
     supported,

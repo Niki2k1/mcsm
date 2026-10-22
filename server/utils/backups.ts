@@ -119,7 +119,10 @@ export async function createBackup(
 
   const filename = `${server.volume}/${Date.now()}.tar.gz`;
   if (!SAFE_FILENAME.test(filename)) {
-    throw createError({ statusCode: 400, statusMessage: "Invalid volume name" });
+    throw createError({
+      statusCode: 400,
+      statusMessage: "Invalid volume name",
+    });
   }
 
   // BlueMap renders continuously into the same volume we're about to tar,
@@ -198,11 +201,20 @@ export async function restoreBackup(
   serverId: string,
   backupId: number
 ) {
-  const { getServer, docker, ensureImage, stopServer, startServer, backupSource } =
-    useDocker(event);
+  const {
+    getServer,
+    docker,
+    ensureImage,
+    stopServer,
+    startServer,
+    backupSource,
+  } = useDocker(event);
   const server = await getServer(serverId);
   if (!server.volume) {
-    throw createError({ statusCode: 400, statusMessage: "Server has no volume" });
+    throw createError({
+      statusCode: 400,
+      statusMessage: "Server has no volume",
+    });
   }
 
   const backup = await getBackup(server.volume, backupId);
@@ -259,7 +271,10 @@ export async function openBackupDownload(
   const { getServer, docker, ensureImage, backupSource } = useDocker(event);
   const server = await getServer(serverId);
   if (!server.volume) {
-    throw createError({ statusCode: 400, statusMessage: "Server has no volume" });
+    throw createError({
+      statusCode: 400,
+      statusMessage: "Server has no volume",
+    });
   }
 
   const backup = await getBackup(server.volume, backupId);
@@ -327,7 +342,10 @@ export async function uploadBackup(
     useDocker(event);
   const server = await getServer(serverId);
   if (!server.volume) {
-    throw createError({ statusCode: 400, statusMessage: "Server has no volume" });
+    throw createError({
+      statusCode: 400,
+      statusMessage: "Server has no volume",
+    });
   }
 
   await ensureBackupStore();
@@ -335,7 +353,10 @@ export async function uploadBackup(
 
   const filename = `${server.volume}/${Date.now()}.tar.gz`;
   if (!SAFE_FILENAME.test(filename)) {
-    throw createError({ statusCode: 400, statusMessage: "Invalid volume name" });
+    throw createError({
+      statusCode: 400,
+      statusMessage: "Invalid volume name",
+    });
   }
   const target = `/backups/${filename}`;
 
@@ -392,7 +413,8 @@ export async function uploadBackup(
       });
     }
 
-    const sizeBytes = parseInt(output.trim().split("\n").pop() ?? "", 10) || null;
+    const sizeBytes =
+      parseInt(output.trim().split("\n").pop() ?? "", 10) || null;
 
     const [row] = await db
       .insert(backups)
@@ -422,7 +444,10 @@ export async function deleteBackup(
   const { getServer, docker, ensureImage, backupSource } = useDocker(event);
   const server = await getServer(serverId);
   if (!server.volume) {
-    throw createError({ statusCode: 400, statusMessage: "Server has no volume" });
+    throw createError({
+      statusCode: 400,
+      statusMessage: "Server has no volume",
+    });
   }
 
   const backup = await getBackup(server.volume, backupId);

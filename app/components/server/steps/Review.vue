@@ -49,7 +49,10 @@
         <ReviewRow v-if="form.FTB_MODPACK_ID" label="Modpack ID">
           {{ form.FTB_MODPACK_ID }}
         </ReviewRow>
-        <ReviewRow v-if="form.FTB_MODPACK_VERSION_ID" label="Modpack Version ID">
+        <ReviewRow
+          v-if="form.FTB_MODPACK_VERSION_ID"
+          label="Modpack Version ID"
+        >
           {{ form.FTB_MODPACK_VERSION_ID }}
         </ReviewRow>
         <ReviewRow v-if="form.CF_SLUG" label="CurseForge Slug">
@@ -87,7 +90,9 @@
           <span class="capitalize">{{ form.DIFFICULTY }}</span>
         </ReviewRow>
         <ReviewRow label="Max Players">{{ form.MAX_PLAYERS }}</ReviewRow>
-        <ReviewRow label="Hardcore"><BoolBadge :value="form.HARDCORE" /></ReviewRow>
+        <ReviewRow label="Hardcore"
+          ><BoolBadge :value="form.HARDCORE"
+        /></ReviewRow>
         <ReviewRow label="Online Mode">
           <BoolBadge :value="form.ONLINE_MODE" />
         </ReviewRow>

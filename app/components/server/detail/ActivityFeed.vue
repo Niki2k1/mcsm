@@ -19,10 +19,7 @@
       v-if="!events?.length"
       class="text-sm text-muted py-6 text-center space-y-2"
     >
-      <UIcon
-        name="i-heroicons-clock"
-        class="size-6 mx-auto opacity-60"
-      />
+      <UIcon name="i-heroicons-clock" class="size-6 mx-auto opacity-60" />
       <p>No activity recorded yet.</p>
     </div>
 

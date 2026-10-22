@@ -26,7 +26,10 @@ export default defineEventHandler(async (event) => {
     throw createError({ statusCode: 404, statusMessage: "Server not found" });
   }
   if (!server.volume) {
-    throw createError({ statusCode: 400, statusMessage: "Server has no volume" });
+    throw createError({
+      statusCode: 400,
+      statusMessage: "Server has no volume",
+    });
   }
 
   const body = await readRawBody(event, false);

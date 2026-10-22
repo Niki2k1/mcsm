@@ -9,7 +9,9 @@
   >
     <span
       class="flex size-10 shrink-0 items-center justify-center rounded-md"
-      :class="accent ? 'bg-primary/15 text-primary' : 'bg-accented/50 text-muted'"
+      :class="
+        accent ? 'bg-primary/15 text-primary' : 'bg-accented/50 text-muted'
+      "
     >
       <UIcon :name="icon" class="size-5" />
     </span>

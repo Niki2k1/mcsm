@@ -2,9 +2,7 @@
   <UContainer class="py-8 space-y-8">
     <div>
       <h1 class="text-2xl font-bold">Admin</h1>
-      <p class="text-muted">
-        Global settings shared across every server.
-      </p>
+      <p class="text-muted">Global settings shared across every server.</p>
     </div>
 
     <AdminStatusPanel />

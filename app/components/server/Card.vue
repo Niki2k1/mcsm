@@ -52,24 +52,24 @@
 
           <!-- Quick start/stop. Everything else lives on the detail page. -->
           <template v-if="hasServerAccess(server.access, 'operator')">
-          <UButton
-            v-if="server.running"
-            icon="i-heroicons-stop-20-solid"
-            color="warning"
-            variant="ghost"
-            size="xs"
-            aria-label="Stop server"
-            @click.stop.prevent="emit('stop', server)"
-          />
-          <UButton
-            v-else
-            icon="i-heroicons-play-20-solid"
-            color="success"
-            variant="ghost"
-            size="xs"
-            aria-label="Start server"
-            @click.stop.prevent="emit('start', server)"
-          />
+            <UButton
+              v-if="server.running"
+              icon="i-heroicons-stop-20-solid"
+              color="warning"
+              variant="ghost"
+              size="xs"
+              aria-label="Stop server"
+              @click.stop.prevent="emit('stop', server)"
+            />
+            <UButton
+              v-else
+              icon="i-heroicons-play-20-solid"
+              color="success"
+              variant="ghost"
+              size="xs"
+              aria-label="Start server"
+              @click.stop.prevent="emit('start', server)"
+            />
           </template>
         </div>
       </div>

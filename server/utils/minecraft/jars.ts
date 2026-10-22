@@ -255,7 +255,9 @@ export async function readJar(
 
     tar.on("finish", () => {
       if (!found) {
-        reject(createError({ statusCode: 404, statusMessage: "Jar not found" }));
+        reject(
+          createError({ statusCode: 404, statusMessage: "Jar not found" })
+        );
       } else {
         resolve(found);
       }

@@ -8,7 +8,10 @@ import { z } from "zod";
 export default defineEventHandler(async (event) => {
   const { id } = await useValidatedParams(event, { id: z.string() });
   const { filenames, loader, restart } = await useValidatedBody(event, {
-    filenames: z.array(z.string().regex(/^[^/\\]+\.jar$/i)).min(1).max(100),
+    filenames: z
+      .array(z.string().regex(/^[^/\\]+\.jar$/i))
+      .min(1)
+      .max(100),
     loader: z.enum(["paper", "fabric", "forge", "neoforge"]).optional(),
     restart: z.boolean().default(true),
   });

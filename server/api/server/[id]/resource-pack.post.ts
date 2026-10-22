@@ -28,7 +28,10 @@ export default defineEventHandler(async (event) => {
     throw createError({ statusCode: 404, statusMessage: "Server not found" });
   }
   if (!server.volume) {
-    throw createError({ statusCode: 400, statusMessage: "Server has no volume" });
+    throw createError({
+      statusCode: 400,
+      statusMessage: "Server has no volume",
+    });
   }
 
   await mkdir(PACKS_DIR, { recursive: true });

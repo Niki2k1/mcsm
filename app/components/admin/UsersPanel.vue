@@ -33,8 +33,8 @@
           </div>
           <p class="text-xs text-dimmed truncate">
             {{ account.email }}
-            · {{ account.hasPassword ? "password" : "no password" }}
-            · {{ account.passkeys }}
+            · {{ account.hasPassword ? "password" : "no password" }} ·
+            {{ account.passkeys }}
             {{ account.passkeys === 1 ? "passkey" : "passkeys" }}
             ·
             {{
@@ -92,7 +92,11 @@
     <template #footer>
       <form class="space-y-3" @submit.prevent="createUser">
         <div class="grid gap-2 sm:grid-cols-3">
-          <UInput v-model="newUser.name" placeholder="Name" autocomplete="off" />
+          <UInput
+            v-model="newUser.name"
+            placeholder="Name"
+            autocomplete="off"
+          />
           <UInput
             v-model="newUser.email"
             type="email"
@@ -175,8 +179,12 @@
             />
           </div>
           <dl class="pt-3 text-xs text-muted space-y-1">
-            <div><strong>Viewer:</strong> overview, players, analytics, map.</div>
-            <div><strong>Operator:</strong> + start/stop, console, player actions.</div>
+            <div>
+              <strong>Viewer:</strong> overview, players, analytics, map.
+            </div>
+            <div>
+              <strong>Operator:</strong> + start/stop, console, player actions.
+            </div>
             <div>
               <strong>Manager:</strong> + configuration, files, mods, backups,
               world and settings. Only admins can create, duplicate or delete
@@ -382,7 +390,10 @@ async function askAccess(account: Account) {
     draft.value = Object.fromEntries(
       serverList
         .filter((server) => server.volume)
-        .map((server) => [server.volume!, byVolume.get(server.volume!) ?? NO_ACCESS])
+        .map((server) => [
+          server.volume!,
+          byVolume.get(server.volume!) ?? NO_ACCESS,
+        ])
     );
     hiddenGrants = grants.filter((g) => !(g.volume in draft.value));
   } catch (error) {

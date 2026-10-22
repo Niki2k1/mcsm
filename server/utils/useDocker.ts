@@ -83,7 +83,12 @@ function connect(host: DockerHostConfig): Docker {
   return new Docker({ socketPath: host.socketPath || "/var/run/docker.sock" });
 }
 
-type DataMount = { Name?: string; Source?: string; Destination?: string; Type?: string };
+type DataMount = {
+  Name?: string;
+  Source?: string;
+  Destination?: string;
+  Type?: string;
+};
 
 /**
  * A server's world identity and the Binds source it is mounted from. Named
@@ -140,7 +145,10 @@ export type ProvisionOptions = {
 // config docs: https://nuxt.com/docs/guide/going-further/runtime-config
 export const useDocker = (event?: H3Event, hostId = "default") => {
   const config = useRuntimeConfig(event);
-  const hosts = (config.docker?.hosts ?? {}) as Record<string, DockerHostConfig>;
+  const hosts = (config.docker?.hosts ?? {}) as Record<
+    string,
+    DockerHostConfig
+  >;
   const host = hosts[hostId];
 
   if (!host) {
@@ -156,7 +164,8 @@ export const useDocker = (event?: H3Event, hostId = "default") => {
   if (dataRoot && !dataRoot.startsWith("/")) {
     throw createError({
       statusCode: 500,
-      statusMessage: "NUXT_DOCKER_DATA_ROOT must be an absolute path on the Docker host",
+      statusMessage:
+        "NUXT_DOCKER_DATA_ROOT must be an absolute path on the Docker host",
     });
   }
 
@@ -209,7 +218,11 @@ export const useDocker = (event?: H3Event, hostId = "default") => {
       // Guards the rm -rf against a bind that isn't a world directory.
       if (!/^[a-z0-9-]+$/.test(name)) return;
       await ensureImage(HELPER_IMAGE);
-      await runHelper(docker, ["rm", "-rf", `/parent/${name}`], [`${parent}:/parent`]);
+      await runHelper(
+        docker,
+        ["rm", "-rf", `/parent/${name}`],
+        [`${parent}:/parent`]
+      );
     } catch {
       // Volume in use or already gone — ignore.
     }
@@ -250,7 +263,9 @@ export const useDocker = (event?: H3Event, hostId = "default") => {
           ? [`${options.volumeSource ?? worldSource(options.volume)}:/data`]
           : undefined,
         NetworkMode: network,
-        PortBindings: options.hostPort ? { [`${port}/tcp`]: [{ HostPort: options.hostPort.toString() }] } : undefined,
+        PortBindings: options.hostPort
+          ? { [`${port}/tcp`]: [{ HostPort: options.hostPort.toString() }] }
+          : undefined,
       },
     });
 

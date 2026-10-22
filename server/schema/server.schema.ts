@@ -17,7 +17,14 @@ export const customEnvSchema = z.array(
  * still validate when they are re-submitted on edit.
  */
 export const serverConfigSchema = z.object({
-  type: z.enum(["VANILLA", "FTBA", "AUTO_CURSEFORGE", "PAPER", "FABRIC", "FORGE"]),
+  type: z.enum([
+    "VANILLA",
+    "FTBA",
+    "AUTO_CURSEFORGE",
+    "PAPER",
+    "FABRIC",
+    "FORGE",
+  ]),
   name: z.string(),
   domain: z.string(),
   subdomain: z.string().nullable(),

@@ -9,8 +9,6 @@ export function errorMessage(error: unknown, fallback: string): string {
     message?: string;
   };
   return (
-    fetchError?.data?.statusMessage ||
-    fetchError?.statusMessage ||
-    fallback
+    fetchError?.data?.statusMessage || fetchError?.statusMessage || fallback
   );
 }

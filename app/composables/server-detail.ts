@@ -60,8 +60,7 @@ type ServerDetailContext = {
   can: (need: ServerAccessLevel) => boolean;
 };
 
-const injectionKey: InjectionKey<ServerDetailContext> =
-  Symbol("server-detail");
+const injectionKey: InjectionKey<ServerDetailContext> = Symbol("server-detail");
 
 /**
  * The server detail page ([id].vue) fetches the server once and provides it

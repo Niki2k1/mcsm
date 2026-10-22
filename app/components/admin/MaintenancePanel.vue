@@ -29,8 +29,9 @@
       <template #body>
         <p class="text-sm">
           This recreates every managed server with the latest global settings.
-          Worlds are kept, but <span class="font-medium">each server will
-          briefly go offline</span> while it restarts.
+          Worlds are kept, but
+          <span class="font-medium">each server will briefly go offline</span>
+          while it restarts.
         </p>
       </template>
       <template #footer>

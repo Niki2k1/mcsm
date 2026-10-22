@@ -65,10 +65,7 @@
     </UCard>
 
     <!-- Enabled -->
-    <UCard
-      v-else
-      :ui="status.ready ? { body: 'p-0 sm:p-0' } : undefined"
-    >
+    <UCard v-else :ui="status.ready ? { body: 'p-0 sm:p-0' } : undefined">
       <template #header>
         <div class="flex flex-wrap items-center justify-between gap-3">
           <div>
@@ -175,9 +172,7 @@
             <div
               class="flex flex-wrap items-center justify-between gap-2 text-sm"
             >
-              <span class="font-medium">
-                Rendering map “{{ map.map }}”
-              </span>
+              <span class="font-medium"> Rendering map “{{ map.map }}” </span>
               <span class="font-mono text-xs text-muted">
                 <template v-if="map.percent != null"
                   >{{ map.percent.toFixed(1) }}%</template
@@ -328,10 +323,7 @@ async function updateMap() {
   } catch (error) {
     toast.add({
       title: "Could not update the map",
-      description: errorMessage(
-        error,
-        "Triggering the BlueMap update failed."
-      ),
+      description: errorMessage(error, "Triggering the BlueMap update failed."),
       color: "error",
     });
   } finally {

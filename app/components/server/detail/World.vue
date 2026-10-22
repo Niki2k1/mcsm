@@ -13,16 +13,13 @@
     <!-- Unsupported server type -->
     <UCard v-else-if="!status.supported">
       <div class="text-sm text-muted py-10 text-center space-y-2">
-        <UIcon
-          name="i-heroicons-globe-alt"
-          class="size-8 mx-auto opacity-60"
-        />
+        <UIcon name="i-heroicons-globe-alt" class="size-8 mx-auto opacity-60" />
         <p class="font-medium text-highlighted">
           Pre-generation isn't available for this server type
         </p>
         <p class="max-w-md mx-auto">
-          World pre-generation uses the Chunky plugin, which needs a server
-          that can load plugins or mods — Paper, Fabric, Forge or a CurseForge
+          World pre-generation uses the Chunky plugin, which needs a server that
+          can load plugins or mods — Paper, Fabric, Forge or a CurseForge
           modpack.
         </p>
       </div>
