@@ -562,8 +562,7 @@
 <script setup lang="ts">
 import MotdEditor from "~/components/server/motd/MotdEditor.vue";
 
-const { id, server, ping } = useServerDetail();
-const router = useRouter();
+const { id, server, ping, refresh: refreshServer } = useServerDetail();
 const toast = useToast();
 
 // --- Local editable copy of the persisted config -----------------------------
@@ -960,7 +959,7 @@ async function save() {
   saving.value = true;
   try {
     // customEnv rides along untouched — it is edited on the Environment tab.
-    const result = await $fetch<{ id: string }>(`/api/server/${id.value}`, {
+    await $fetch(`/api/server/${id.value}`, {
       method: "PUT",
       body: form.value,
     });
@@ -971,16 +970,13 @@ async function save() {
       color: "success",
     });
 
-    // Mark the form clean BEFORE navigating so the leave guard doesn't fire.
     original.value = JSON.stringify(form.value);
 
-    await refreshNuxtData("servers");
-    // The container was recreated under a new id — move to its page.
-    await router.replace(`/server/${result.id}/configuration`);
-  } catch {
+    await Promise.all([refreshServer(), refreshNuxtData("servers")]);
+  } catch (error) {
     toast.add({
       title: "Error",
-      description: "Failed to save the configuration.",
+      description: errorMessage(error, "Failed to save the configuration."),
       color: "error",
     });
   } finally {

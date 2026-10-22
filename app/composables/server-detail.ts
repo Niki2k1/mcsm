@@ -42,7 +42,7 @@ export type ServerPing = {
 };
 
 type ServerDetailContext = {
-  /** Container id from the route. Changes when a config edit recreates the container. */
+  /** Container name from the route; stays the same when a config edit recreates the container. */
   id: Ref<string>;
   server: Ref<ServerDetail | undefined>;
   refresh: () => Promise<void>;

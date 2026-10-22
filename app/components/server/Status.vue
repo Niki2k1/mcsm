@@ -92,7 +92,10 @@ async function setRunning(id: string, running: boolean) {
   } catch (error) {
     toast.add({
       title: "Error",
-      description: `Failed to ${running ? "start" : "stop"} server.`,
+      description: errorMessage(
+        error,
+        `Failed to ${running ? "start" : "stop"} server.`
+      ),
       color: "error",
     });
   }

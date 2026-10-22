@@ -193,8 +193,7 @@
 </template>
 
 <script setup lang="ts">
-const { id, server } = useServerDetail();
-const router = useRouter();
+const { id, server, refresh: refreshServer } = useServerDetail();
 const toast = useToast();
 
 // --- Container env (read-only listing) ----------------------------------------
@@ -273,7 +272,7 @@ async function save() {
   if (!config) return;
   saving.value = true;
   try {
-    const result = await $fetch<{ id: string }>(`/api/server/${id.value}`, {
+    await $fetch(`/api/server/${id.value}`, {
       method: "PUT",
       body: {
         ...config,
@@ -290,12 +289,11 @@ async function save() {
     });
 
     original.value = JSON.stringify(customEnv.value);
-    await refreshNuxtData("servers");
-    await router.replace(`/server/${result.id}/environment`);
-  } catch {
+    await Promise.all([refreshServer(), refreshNuxtData("servers")]);
+  } catch (error) {
     toast.add({
       title: "Error",
-      description: "Failed to save the environment.",
+      description: errorMessage(error, "Failed to save the environment."),
       color: "error",
     });
   } finally {
