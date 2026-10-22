@@ -538,10 +538,7 @@ const cancelOpen = ref(false);
 async function enable() {
   enabling.value = true;
   try {
-    await $fetch(
-      `/api/server/${id.value}/pregen/enable`,
-      { method: "POST" }
-    );
+    await $fetch(`/api/server/${id.value}/pregen/enable`, { method: "POST" });
     toast.add({
       title: "Pre-generation enabled",
       description: "The server is restarting and downloading Chunky.",

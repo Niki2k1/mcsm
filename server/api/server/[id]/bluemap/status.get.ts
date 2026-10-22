@@ -27,7 +27,10 @@ export default defineEventHandler(async (event) => {
   // production and through a dev tunnel in local dev.
   const ready =
     enabled && server.running && server.containerName
-      ? await probeBluemap({ name: server.containerName, id: server.containerId })
+      ? await probeBluemap({
+          name: server.containerName,
+          id: server.containerId,
+        })
       : false;
 
   // Published = viewable at /map/<volume>/ without logging in.

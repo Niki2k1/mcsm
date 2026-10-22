@@ -652,10 +652,10 @@ async function runMigrate() {
   if (!migrateTarget.value) return;
   migrating.value = true;
   try {
-    await $fetch(
-      `/api/server/${id.value}/variant`,
-      { method: "POST", body: { type: migrateTarget.value } }
-    );
+    await $fetch(`/api/server/${id.value}/variant`, {
+      method: "POST",
+      body: { type: migrateTarget.value },
+    });
 
     toast.add({
       title: "Server variant changed",

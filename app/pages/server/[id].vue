@@ -128,7 +128,10 @@ watchEffect(() => {
   const prefix = `/server/${id.value}`;
   if (!route.path.startsWith(prefix)) return;
   navigateTo(
-    { path: `/server/${server.value.id}${route.path.slice(prefix.length)}`, query: route.query },
+    {
+      path: `/server/${server.value.id}${route.path.slice(prefix.length)}`,
+      query: route.query,
+    },
     { replace: true }
   );
 });

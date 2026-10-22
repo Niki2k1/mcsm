@@ -342,10 +342,7 @@ const setupHint = ref("");
 async function enable() {
   enabling.value = true;
   try {
-    await $fetch(
-      `/api/server/${id.value}/bluemap/enable`,
-      { method: "POST" }
-    );
+    await $fetch(`/api/server/${id.value}/bluemap/enable`, { method: "POST" });
     toast.add({
       title: "BlueMap enabled",
       description: "The server is restarting and downloading BlueMap.",
@@ -366,10 +363,7 @@ async function enable() {
 async function disable() {
   disabling.value = true;
   try {
-    await $fetch(
-      `/api/server/${id.value}/bluemap/disable`,
-      { method: "POST" }
-    );
+    await $fetch(`/api/server/${id.value}/bluemap/disable`, { method: "POST" });
     toast.add({ title: "BlueMap disabled", color: "success" });
     disableOpen.value = false;
     await Promise.all([refreshServer(), refresh(), refreshNuxtData("servers")]);
