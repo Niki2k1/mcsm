@@ -1,29 +1,15 @@
 import * as v from "valibot";
 
-/** List the editable config files on a server. */
+/** List the scope roots and every file/folder the file manager may show. */
 export default defineEventHandler(async (event) => {
   const { id } = await getValidatedRouterParams(
     event,
     v.parser(v.object({ id: v.string() }))
   );
-
-  const { getServer } = useDocker(event);
-  let server: Awaited<ReturnType<typeof getServer>>;
-  try {
-    server = await getServer(id);
-  } catch {
-    throw createError({ statusCode: 404, statusMessage: "Server not found" });
-  }
-
-  if (!serverTypeSupportsJars(server.config?.type)) {
-    throw createError({
-      statusCode: 400,
-      statusMessage: "This server type does not support config editing",
-    });
-  }
+  const server = await getFileManagerServer(event, id);
 
   try {
-    return await listConfigFiles(id, server.config?.type, server.config?.LEVEL);
+    return await listFiles(id, server.config?.type, server.config?.LEVEL);
   } catch (error) {
     if ((error as { statusCode?: number }).statusCode) throw error;
     console.error(error);

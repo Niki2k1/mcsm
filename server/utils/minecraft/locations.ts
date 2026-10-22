@@ -50,21 +50,32 @@ export function worldServerConfigRoot(level?: string | null): string | null {
   return `${name}/serverconfig`;
 }
 
+/** The active world's datapacks folder, or null if the world name isn't shell-safe. */
+export function worldDatapacksRoot(level?: string | null): string | null {
+  const name = (level || "world").trim();
+  if (!SAFE_LEVEL.test(name)) return null;
+  return `${name}/datapacks`;
+}
+
 /**
- * Directory roots (relative to /data) whose files are editable in the config
- * editor: plugin configs live next to the jars; mod configs live in config/,
- * plus the active world's serverconfig/ (Forge/NeoForge per-world configs).
+ * Directory roots (relative to /data) the file manager may touch: plugin
+ * configs live next to the jars; mod configs live in config/, plus the active
+ * world's serverconfig/ (Forge/NeoForge per-world configs). Every type also
+ * gets the active world's datapacks/.
  */
 export function configRoots(
   type?: string | null,
   level?: string | null
 ): string[] {
   if (!serverTypeSupportsJars(type)) return [];
-  if (type === "PAPER") return ["plugins"];
 
-  const roots = ["config"];
-  const worldServerConfig = worldServerConfigRoot(level);
-  if (worldServerConfig) roots.push(worldServerConfig);
+  const roots = type === "PAPER" ? ["plugins"] : ["config"];
+  if (type !== "PAPER") {
+    const worldServerConfig = worldServerConfigRoot(level);
+    if (worldServerConfig) roots.push(worldServerConfig);
+  }
+  const datapacks = worldDatapacksRoot(level);
+  if (datapacks) roots.push(datapacks);
   return roots;
 }
 
