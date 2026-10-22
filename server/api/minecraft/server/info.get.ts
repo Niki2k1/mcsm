@@ -3,12 +3,12 @@ import { z } from "zod";
 export default defineEventHandler(async (event) => {
   const options = await useValidatedQuery(event, {
     host: z.string(),
-    port: z.number().optional(),
+    port: z.coerce.number().int().optional(),
     timeout: z
       .string()
       .optional()
       .transform((val) => (val ? parseInt(val) : undefined)),
-    protocolVersion: z.number().optional(),
+    protocolVersion: z.coerce.number().int().optional(),
   });
 
   try {
@@ -21,16 +21,16 @@ export default defineEventHandler(async (event) => {
     );
     if (tunnel) {
       return await useMinecraftServer({
-        timeout: 10000,
         ...options,
+        timeout: options.timeout ?? 10000,
         // 127.0.0.1 is an IP, so the pinger skips the SRV lookup.
         ...tunnel,
       });
     }
 
     return await useMinecraftServer({
-      timeout: 10000,
       ...options,
+      timeout: options.timeout ?? 10000,
     });
   } catch (error) {
     return createError(error as Error);

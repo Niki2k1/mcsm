@@ -178,7 +178,7 @@ export async function createBackup(
       .returning();
 
     await recordActivity(server.volume, "backup-created", label);
-    return row;
+    return row!;
   } finally {
     if (server.running) {
       await withRcon(event, serverId, async (rcon) => {
@@ -407,7 +407,7 @@ export async function uploadBackup(
       .returning();
 
     await recordActivity(server.volume, "backup-created", label ?? "Uploaded");
-    return row;
+    return row!;
   } finally {
     await container.remove({ force: true }).catch(() => {});
   }

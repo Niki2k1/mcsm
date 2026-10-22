@@ -81,22 +81,7 @@
 </template>
 
 <script setup lang="ts">
-interface CheckData {
-  target: string;
-  mode: "wildcard" | "server";
-  port: number;
-  dns: { ok: boolean; addresses: string[]; error?: string };
-  expected?: { host: string; addresses: string[]; matches: boolean };
-  tcp: { ok: boolean; ms?: number; error?: string };
-  mc: {
-    ok: boolean;
-    version?: string;
-    players?: { online: number; max: number };
-    error?: string;
-  } | null;
-}
-
-defineProps<{ result: CheckData }>();
+defineProps<{ result: DomainCheck }>();
 
 const icon = (ok: boolean) =>
   ok ? "i-heroicons-check-circle-20-solid" : "i-heroicons-x-circle-20-solid";

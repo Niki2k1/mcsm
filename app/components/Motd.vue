@@ -10,11 +10,17 @@ defineProps<{
 }>();
 
 const prefersReducedMotion = useMediaQuery("(prefers-reduced-motion: reduce)");
-const obfuscated_animation_request_id = ref(null);
+const obfuscated_animation_request_id = ref<number | null>(null);
 
 onMounted(() => {
   if (!prefersReducedMotion.value) {
     animate_obfuscated_text();
+  }
+});
+
+onUnmounted(() => {
+  if (obfuscated_animation_request_id.value !== null) {
+    window.cancelAnimationFrame(obfuscated_animation_request_id.value);
   }
 });
 
@@ -30,17 +36,13 @@ function animate_obfuscated_text() {
   const spansToAnimate = document.querySelectorAll('span[style*="obfuscated"]');
 
   for (const span of spansToAnimate) {
-    let walker = document.createTreeWalker(
-      span,
-      NodeFilter.SHOW_TEXT,
-      null,
-      !1
-    );
+    const walker = document.createTreeWalker(span, NodeFilter.SHOW_TEXT);
 
     while (walker.nextNode()) {
-      if (walker.currentNode.nodeValue.trim()) {
+      const text = walker.currentNode.nodeValue;
+      if (text?.trim()) {
         let random_string = "";
-        for (let x = 0; x < walker.currentNode.nodeValue.length; x++)
+        for (let x = 0; x < text.length; x++)
           random_string += String.fromCharCode(
             Math.floor(Math.random() * (95 - 64 + 1)) + 64
           );

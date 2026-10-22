@@ -219,7 +219,8 @@ export async function readConfigFile(
       }
       const chunks: Uint8Array[] = [];
       let size = 0;
-      entry.on("data", (chunk: Uint8Array) => {
+      entry.on("data", (raw) => {
+        const chunk = raw as Uint8Array;
         size += chunk.length;
         if (size > MAX_FILE_BYTES) {
           tar.destroy();

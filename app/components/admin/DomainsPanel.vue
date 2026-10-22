@@ -150,16 +150,6 @@ const usage = (base: string) =>
   ).length;
 
 // --- Public address (for DNS verification) ---
-interface CheckData {
-  target: string;
-  mode: "wildcard" | "server";
-  port: number;
-  dns: { ok: boolean; addresses: string[]; error?: string };
-  expected?: { host: string; addresses: string[]; matches: boolean };
-  tcp: { ok: boolean; ms?: number; error?: string };
-  mc: unknown | null;
-}
-
 const { data: settings } = useFetch<{ publicHost?: string }>(
   "/api/admin/settings",
   { key: "admin-settings", default: () => ({}) }
@@ -191,13 +181,13 @@ async function savePublicHost() {
 
 // --- Per-domain diagnostics ---
 const checks = reactive<
-  Record<string, { loading: boolean; data: CheckData | null }>
+  Record<string, { loading: boolean; data: DomainCheck | null }>
 >({});
 
 async function runCheck(domain: string) {
   checks[domain] = { loading: true, data: checks[domain]?.data ?? null };
   try {
-    const data = await $fetch<CheckData>("/api/admin/check", {
+    const data = await $fetch<DomainCheck>("/api/admin/check", {
       query: { host: domain, mode: "wildcard" },
     });
     checks[domain] = { loading: false, data };

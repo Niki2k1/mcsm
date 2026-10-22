@@ -2,7 +2,7 @@
   <div class="space-y-4">
     <UFormField name="name" label="Name" required>
       <UInput
-        v-model="form.name"
+        v-model="name"
         placeholder="My Awesome Server"
         autocomplete="off"
         class="w-full"
@@ -34,7 +34,7 @@
           autocomplete="off"
         />
         <USelectMenu
-          v-model="form.domain"
+          v-model="domain"
           :items="domainOptions"
           value-key="value"
           placeholder="Domain"
@@ -43,7 +43,7 @@
     </UFormField>
 
     <UFormField name="memory" label="Memory" required>
-      <UTabs v-model="form.memory" :items="memoryOptions" :content="false" />
+      <UTabs v-model="memory" :items="memoryOptions" :content="false" />
     </UFormField>
 
     <UFormField
@@ -63,6 +63,9 @@
 
 <script setup lang="ts">
 const form = useCreateForm();
+const name = useNullableFormField("name");
+const domain = useNullableFormField("domain");
+const memory = useNullableFormField("memory");
 
 const { data: domains } = useFetch<string[]>("/api/domains", {
   default: () => [],

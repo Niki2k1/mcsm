@@ -15,7 +15,10 @@
     "preview": "nuxt preview",
     "postinstall": "nuxt prepare",
     "db:generate": "nuxt-db generate",
-    "start": "mkdir -p .data/db && node .output/server/index.mjs"
+    "start": "mkdir -p .data/db && node .output/server/index.mjs",
+    "lint": "oxlint && oxfmt --check",
+    "lint:fix": "oxlint --fix && oxfmt",
+    "typecheck": "vue-tsc --noEmit"
   },
   "dependencies": {
     "@libsql/client": "^0.18.0",
@@ -36,7 +39,6 @@
     "dockerode": "^5.0.1",
     "drizzle-orm": "^0.45.3",
     "fflate": "^0.8.3",
-    "h3-zod": "^0.5.3",
     "jimp-compact": "0.16.1-2",
     "modern-monaco": "^0.4.2",
     "nuxt": "^4.5.2",
@@ -62,6 +64,9 @@
     "@types/tar-stream": "^3.1.5",
     "@vueuse/core": "^15.0.0",
     "@vueuse/nuxt": "^15.0.0",
-    "drizzle-kit": "^0.31.11"
+    "drizzle-kit": "^0.31.11",
+    "oxfmt": "^0.74.0",
+    "oxlint": "^1.89.0",
+    "vue-tsc": "3.3.10"
   }
 }
