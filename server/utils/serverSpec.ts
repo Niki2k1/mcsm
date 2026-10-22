@@ -211,7 +211,8 @@ export async function recreateServer(
   serverId: string,
   data: ServerConfig,
   activityDetail: string,
-  action: ActivityAction = "edited"
+  action: ActivityAction = "edited",
+  volumeSource?: string
 ) {
   const { getServer, removeServer, provisionServer } = useDocker(event);
 
@@ -234,7 +235,7 @@ export async function recreateServer(
     port: spec.port,
     hostPort: spec.hostPort,
     volume,
-    volumeSource: existing.volumeSource ?? undefined,
+    volumeSource: volumeSource ?? existing.volumeSource ?? undefined,
     restartPolicy: spec.restartPolicy,
   });
 

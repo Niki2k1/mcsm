@@ -36,8 +36,11 @@ const OPERATOR_ROUTES = new Set([
   "POST players/action",
 ]);
 
-/** Routes that create or destroy whole servers stay with admins. */
-const ADMIN_ROUTES = new Set(["DELETE ", "POST duplicate"]);
+/**
+ * Routes that create or destroy whole servers, or touch host storage, stay
+ * with admins.
+ */
+const ADMIN_ROUTES = new Set(["DELETE ", "POST duplicate", "POST relocate"]);
 
 /**
  * Role needed for `method` on `/api/server/<id>/<subpath>`. Unknown routes

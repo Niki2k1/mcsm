@@ -298,6 +298,12 @@ export const useDocker = (event?: H3Event, hostId = "default") => {
       volume,
       /** Binds source for `volume` — use this, not `volume`, in helper mounts. */
       volumeSource,
+      /**
+       * Where the world would live under the current `dataRoot`. Differs from
+       * `volumeSource` once `dataRoot` was changed after the server was
+       * created; the relocate endpoint closes that gap.
+       */
+      targetSource: volume ? worldSource(volume) : null,
       // When the container started (ISO string) — used for uptime display.
       startedAt: info.State?.Running ? (info.State?.StartedAt ?? null) : null,
       createdAt: info.Created ?? null,

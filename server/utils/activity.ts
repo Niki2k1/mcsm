@@ -24,7 +24,8 @@ export type ActivityAction =
   | "jars-uploaded"
   | "jars-updated"
   | "jar-deleted"
-  | "config-edited";
+  | "config-edited"
+  | "storage-relocated";
 
 /**
  * Record a server lifecycle event. Events are keyed by the world volume name —
