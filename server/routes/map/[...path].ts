@@ -42,7 +42,7 @@ async function resolveTarget(
     if (detail.volume !== volume || !detail.containerName) continue;
     target = {
       containerName: detail.containerName,
-      containerId: detail.id,
+      containerId: detail.containerId,
       running: detail.running,
       bluemap: true,
     };

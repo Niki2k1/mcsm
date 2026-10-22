@@ -58,6 +58,11 @@ type DockerHostConfig = {
 };
 
 export type ServerSummary = {
+  /**
+   * Container name. Used instead of the container id because editing a
+   * server recreates its container under a new id but the same name, so URLs
+   * and open tabs keep working. Docker accepts names wherever it takes ids.
+   */
   id: string;
   name: string;
   domain: string;
@@ -256,7 +261,7 @@ export const useDocker = (event?: H3Event, hostId = "default") => {
 
     await container.start();
 
-    return { id: container.id, name: options.name };
+    return { id: options.name, containerId: container.id, name: options.name };
   }
 
   /** All MCSM-managed servers on this host. */
@@ -270,7 +275,7 @@ export const useDocker = (event?: H3Event, hostId = "default") => {
       const labels = container.Labels ?? {};
       const cfg = parseConfig(labels);
       return {
-        id: container.Id,
+        id: container.Names?.[0]?.replace(/^\//, "") || container.Id,
         name: labels["mcsm.name"] ?? cfg?.name ?? "",
         domain: (labels["infrarust.domains"] ?? "").split(",")[0] ?? "",
         type: cfg?.type ?? null,
@@ -287,14 +292,17 @@ export const useDocker = (event?: H3Event, hostId = "default") => {
     const labels = info.Config?.Labels ?? {};
     const cfg = parseConfig(labels);
     const { volume, volumeSource } = worldMount(info.Mounts);
+    const containerName = (info.Name ?? "").replace(/^\//, "");
 
     return {
-      id: info.Id,
+      id: containerName || info.Id,
+      /** Changes on every recreate; only for detecting exactly that. */
+      containerId: info.Id,
       name: labels["mcsm.name"] ?? cfg?.name ?? "",
       domain: (labels["infrarust.domains"] ?? "").split(",")[0] ?? "",
       running: info.State?.Running ?? false,
       config: cfg,
-      containerName: (info.Name ?? "").replace(/^\//, ""),
+      containerName,
       volume,
       /** Binds source for `volume` — use this, not `volume`, in helper mounts. */
       volumeSource,

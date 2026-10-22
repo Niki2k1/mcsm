@@ -117,10 +117,20 @@ const {
   pending,
   error,
 } = await useFetch<ServerDetail>(() => `/api/server/${id.value}`, {
-  // Key by container id so navigating to the recreated container after a
-  // config save fetches fresh data instead of reusing the old payload.
   key: `server-${id.value}`,
   retry: false,
+});
+
+// Links from before servers were addressed by container name carry a
+// container id; swap it for the name so the URL survives the next recreate.
+watchEffect(() => {
+  if (!server.value || server.value.id === id.value) return;
+  const prefix = `/server/${id.value}`;
+  if (!route.path.startsWith(prefix)) return;
+  navigateTo(
+    { path: `/server/${server.value.id}${route.path.slice(prefix.length)}`, query: route.query },
+    { replace: true }
+  );
 });
 
 useSeoMeta({
@@ -341,12 +351,14 @@ async function runAction(action: "start" | "stop" | "restart") {
     });
     await refresh();
     await refreshNuxtData("servers");
-  } catch {
+  } catch (error) {
     toast.add({
       title: "Error",
-      description: `Failed to ${action} server.`,
+      description: errorMessage(error, `Failed to ${action} server.`),
       color: "error",
     });
+    // A server deleted meanwhile: reloading switches to the "doesn't exist" view.
+    if ((error as { statusCode?: number }).statusCode === 404) await refresh();
   } finally {
     acting.value = null;
   }

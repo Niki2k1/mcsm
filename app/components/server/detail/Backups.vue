@@ -206,10 +206,10 @@ async function create() {
     toast.add({ title: "Backup created", color: "success" });
     newLabel.value = "";
     await refresh();
-  } catch {
+  } catch (error) {
     toast.add({
       title: "Backup failed",
-      description: "Could not create the backup.",
+      description: errorMessage(error, "Could not create the backup."),
       color: "error",
     });
   } finally {
@@ -291,10 +291,10 @@ async function runRestore() {
     });
     restoreOpen.value = false;
     await refreshServer();
-  } catch {
+  } catch (error) {
     toast.add({
       title: "Restore failed",
-      description: "Could not restore the backup.",
+      description: errorMessage(error, "Could not restore the backup."),
       color: "error",
     });
   } finally {
@@ -312,10 +312,10 @@ async function runDelete() {
     toast.add({ title: "Backup deleted", color: "success" });
     deleteOpen.value = false;
     await refresh();
-  } catch {
+  } catch (error) {
     toast.add({
       title: "Delete failed",
-      description: "Could not delete the backup.",
+      description: errorMessage(error, "Could not delete the backup."),
       color: "error",
     });
   } finally {

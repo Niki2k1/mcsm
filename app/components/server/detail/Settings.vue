@@ -422,8 +422,7 @@ import paper from "~/assets/paper.svg";
 import fabric from "~/assets/fabric.png";
 import forge from "~/assets/forge.svg";
 
-const { id, server, can } = useServerDetail();
-const router = useRouter();
+const { id, server, can, refresh: refreshServer } = useServerDetail();
 const toast = useToast();
 
 // --- General (name / domain) --------------------------------------------------
@@ -480,7 +479,7 @@ async function saveGeneral() {
   if (!config) return;
   saving.value = true;
   try {
-    const result = await $fetch<{ id: string }>(`/api/server/${id.value}`, {
+    await $fetch(`/api/server/${id.value}`, {
       method: "PUT",
       body: {
         ...config,
@@ -492,12 +491,11 @@ async function saveGeneral() {
     });
 
     toast.add({ title: "Server updated", color: "success" });
-    await refreshNuxtData("servers");
-    await router.replace(`/server/${result.id}/settings`);
-  } catch {
+    await Promise.all([refreshServer(), refreshNuxtData("servers")]);
+  } catch (error) {
     toast.add({
       title: "Error",
-      description: "Failed to update the server.",
+      description: errorMessage(error, "Failed to update the server."),
       color: "error",
     });
   } finally {
@@ -581,8 +579,7 @@ async function runRelocate() {
     });
 
     relocateOpen.value = false;
-    await refreshNuxtData("servers");
-    await router.replace(`/server/${result.id}/settings`);
+    await Promise.all([refreshServer(), refreshNuxtData("servers")]);
   } catch (error) {
     toast.add({
       title: "Error",
@@ -654,7 +651,7 @@ async function runMigrate() {
   if (!migrateTarget.value) return;
   migrating.value = true;
   try {
-    const result = await $fetch<{ id: string; backupId: number }>(
+    await $fetch(
       `/api/server/${id.value}/variant`,
       { method: "POST", body: { type: migrateTarget.value } }
     );
@@ -666,8 +663,7 @@ async function runMigrate() {
     });
 
     migrateOpen.value = false;
-    await refreshNuxtData("servers");
-    await router.replace(`/server/${result.id}/settings`);
+    await Promise.all([refreshServer(), refreshNuxtData("servers")]);
   } catch (error) {
     toast.add({
       title: "Error",
@@ -711,10 +707,10 @@ async function runDelete() {
     deleteOpen.value = false;
     await refreshNuxtData("servers");
     await navigateTo("/");
-  } catch {
+  } catch (error) {
     toast.add({
       title: "Error",
-      description: "Failed to delete the server.",
+      description: errorMessage(error, "Failed to delete the server."),
       color: "error",
     });
   } finally {

@@ -43,7 +43,7 @@ export default defineNitroPlugin(() => {
           try {
             const address = await containerAddress(
               undefined,
-              { name: detail.containerName, id: detail.id },
+              { name: detail.containerName, id: detail.containerId },
               25565
             );
             const pingPromise = useMinecraftServer({

@@ -169,7 +169,7 @@ export async function devAddressForDomain(
   try {
     return await containerAddress(
       event,
-      { name: detail.containerName, id: detail.id },
+      { name: detail.containerName, id: detail.containerId },
       port
     );
   } catch {

@@ -541,7 +541,7 @@ const cancelOpen = ref(false);
 async function enable() {
   enabling.value = true;
   try {
-    const result = await $fetch<{ id: string }>(
+    await $fetch(
       `/api/server/${id.value}/pregen/enable`,
       { method: "POST" }
     );
@@ -550,9 +550,7 @@ async function enable() {
       description: "The server is restarting and downloading Chunky.",
       color: "success",
     });
-    // Enabling recreates the container under a new id — navigate to it.
-    await navigateTo(`/server/${result.id}/world`);
-    await refreshNuxtData("servers");
+    await Promise.all([refreshServer(), refresh(), refreshNuxtData("servers")]);
   } catch (error) {
     toast.add({
       title: "Could not enable pre-generation",
