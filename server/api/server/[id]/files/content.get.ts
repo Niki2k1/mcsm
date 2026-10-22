@@ -1,8 +1,9 @@
 import * as v from "valibot";
 
 /**
- * Read a single config file as text. With ?download=true the content is sent
- * as a file attachment instead of JSON.
+ * Read a single file as text for the editor. With ?download=true the raw file
+ * is streamed as an attachment instead — any content, so binaries like
+ * WorldEdit schematics download too.
  */
 export default defineEventHandler(async (event) => {
   const { id } = await getValidatedRouterParams(
@@ -18,42 +19,24 @@ export default defineEventHandler(async (event) => {
       })
     )
   );
-
-  const { getServer } = useDocker(event);
-  let server: Awaited<ReturnType<typeof getServer>>;
-  try {
-    server = await getServer(id);
-  } catch {
-    throw createError({ statusCode: 404, statusMessage: "Server not found" });
-  }
-
-  if (!serverTypeSupportsJars(server.config?.type)) {
-    throw createError({
-      statusCode: 400,
-      statusMessage: "This server type does not support config editing",
-    });
-  }
+  const server = await getFileManagerServer(event, id);
+  const type = server.config?.type;
+  const level = server.config?.LEVEL;
 
   try {
-    const file = await readConfigFile(
-      id,
-      server.config?.type,
-      server.config?.LEVEL,
-      path
-    );
-
     if (download === "true") {
-      const filename = file.path.split("/").pop() ?? "config";
-      setHeader(event, "Content-Type", "text/plain; charset=utf-8");
+      const file = await openFileDownload(id, type, level, path);
+      setHeader(event, "Content-Type", "application/octet-stream");
+      setHeader(event, "Content-Length", file.size);
       setHeader(
         event,
         "Content-Disposition",
-        `attachment; filename="${filename}"`
+        `attachment; filename*=UTF-8''${encodeURIComponent(file.filename)}`
       );
-      return file.content;
+      return sendStream(event, file.stream);
     }
 
-    return file;
+    return await readConfigFile(id, type, level, path);
   } catch (error) {
     if ((error as { statusCode?: number }).statusCode) throw error;
     console.error(error);

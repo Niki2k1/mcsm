@@ -200,7 +200,8 @@ And everything else a server needs
 
   #description
   Browse Modrinth, install mods with dependencies in one click, get update
-  badges, and edit config files in a built-in Monaco editor.
+  badges, and manage config files, datapacks and schematics in a built-in
+  file manager.
   :::
 
   :::u-page-feature

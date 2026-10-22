@@ -1,8 +1,9 @@
 import * as v from "valibot";
 
 /**
- * Save a single config file. YAML/JSON is validated server-side; with
- * restart=true a running server is restarted so the change takes effect.
+ * Save a single text file (also creates new ones). YAML/JSON is validated
+ * server-side; with restart=true a running server is restarted so the change
+ * takes effect.
  */
 export default defineEventHandler(async (event) => {
   const { id } = await getValidatedRouterParams(
@@ -20,20 +21,8 @@ export default defineEventHandler(async (event) => {
     )
   );
 
-  const { getServer, restartServer } = useDocker(event);
-  let server: Awaited<ReturnType<typeof getServer>>;
-  try {
-    server = await getServer(id);
-  } catch {
-    throw createError({ statusCode: 404, statusMessage: "Server not found" });
-  }
-
-  if (!serverTypeSupportsJars(server.config?.type)) {
-    throw createError({
-      statusCode: 400,
-      statusMessage: "This server type does not support config editing",
-    });
-  }
+  const server = await getFileManagerServer(event, id);
+  const { restartServer } = useDocker(event);
 
   try {
     await writeConfigFile(

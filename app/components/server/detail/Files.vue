@@ -214,162 +214,8 @@
         </div>
       </UCard>
 
-      <!-- Config files -->
-      <UCard>
-        <template #header>
-          <div class="flex flex-wrap items-center justify-between gap-3">
-            <div>
-              <h3 class="font-semibold">Configuration files</h3>
-              <p class="text-sm text-muted">
-                Edit {{ kindLabel.toLowerCase() }} and server config files right
-                in the browser.
-              </p>
-            </div>
-            <div class="flex items-center gap-2">
-              <UInput
-                v-model="fileSearch"
-                icon="i-heroicons-magnifying-glass-20-solid"
-                placeholder="Search..."
-                size="sm"
-                class="w-40"
-              />
-              <UButton
-                icon="i-heroicons-arrow-path-20-solid"
-                variant="ghost"
-                color="neutral"
-                size="sm"
-                aria-label="Refresh files"
-                :loading="filesStatus === 'pending'"
-                @click="refreshFiles()"
-              />
-            </div>
-          </div>
-        </template>
-
-        <div v-if="filteredFiles.length">
-          <div
-            class="flex items-center gap-4 px-4 py-3 mb-2 text-xs font-medium text-muted uppercase tracking-wider border-b border-default"
-          >
-            <div class="w-5" />
-            <div class="flex-1 min-w-0">File</div>
-            <div class="w-24 text-right">Size</div>
-            <div class="w-16 text-right">Actions</div>
-          </div>
-
-          <div class="flex flex-col gap-2">
-            <div
-              v-for="file in filteredFiles"
-              :key="file.path"
-              class="flex items-center gap-4 rounded-lg ring-2 ring-transparent hover:ring-primary/50 cursor-pointer transition-all duration-150 px-4 py-2 bg-elevated/50"
-              @click="openEditor(file)"
-            >
-              <UIcon
-                :name="fileIcon(file.path)"
-                class="size-5 text-muted shrink-0"
-              />
-              <div class="flex-1 min-w-0">
-                <p class="text-sm font-mono truncate">
-                  <span class="text-muted">{{ fileDir(file.path) }}</span
-                  ><span class="font-medium">{{ fileName(file.path) }}</span>
-                </p>
-              </div>
-              <div class="w-24 text-right text-sm text-muted">
-                {{ formatSize(file.size) }}
-              </div>
-              <div class="w-16 flex justify-end">
-                <UDropdownMenu
-                  :items="fileMenuItems(file)"
-                  :ui="{ content: 'w-48' }"
-                >
-                  <UButton
-                    icon="i-heroicons-ellipsis-vertical-20-solid"
-                    size="xs"
-                    variant="ghost"
-                    color="neutral"
-                    aria-label="File actions"
-                    @click.stop
-                  />
-                </UDropdownMenu>
-              </div>
-            </div>
-          </div>
-        </div>
-
-        <div
-          v-else-if="filesStatus !== 'pending'"
-          class="text-sm text-muted py-8 text-center"
-        >
-          {{
-            fileSearch
-              ? "No matches."
-              : "No config files yet — most appear after the server's first start."
-          }}
-        </div>
-        <div v-else class="text-sm text-muted py-8 text-center">
-          <UIcon
-            name="i-heroicons-arrow-path-20-solid"
-            class="size-5 mx-auto animate-spin opacity-60"
-          />
-        </div>
-      </UCard>
+      <ServerDetailFileManager v-model:restart-after="restartAfter" />
     </template>
-
-    <!-- Editor modal -->
-    <UModal
-      v-model:open="editorOpen"
-      :title="editingFile?.path ?? ''"
-      description="Changes apply after the server restarts."
-      :ui="{ content: 'max-w-4xl' }"
-    >
-      <template #body>
-        <div class="space-y-3">
-          <UAlert
-            v-if="editorError"
-            icon="i-heroicons-exclamation-triangle"
-            color="error"
-            variant="soft"
-            :description="editorError"
-          />
-          <div
-            v-if="editorLoading"
-            class="h-[55vh] flex items-center justify-center text-muted"
-          >
-            <UIcon
-              name="i-heroicons-arrow-path-20-solid"
-              class="size-6 animate-spin"
-            />
-          </div>
-          <CodeEditor
-            v-else
-            v-model="draft"
-            :language="editorLanguage"
-            :theme="editorTheme"
-            class="h-[55vh] rounded-md overflow-hidden ring-1 ring-default"
-          />
-        </div>
-      </template>
-      <template #footer>
-        <div class="flex items-center justify-between gap-2 w-full">
-          <div class="flex items-center gap-2">
-            <USwitch v-model="restartAfter" size="sm" />
-            <span class="text-xs text-muted">Restart server after saving</span>
-          </div>
-          <div class="flex gap-2">
-            <UButton
-              color="neutral"
-              variant="ghost"
-              :disabled="saving"
-              @click="editorOpen = false"
-            >
-              Cancel
-            </UButton>
-            <UButton :loading="saving" :disabled="editorLoading" @click="save">
-              Save
-            </UButton>
-          </div>
-        </div>
-      </template>
-    </UModal>
 
     <!-- Single jar delete confirmation -->
     <UModal
@@ -438,11 +284,9 @@ import type { DropdownMenuItem } from "@nuxt/ui";
 import { errorMessage } from "~/utils/errors";
 
 type JarInfo = { name: string; size: number };
-type ConfigFile = { path: string; size: number };
 
 const { id, server, refresh: refreshServer } = useServerDetail();
 const toast = useToast();
-const colorMode = useColorMode();
 
 // --- Type gating ----------------------------------------------------------------
 
@@ -474,30 +318,13 @@ const {
   immediate: true,
 });
 
-const {
-  data: files,
-  refresh: refreshFiles,
-  status: filesStatus,
-} = useFetch<ConfigFile[]>(() => `/api/server/${id.value}/files`, {
-  default: () => [],
-  retry: false,
-  immediate: true,
-});
-
 const jarSearch = ref("");
-const fileSearch = ref("");
 
 const filteredJars = computed(() =>
   (jars.value ?? []).filter((jar) =>
     jar.name.toLowerCase().includes(jarSearch.value.toLowerCase())
   )
 );
-const filteredFiles = computed(() =>
-  (files.value ?? []).filter((file) =>
-    file.path.toLowerCase().includes(fileSearch.value.toLowerCase())
-  )
-);
-
 // --- Selection -------------------------------------------------------------------
 
 const selectedJars = ref<string[]>([]);
@@ -765,100 +592,6 @@ async function runBatchDelete() {
   }
 }
 
-// --- Config editor ----------------------------------------------------------------
-
-const editorOpen = ref(false);
-const editorLoading = ref(false);
-const editingFile = ref<ConfigFile | null>(null);
-const draft = ref("");
-const editorError = ref("");
-const saving = ref(false);
-
-const editorTheme = computed(() =>
-  colorMode.value === "dark" ? "vitesse-dark" : "vitesse-light"
-);
-
-const editorLanguage = computed(() => {
-  const path = editingFile.value?.path.toLowerCase() ?? "";
-  if (path.endsWith(".yml") || path.endsWith(".yaml")) return "yaml";
-  if (path.endsWith(".json")) return "json";
-  if (path.endsWith(".toml")) return "toml";
-  if (path.endsWith(".properties") || path.endsWith(".ini")) return "ini";
-  return "plaintext";
-});
-
-function fileMenuItems(file: ConfigFile): DropdownMenuItem[] {
-  return [
-    {
-      label: "Edit",
-      icon: "i-heroicons-pencil-square-20-solid",
-      onSelect: () => openEditor(file),
-    },
-    {
-      label: "Download",
-      icon: "i-heroicons-arrow-down-tray-20-solid",
-      onSelect: () => {
-        window.open(
-          `/api/server/${id.value}/files/content?path=${encodeURIComponent(file.path)}&download=true`,
-          "_blank"
-        );
-      },
-    },
-  ];
-}
-
-async function openEditor(file: ConfigFile) {
-  editingFile.value = file;
-  editorError.value = "";
-  draft.value = "";
-  editorOpen.value = true;
-  editorLoading.value = true;
-  try {
-    const result = await $fetch<{ path: string; content: string }>(
-      `/api/server/${id.value}/files/content`,
-      { query: { path: file.path } }
-    );
-    draft.value = result.content;
-  } catch (error) {
-    editorError.value = errorMessage(error, "Could not read the file.");
-  } finally {
-    editorLoading.value = false;
-  }
-}
-
-async function save() {
-  if (!editingFile.value) return;
-  saving.value = true;
-  editorError.value = "";
-  try {
-    const result = await $fetch<{ ok: boolean; restarted: boolean }>(
-      `/api/server/${id.value}/files/content`,
-      {
-        method: "PUT",
-        body: {
-          path: editingFile.value.path,
-          content: draft.value,
-          restart: restartAfter.value,
-        },
-      }
-    );
-    toast.add({
-      title: "File saved",
-      description: result.restarted
-        ? "The server is restarting to apply it."
-        : "The change applies on the next server start.",
-      color: "success",
-    });
-    editorOpen.value = false;
-    await refreshFiles();
-  } catch (error) {
-    // Validation errors (invalid YAML/JSON) stay inside the modal.
-    editorError.value = errorMessage(error, "Could not save the file.");
-  } finally {
-    saving.value = false;
-  }
-}
-
 // --- Display helpers ----------------------------------------------------------------
 
 function formatSize(bytes: number) {
@@ -869,33 +602,13 @@ function formatSize(bytes: number) {
   return `${(kib / 1024).toFixed(2)} MiB`;
 }
 
-function fileDir(path: string) {
-  const index = path.lastIndexOf("/");
-  return index === -1 ? "" : path.slice(0, index + 1);
-}
-
-function fileName(path: string) {
-  return path.split("/").pop() ?? path;
-}
-
-function fileIcon(path: string) {
-  const lower = path.toLowerCase();
-  if (lower.endsWith(".json")) return "i-heroicons-code-bracket-20-solid";
-  if (lower.endsWith(".toml") || lower.endsWith(".properties"))
-    return "i-heroicons-adjustments-horizontal-20-solid";
-  return "i-heroicons-document-text-20-solid";
-}
-
 // --- Container identity changes (config edits recreate the container) ---------------
 
 watch(id, () => {
   selectedJars.value = [];
   uploadFiles.value = [];
-  editorOpen.value = false;
-  editingFile.value = null;
   modrinthOpen.value = false;
   refreshJars();
-  refreshFiles();
   refreshUpdates();
 });
 </script>

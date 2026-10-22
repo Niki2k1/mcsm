@@ -193,6 +193,24 @@ const STYLES: Record<
     bg: "bg-info/10",
     text: "text-info",
   },
+  "files-uploaded": {
+    label: "Files uploaded",
+    icon: "i-heroicons-arrow-up-tray-20-solid",
+    bg: "bg-success/10",
+    text: "text-success",
+  },
+  "file-moved": {
+    label: "File renamed",
+    icon: "i-heroicons-arrows-right-left-20-solid",
+    bg: "bg-info/10",
+    text: "text-info",
+  },
+  "file-deleted": {
+    label: "File deleted",
+    icon: "i-heroicons-trash-20-solid",
+    bg: "bg-error/10",
+    text: "text-error",
+  },
 };
 
 const FALLBACK_STYLE = {

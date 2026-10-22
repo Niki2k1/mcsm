@@ -25,6 +25,9 @@ export type ActivityAction =
   | "jars-updated"
   | "jar-deleted"
   | "config-edited"
+  | "files-uploaded"
+  | "file-moved"
+  | "file-deleted"
   | "storage-relocated";
 
 /**
