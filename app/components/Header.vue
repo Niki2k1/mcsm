@@ -18,8 +18,12 @@
 </template>
 
 <script setup lang="ts">
-const links = [
+const { user } = useUserSession();
+
+const links = computed(() => [
   { to: "/", label: "Overview", icon: "i-heroicons-squares-2x2-16-solid" },
-  { to: "/admin", label: "Admin", icon: "i-heroicons-cog-6-tooth-16-solid" },
-];
+  ...(user.value?.admin
+    ? [{ to: "/admin", label: "Admin", icon: "i-heroicons-cog-6-tooth-16-solid" }]
+    : []),
+]);
 </script>

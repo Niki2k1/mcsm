@@ -1,6 +1,6 @@
 import { eq, count } from "drizzle-orm";
 import { db } from "@nuxthub/db";
-import { users, credentials } from "../../db/schema";
+import { users, credentials, serverAccess } from "../../db/schema";
 
 /** List all accounts (admin only). Passwords/keys never leave the server. */
 export default defineEventHandler(async (event) => {
@@ -20,8 +20,15 @@ export default defineEventHandler(async (event) => {
     .leftJoin(credentials, eq(credentials.userId, users.id))
     .groupBy(users.id);
 
+  const grants = await db
+    .select({ userId: serverAccess.userId, servers: count() })
+    .from(serverAccess)
+    .groupBy(serverAccess.userId);
+  const serversByUser = new Map(grants.map((g) => [g.userId, g.servers]));
+
   return rows.map((row) => ({
     ...row,
     hasPassword: Boolean(row.hasPassword),
+    servers: serversByUser.get(row.id) ?? 0,
   }));
 });

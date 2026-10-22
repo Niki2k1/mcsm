@@ -72,8 +72,8 @@
       </template>
     </UCard>
 
-    <!-- Duplicate -->
-    <UCard v-if="server.config">
+    <!-- Duplicate (creates a new server, so admin only) -->
+    <UCard v-if="server.config && can('admin')">
       <template #header>
         <div>
           <h3 class="font-semibold">Duplicate</h3>
@@ -127,6 +127,7 @@
         </div>
 
         <div
+          v-if="can('admin')"
           class="flex flex-wrap items-center justify-between gap-4 py-4 first:pt-0 last:pb-0"
         >
           <div class="min-w-0">
@@ -142,6 +143,7 @@
         </div>
 
         <div
+          v-if="can('admin')"
           class="flex flex-wrap items-center justify-between gap-4 py-4 first:pt-0 last:pb-0"
         >
           <div class="min-w-0">
@@ -351,7 +353,7 @@ import paper from "~/assets/paper.svg";
 import fabric from "~/assets/fabric.png";
 import forge from "~/assets/forge.svg";
 
-const { id, server } = useServerDetail();
+const { id, server, can } = useServerDetail();
 const router = useRouter();
 const toast = useToast();
 

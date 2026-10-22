@@ -51,6 +51,7 @@
           />
 
           <!-- Quick start/stop. Everything else lives on the detail page. -->
+          <template v-if="hasServerAccess(server.access, 'operator')">
           <UButton
             v-if="server.running"
             icon="i-heroicons-stop-20-solid"
@@ -69,6 +70,7 @@
             aria-label="Start server"
             @click.stop.prevent="emit('start', server)"
           />
+          </template>
         </div>
       </div>
 
@@ -102,6 +104,7 @@ const props = defineProps<{
     running: boolean;
     config?: { ICON?: string | null; BLUEMAP?: boolean } | null;
     volume?: string | null;
+    access?: ServerAccessLevel;
   };
 }>();
 

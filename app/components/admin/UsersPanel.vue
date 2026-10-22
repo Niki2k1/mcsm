@@ -36,10 +36,25 @@
             · {{ account.hasPassword ? "password" : "no password" }}
             · {{ account.passkeys }}
             {{ account.passkeys === 1 ? "passkey" : "passkeys" }}
+            ·
+            {{
+              account.admin
+                ? "all servers"
+                : `${account.servers} ${account.servers === 1 ? "server" : "servers"}`
+            }}
           </p>
         </div>
 
         <div class="flex items-center gap-1 shrink-0">
+          <UButton
+            v-if="!account.admin"
+            color="neutral"
+            variant="ghost"
+            size="xs"
+            icon="i-heroicons-server-stack"
+            label="Server access"
+            @click="askAccess(account)"
+          />
           <UButton
             color="neutral"
             variant="ghost"
@@ -124,6 +139,68 @@
       </template>
     </UModal>
 
+    <!-- Per-server access -->
+    <UModal
+      v-model:open="accessOpen"
+      :title="`Server access for ${pending?.name ?? ''}`"
+      description="Admins can always manage every server. Everyone else only sees the servers listed here."
+    >
+      <template #body>
+        <div v-if="loadingAccess" class="py-6 text-center text-muted">
+          <UIcon name="i-heroicons-arrow-path-20-solid" class="animate-spin" />
+        </div>
+        <p
+          v-else-if="!servers?.length"
+          class="text-sm text-muted py-4 text-center"
+        >
+          There are no servers yet.
+        </p>
+        <div v-else class="space-y-2">
+          <div
+            v-for="server in servers"
+            :key="server.volume ?? server.id"
+            class="flex items-center justify-between gap-3"
+          >
+            <div class="min-w-0">
+              <p class="text-sm font-medium truncate">{{ server.name }}</p>
+              <p class="text-xs text-dimmed font-mono truncate">
+                {{ server.domain }}
+              </p>
+            </div>
+            <USelect
+              v-if="server.volume"
+              v-model="draft[server.volume]"
+              :items="roleOptions"
+              class="w-36 shrink-0"
+            />
+          </div>
+          <dl class="pt-3 text-xs text-muted space-y-1">
+            <div><strong>Viewer:</strong> overview, players, analytics, map.</div>
+            <div><strong>Operator:</strong> + start/stop, console, player actions.</div>
+            <div>
+              <strong>Manager:</strong> + configuration, files, mods, backups,
+              world and settings. Only admins can create, duplicate or delete
+              servers.
+            </div>
+          </dl>
+        </div>
+      </template>
+      <template #footer>
+        <div class="flex justify-end gap-2 w-full">
+          <UButton color="neutral" variant="ghost" @click="accessOpen = false">
+            Cancel
+          </UButton>
+          <UButton
+            :loading="savingAccess"
+            :disabled="loadingAccess"
+            @click="saveAccess"
+          >
+            Save
+          </UButton>
+        </div>
+      </template>
+    </UModal>
+
     <!-- Password reset -->
     <UModal v-model:open="resetOpen" title="Reset password">
       <template #body>
@@ -169,6 +246,19 @@ interface Account {
   createdAt: number;
   hasPassword: boolean;
   passkeys: number;
+  servers: number;
+}
+
+interface Grant {
+  volume: string;
+  role: ServerRole;
+}
+
+interface ServerOption {
+  id: string;
+  name: string;
+  domain: string;
+  volume: string | null;
 }
 
 const toast = useToast();
@@ -255,6 +345,83 @@ async function deleteUser() {
     });
   } finally {
     deleting.value = false;
+  }
+}
+
+// --- Server access ----------------------------------------------------------
+
+const NO_ACCESS = "none";
+const roleOptions = [
+  { label: "No access", value: NO_ACCESS },
+  { label: "Viewer", value: "viewer" },
+  { label: "Operator", value: "operator" },
+  { label: "Manager", value: "manager" },
+];
+
+const accessOpen = ref(false);
+const loadingAccess = ref(false);
+const savingAccess = ref(false);
+const draft = ref<Record<string, string>>({});
+const servers = ref<ServerOption[]>([]);
+// Grants for worlds whose container is gone (deleted, volume kept) don't show
+// up in the list, but must survive a save so the user regains access if the
+// server is recreated.
+let hiddenGrants: Grant[] = [];
+
+async function askAccess(account: Account) {
+  pending.value = account;
+  accessOpen.value = true;
+  loadingAccess.value = true;
+  try {
+    const [serverList, grants] = await Promise.all([
+      $fetch<ServerOption[]>("/api/server"),
+      $fetch<Grant[]>(`/api/users/${account.id}/access`),
+    ]);
+    servers.value = serverList;
+    const byVolume = new Map(grants.map((g) => [g.volume, g.role]));
+    draft.value = Object.fromEntries(
+      serverList
+        .filter((server) => server.volume)
+        .map((server) => [server.volume!, byVolume.get(server.volume!) ?? NO_ACCESS])
+    );
+    hiddenGrants = grants.filter((g) => !(g.volume in draft.value));
+  } catch (error) {
+    accessOpen.value = false;
+    toast.add({
+      title: "Could not load server access",
+      description: errorMessage(error, "Loading the grants failed."),
+      color: "error",
+    });
+  } finally {
+    loadingAccess.value = false;
+  }
+}
+
+async function saveAccess() {
+  if (!pending.value) return;
+  savingAccess.value = true;
+  try {
+    const grants: Grant[] = [
+      ...hiddenGrants,
+      ...Object.entries(draft.value)
+        .filter(([, role]) => role !== NO_ACCESS)
+        .map(([volume, role]) => ({ volume, role: role as ServerRole })),
+    ];
+    await $fetch(`/api/users/${pending.value.id}/access`, {
+      method: "PUT",
+      body: { grants },
+    });
+    accessOpen.value = false;
+    await refresh();
+    toast.add({ title: "Server access updated", color: "success" });
+  } catch (error) {
+    toast.add({
+      title: "Could not update server access",
+      description: errorMessage(error, "Saving the grants failed."),
+      color: "error",
+    });
+  } finally {
+    savingAccess.value = false;
   }
 }
 

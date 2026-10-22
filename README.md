@@ -241,6 +241,12 @@ panel**. Each user can sign in with their password, register **passkeys**
 (Touch ID, Windows Hello, security keys) from the user menu, or use **Sign in
 with Microsoft** if their account email matches an MCSM user.
 
+Non-admin users only see the servers an admin shared with them (**Admin →
+Users → Server access**), each with a role: **viewer** (read-only),
+**operator** (+ start/stop, console, player actions) or **manager** (+
+configuration, files, mods, backups). Creating and deleting servers stays
+admin-only.
+
 ### 3. Secure the Docker socket ⚠️
 
 MCSM provisions by talking to the Docker Engine API, and a web app with raw

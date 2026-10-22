@@ -1,7 +1,7 @@
 import { z } from "zod";
 import { eq } from "drizzle-orm";
 import { db } from "@nuxthub/db";
-import { users } from "../../db/schema";
+import { serverAccess, users } from "../../db/schema";
 
 /**
  * Delete an account (admin only). Self-deletion is blocked so the instance
@@ -20,6 +20,10 @@ export default defineEventHandler(async (event) => {
       statusMessage: "You cannot delete your own account",
     });
   }
+
+  // Explicit rather than relying on the FK cascade: SQLite only enforces it
+  // when foreign_keys is on for the connection.
+  await db.delete(serverAccess).where(eq(serverAccess.userId, id));
 
   const deleted = await db
     .delete(users)

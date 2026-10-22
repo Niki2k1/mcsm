@@ -86,6 +86,7 @@
           <div class="flex items-center justify-between">
             <h3 class="font-semibold">About</h3>
             <UButton
+              v-if="can('manager')"
               :to="`/server/${id}/configuration`"
               variant="ghost"
               color="neutral"
@@ -116,7 +117,8 @@
 import { chatToMotd } from "~/utils/motd";
 import { durationSince } from "~/utils/time";
 
-const { id, server, ping, pingStatus, displayFavicon } = useServerDetail();
+const { id, server, ping, pingStatus, displayFavicon, can } =
+  useServerDetail();
 
 const motd = computed(() => chatToMotd(ping.value?.status?.description));
 

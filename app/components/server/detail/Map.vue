@@ -53,6 +53,7 @@
           description="Enabling BlueMap adds it to the server's mods and recreates the container. The world is not affected."
         />
         <UButton
+          v-if="canManage"
           icon="i-heroicons-map-20-solid"
           size="lg"
           :loading="enabling"
@@ -79,6 +80,7 @@
           <div class="flex items-center gap-2">
             <!-- Publish toggle: published maps are viewable without login. -->
             <USwitch
+              v-if="canManage"
               :model-value="status.published"
               :disabled="publishing"
               :label="status.published ? 'Public' : 'Private'"
@@ -86,7 +88,7 @@
               @update:model-value="setPublished"
             />
             <UButton
-              v-if="status.ready && server?.running"
+              v-if="canManage && status.ready && server?.running"
               icon="i-heroicons-arrow-path-20-solid"
               variant="soft"
               color="neutral"
@@ -109,6 +111,7 @@
               Open full screen
             </UButton>
             <UButton
+              v-if="canManage"
               icon="i-heroicons-x-mark-20-solid"
               variant="ghost"
               color="error"
@@ -143,6 +146,7 @@
         />
         <div class="flex items-center gap-3">
           <UButton
+            v-if="canManage"
             icon="i-heroicons-check-20-solid"
             color="success"
             :loading="accepting"
@@ -241,7 +245,8 @@ type BluemapStatus = {
   mapPath: string | null;
 };
 
-const { id, server, refresh: refreshServer } = useServerDetail();
+const { id, server, refresh: refreshServer, can } = useServerDetail();
+const canManage = computed(() => can("manager"));
 const toast = useToast();
 
 const { data: status, refresh } = useFetch<BluemapStatus>(

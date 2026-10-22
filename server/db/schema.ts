@@ -4,6 +4,7 @@ import {
   integer,
   real,
   index,
+  primaryKey,
 } from "drizzle-orm/sqlite-core";
 
 /**
@@ -142,6 +143,27 @@ export const credentials = sqliteTable(
     createdAt: integer("created_at").notNull(),
   },
   (table) => [index("credentials_user_id_idx").on(table.userId)]
+);
+
+/**
+ * Which servers a non-admin user can see and what they may do there. Keyed by
+ * world volume (not container id) so grants survive config edits. No row =
+ * no access; admins bypass this table entirely.
+ */
+export const serverAccess = sqliteTable(
+  "server_access",
+  {
+    userId: integer("user_id")
+      .notNull()
+      .references(() => users.id, { onDelete: "cascade" }),
+    volume: text("volume").notNull(),
+    /** viewer | operator | manager (see shared/utils/serverRoles.ts) */
+    role: text("role").notNull(),
+  },
+  (table) => [
+    primaryKey({ columns: [table.userId, table.volume] }),
+    index("server_access_volume_idx").on(table.volume),
+  ]
 );
 
 /** Global secrets (API keys) injected into containers at provision time. */

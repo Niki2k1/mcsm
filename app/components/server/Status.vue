@@ -6,7 +6,7 @@
         title="Overview"
         description="Check the status of your servers."
       >
-        <template #links>
+        <template v-if="user?.admin" #links>
           <UButton
             icon="i-heroicons-plus-20-solid"
             @click="serverModal.openCreate()"
@@ -25,8 +25,15 @@
             name="i-heroicons-server-stack"
             class="size-10 mx-auto opacity-60"
           />
-          <p>No servers yet. Create your first one to get started.</p>
+          <p v-if="user?.admin">
+            No servers yet. Create your first one to get started.
+          </p>
+          <p v-else>
+            You don't have access to any servers yet. Ask an admin to share one
+            with you.
+          </p>
           <UButton
+            v-if="user?.admin"
             icon="i-heroicons-plus-20-solid"
             @click="serverModal.openCreate()"
           >
@@ -59,7 +66,10 @@ type Server = {
   config?: { ICON?: string | null; BLUEMAP?: boolean } | null;
   /** World volume name — used for the card's BlueMap link. */
   volume?: string | null;
+  access?: ServerAccessLevel;
 };
+
+const { user } = useUserSession();
 
 const serverModal = useServerModal();
 const toast = useToast();
