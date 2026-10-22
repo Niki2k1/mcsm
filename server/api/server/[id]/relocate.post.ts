@@ -1,4 +1,4 @@
-import { z } from "zod";
+import * as v from "valibot";
 
 /**
  * Move a server's world to where the current `NUXT_DOCKER_DATA_ROOT` puts new
@@ -30,7 +30,10 @@ echo copied
 `;
 
 export default defineEventHandler(async (event) => {
-  const { id } = await useValidatedParams(event, { id: z.string() });
+  const { id } = await getValidatedRouterParams(
+    event,
+    v.parser(v.object({ id: v.string() }))
+  );
   const {
     getServer,
     docker,

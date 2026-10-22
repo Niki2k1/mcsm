@@ -1,16 +1,29 @@
-import { z } from "zod";
+import * as v from "valibot";
 
 /**
  * Search Modrinth for mods/plugins compatible with this server's loader and
  * Minecraft version.
  */
 export default defineEventHandler(async (event) => {
-  const { id } = await useValidatedParams(event, { id: z.string() });
-  const { query, offset, loader } = await useValidatedQuery(event, {
-    query: z.string().min(1).max(200),
-    offset: z.coerce.number().int().min(0).default(0),
-    loader: z.enum(["paper", "fabric", "forge", "neoforge"]).optional(),
-  });
+  const { id } = await getValidatedRouterParams(
+    event,
+    v.parser(v.object({ id: v.string() }))
+  );
+  const { query, offset, loader } = await getValidatedQuery(
+    event,
+    v.parser(
+      v.object({
+        query: v.pipe(v.string(), v.minLength(1), v.maxLength(200)),
+        offset: v.optional(
+          v.pipe(v.string(), v.toNumber(), v.integer(), v.minValue(0)),
+          "0"
+        ),
+        loader: v.optional(
+          v.picklist(["paper", "fabric", "forge", "neoforge"])
+        ),
+      })
+    )
+  );
 
   const { getServer } = useDocker(event);
   let server: Awaited<ReturnType<typeof getServer>>;

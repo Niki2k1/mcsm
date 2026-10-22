@@ -1,14 +1,19 @@
-import { z } from "zod";
+import * as v from "valibot";
 
 /**
  * Download a backup tarball. The file is streamed out of the backup volume
  * through a disposable helper container (see openBackupDownload).
  */
 export default defineEventHandler(async (event) => {
-  const { id, backupId } = await useValidatedParams(event, {
-    id: z.string(),
-    backupId: z.coerce.number().int(),
-  });
+  const { id, backupId } = await getValidatedRouterParams(
+    event,
+    v.parser(
+      v.object({
+        id: v.string(),
+        backupId: v.pipe(v.string(), v.toNumber(), v.integer()),
+      })
+    )
+  );
 
   const { backup, stream, cleanup } = await openBackupDownload(
     event,

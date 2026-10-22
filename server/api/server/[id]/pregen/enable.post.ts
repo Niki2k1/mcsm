@@ -1,4 +1,4 @@
-import { z } from "zod";
+import * as v from "valibot";
 import { serverConfigSchema } from "../../../../schema/server.schema";
 
 /**
@@ -10,7 +10,10 @@ import { serverConfigSchema } from "../../../../schema/server.schema";
  * Returns the new container id — the caller must navigate to it.
  */
 export default defineEventHandler(async (event) => {
-  const { id } = await useValidatedParams(event, { id: z.string() });
+  const { id } = await getValidatedRouterParams(
+    event,
+    v.parser(v.object({ id: v.string() }))
+  );
 
   const { getServer } = useDocker(event);
 
@@ -39,7 +42,7 @@ export default defineEventHandler(async (event) => {
   }
 
   // Re-validate so configs created before newer schema fields pick up defaults.
-  const data = serverConfigSchema.parse({
+  const data = v.parse(serverConfigSchema, {
     ...existing.config,
     MODRINTH_PROJECTS: addChunky(existing.config.MODRINTH_PROJECTS),
   });

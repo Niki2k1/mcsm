@@ -47,9 +47,9 @@
     "tar-stream": "^3.2.1",
     "typescript": "^6.0.3",
     "unstorage": "^1.17.5",
+    "valibot": "^1.5.0",
     "vue": "^3.5.43",
-    "yaml": "^2.9.1",
-    "zod": "^4.6.5"
+    "yaml": "^2.9.1"
   },
   "devDependencies": {
     "@iconify-json/heroicons": "^1.2.3",

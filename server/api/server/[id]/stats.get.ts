@@ -1,8 +1,11 @@
-import { z } from "zod";
+import * as v from "valibot";
 
 /** Live one-shot stats for a server (Docker metrics + uptime). */
 export default defineEventHandler(async (event) => {
-  const { id } = await useValidatedParams(event, { id: z.string() });
+  const { id } = await getValidatedRouterParams(
+    event,
+    v.parser(v.object({ id: v.string() }))
+  );
   const { getServer, docker } = useDocker(event);
 
   let server: Awaited<ReturnType<typeof getServer>>;

@@ -1,4 +1,4 @@
-import { z } from "zod";
+import * as v from "valibot";
 import { serverConfigSchema } from "../../../schema/server.schema";
 
 /**
@@ -11,11 +11,19 @@ import { serverConfigSchema } from "../../../schema/server.schema";
  * permission, so this is the only way to touch volume contents.
  */
 export default defineEventHandler(async (event) => {
-  const { id } = await useValidatedParams(event, { id: z.string() });
-  const { name, copyWorld } = await useValidatedBody(event, {
-    name: z.string().trim().min(1),
-    copyWorld: z.boolean().default(true),
-  });
+  const { id } = await getValidatedRouterParams(
+    event,
+    v.parser(v.object({ id: v.string() }))
+  );
+  const { name, copyWorld } = await readValidatedBody(
+    event,
+    v.parser(
+      v.object({
+        name: v.pipe(v.string(), v.trim(), v.minLength(1)),
+        copyWorld: v.optional(v.boolean(), true),
+      })
+    )
+  );
 
   const {
     getServer,
@@ -48,7 +56,7 @@ export default defineEventHandler(async (event) => {
 
   // The new name drives the clone's whole identity — subdomain, container and
   // volume all derive from it, so the explicit subdomain override is dropped.
-  const config = serverConfigSchema.parse({
+  const config = v.parse(serverConfigSchema, {
     ...server.config,
     name,
     subdomain: null,

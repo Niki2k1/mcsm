@@ -1,4 +1,4 @@
-import { z } from "zod";
+import * as v from "valibot";
 import { and, eq } from "drizzle-orm";
 import { db } from "@nuxthub/db";
 import { credentials } from "../../../db/schema";
@@ -6,7 +6,10 @@ import { credentials } from "../../../db/schema";
 /** Remove one of the logged-in user's own passkeys. */
 export default defineEventHandler(async (event) => {
   const { user } = await requireUserSession(event);
-  const { id } = await useValidatedParams(event, { id: z.string().min(1) });
+  const { id } = await getValidatedRouterParams(
+    event,
+    v.parser(v.object({ id: v.pipe(v.string(), v.minLength(1)) }))
+  );
 
   const deleted = await db
     .delete(credentials)

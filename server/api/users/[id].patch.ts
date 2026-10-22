@@ -1,4 +1,4 @@
-import { z } from "zod";
+import * as v from "valibot";
 import { eq } from "drizzle-orm";
 import { db } from "@nuxthub/db";
 import { users } from "../../db/schema";
@@ -11,14 +11,26 @@ import { users } from "../../db/schema";
 export default defineEventHandler(async (event) => {
   const requester = await requireAdmin(event);
 
-  const { id } = await useValidatedParams(event, {
-    id: z.coerce.number().int(),
-  });
-  const body = await useValidatedBody(event, {
-    name: z.string().min(1).max(100).optional(),
-    password: z.string().min(8).max(255).optional(),
-    admin: z.boolean().optional(),
-  });
+  const { id } = await getValidatedRouterParams(
+    event,
+    v.parser(
+      v.object({
+        id: v.pipe(v.string(), v.toNumber(), v.integer()),
+      })
+    )
+  );
+  const body = await readValidatedBody(
+    event,
+    v.parser(
+      v.object({
+        name: v.optional(v.pipe(v.string(), v.minLength(1), v.maxLength(100))),
+        password: v.optional(
+          v.pipe(v.string(), v.minLength(8), v.maxLength(255))
+        ),
+        admin: v.optional(v.boolean()),
+      })
+    )
+  );
 
   if (body.admin === false && id === requester.id) {
     throw createError({

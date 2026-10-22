@@ -1,4 +1,4 @@
-import { z } from "zod";
+import * as v from "valibot";
 import { db } from "@nuxthub/db";
 import { users } from "../../db/schema";
 
@@ -7,11 +7,16 @@ import { users } from "../../db/schema";
  * account and log it in. Rejected as soon as any account exists.
  */
 export default defineEventHandler(async (event) => {
-  const body = await useValidatedBody(event, {
-    name: z.string().min(1).max(100),
-    email: z.string().email(),
-    password: z.string().min(8).max(255),
-  });
+  const body = await readValidatedBody(
+    event,
+    v.parser(
+      v.object({
+        name: v.pipe(v.string(), v.minLength(1), v.maxLength(100)),
+        email: v.pipe(v.string(), v.email()),
+        password: v.pipe(v.string(), v.minLength(8), v.maxLength(255)),
+      })
+    )
+  );
 
   if (!(await needsSetup())) {
     throw createError({

@@ -1,4 +1,4 @@
-import { z } from "zod";
+import * as v from "valibot";
 
 /**
  * Upload a backup tarball (.tar.gz of a world's /data directory).
@@ -8,10 +8,18 @@ import { z } from "zod";
  * buffered in memory.
  */
 export default defineEventHandler(async (event) => {
-  const { id } = await useValidatedParams(event, { id: z.string() });
-  const { label } = await useValidatedQuery(event, {
-    label: z.string().max(100).optional(),
-  });
+  const { id } = await getValidatedRouterParams(
+    event,
+    v.parser(v.object({ id: v.string() }))
+  );
+  const { label } = await getValidatedQuery(
+    event,
+    v.parser(
+      v.object({
+        label: v.optional(v.pipe(v.string(), v.maxLength(100))),
+      })
+    )
+  );
 
   return uploadBackup(event, id, event.node.req, label);
 });

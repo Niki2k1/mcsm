@@ -1,4 +1,4 @@
-import { z } from "zod";
+import * as v from "valibot";
 import { eq } from "drizzle-orm";
 import { db } from "@nuxthub/db";
 import { serverAccess } from "../../../db/schema";
@@ -7,9 +7,14 @@ import { serverAccess } from "../../../db/schema";
 export default defineEventHandler(async (event) => {
   await requireAdmin(event);
 
-  const { id } = await useValidatedParams(event, {
-    id: z.coerce.number().int(),
-  });
+  const { id } = await getValidatedRouterParams(
+    event,
+    v.parser(
+      v.object({
+        id: v.pipe(v.string(), v.toNumber(), v.integer()),
+      })
+    )
+  );
 
   return db
     .select({ volume: serverAccess.volume, role: serverAccess.role })

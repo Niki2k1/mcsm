@@ -1,8 +1,11 @@
-import { z } from "zod";
+import * as v from "valibot";
 
 /** Full detail for one server, used to prefill the edit form. */
 export default defineEventHandler(async (event) => {
-  const { id } = await useValidatedParams(event, { id: z.string() });
+  const { id } = await getValidatedRouterParams(
+    event,
+    v.parser(v.object({ id: v.string() }))
+  );
 
   try {
     const { getServer } = useDocker(event);

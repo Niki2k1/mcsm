@@ -1,4 +1,4 @@
-import { z } from "zod";
+import * as v from "valibot";
 import dns from "node:dns/promises";
 import net from "node:net";
 
@@ -79,10 +79,15 @@ function tcpCheck(host: string, port: number, timeoutMs = 3000) {
 }
 
 export default defineEventHandler(async (event) => {
-  const { host, mode } = await useValidatedQuery(event, {
-    host: z.string().min(1),
-    mode: z.enum(["wildcard", "server"]).optional(),
-  });
+  const { host, mode } = await getValidatedQuery(
+    event,
+    v.parser(
+      v.object({
+        host: v.pipe(v.string(), v.minLength(1)),
+        mode: v.optional(v.picklist(["wildcard", "server"])),
+      })
+    )
+  );
 
   // Only allow checking domains MCSM manages (the base, or a subdomain of one).
   const domains = await useDomains().list();

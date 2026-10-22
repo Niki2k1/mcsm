@@ -1,4 +1,4 @@
-import { z } from "zod";
+import * as v from "valibot";
 import { createHash } from "node:crypto";
 import { createWriteStream } from "node:fs";
 import { mkdir, readdir, unlink } from "node:fs/promises";
@@ -18,7 +18,10 @@ import { Transform } from "node:stream";
 const PACKS_DIR = ".data/resource-packs";
 
 export default defineEventHandler(async (event) => {
-  const { id } = await useValidatedParams(event, { id: z.string() });
+  const { id } = await getValidatedRouterParams(
+    event,
+    v.parser(v.object({ id: v.string() }))
+  );
 
   const { getServer } = useDocker(event);
   let server: Awaited<ReturnType<typeof getServer>>;

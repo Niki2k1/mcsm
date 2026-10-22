@@ -1,15 +1,22 @@
-import { z } from "zod";
+import * as v from "valibot";
 
 export default defineEventHandler(async (event) => {
-  const options = await useValidatedQuery(event, {
-    host: z.string(),
-    port: z.coerce.number().int().optional(),
-    timeout: z
-      .string()
-      .optional()
-      .transform((val) => (val ? parseInt(val) : undefined)),
-    protocolVersion: z.coerce.number().int().optional(),
-  });
+  const options = await getValidatedQuery(
+    event,
+    v.parser(
+      v.object({
+        host: v.string(),
+        port: v.optional(v.pipe(v.string(), v.toNumber(), v.integer())),
+        timeout: v.pipe(
+          v.optional(v.string()),
+          v.transform((val) => (val ? parseInt(val) : undefined))
+        ),
+        protocolVersion: v.optional(
+          v.pipe(v.string(), v.toNumber(), v.integer())
+        ),
+      })
+    )
+  );
 
   try {
     // Local dev: server domains have no DNS — when the host matches a managed

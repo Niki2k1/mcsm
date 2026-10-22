@@ -1,4 +1,4 @@
-import { z } from "zod";
+import * as v from "valibot";
 
 const RANGES = {
   "1h": 60 * 60 * 1000,
@@ -11,10 +11,18 @@ const RANGES = {
  * so the history covers all container generations of this server.
  */
 export default defineEventHandler(async (event) => {
-  const { id } = await useValidatedParams(event, { id: z.string() });
-  const { range } = await useValidatedQuery(event, {
-    range: z.enum(["1h", "24h", "7d"]).optional().default("24h"),
-  });
+  const { id } = await getValidatedRouterParams(
+    event,
+    v.parser(v.object({ id: v.string() }))
+  );
+  const { range } = await getValidatedQuery(
+    event,
+    v.parser(
+      v.object({
+        range: v.optional(v.picklist(["1h", "24h", "7d"]), "24h"),
+      })
+    )
+  );
 
   const { getServer } = useDocker(event);
 
