@@ -9,6 +9,10 @@ export type ServerDetail = {
   config: CreateForm | null;
   containerName?: string;
   volume?: string;
+  /** Host path or volume name the world is mounted from. */
+  volumeSource?: string | null;
+  /** Where the current data root would put the world. */
+  targetSource?: string | null;
   /** ISO timestamp of the current run's start (null when stopped). */
   startedAt?: string | null;
   /** ISO timestamp of container creation. */

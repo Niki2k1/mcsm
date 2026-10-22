@@ -97,6 +97,36 @@
       </div>
     </UCard>
 
+    <!-- Storage: only when the world lives outside the configured data root -->
+    <UCard v-if="server.config && can('admin') && storageMoved">
+      <template #header>
+        <div>
+          <h3 class="font-semibold">Storage</h3>
+          <p class="text-sm text-muted">
+            This world was created before the data root
+            (<code>NUXT_DOCKER_DATA_ROOT</code>) changed and still lives in
+            the old location.
+          </p>
+        </div>
+      </template>
+
+      <div class="flex flex-wrap items-center justify-between gap-4">
+        <dl class="min-w-0 text-xs space-y-1">
+          <div>
+            <dt class="text-muted inline">Current:</dt>
+            <dd class="font-mono inline ms-1 break-all">{{ server.volumeSource }}</dd>
+          </div>
+          <div>
+            <dt class="text-muted inline">Configured:</dt>
+            <dd class="font-mono inline ms-1 break-all">{{ server.targetSource }}</dd>
+          </div>
+        </dl>
+        <UButton variant="soft" @click="relocateOpen = true">
+          Move world
+        </UButton>
+      </div>
+    </UCard>
+
     <!-- Danger Zone -->
     <UCard
       class="ring-error/40"
@@ -263,6 +293,45 @@
             @click="runDuplicate"
           >
             Duplicate
+          </UButton>
+        </div>
+      </template>
+    </UModal>
+
+    <!-- Relocate -->
+    <UModal
+      v-model:open="relocateOpen"
+      title="Move world"
+      description="The server stops, its world moves to the configured data root and the container is recreated there."
+    >
+      <template #body>
+        <div class="space-y-3 text-sm">
+          <p>
+            If the new location already shows the same files (e.g. Unraid's
+            <code>/mnt/user</code> and <code>/mnt/cache</code> paths of one
+            share), only the mount switches. Otherwise the world is copied,
+            which can take a while for large worlds.
+          </p>
+          <p class="text-muted">
+            The old copy is never deleted automatically. After a copy, remove
+            <span class="font-mono break-all">{{ server.volumeSource }}</span>
+            yourself once the server runs fine.
+          </p>
+        </div>
+      </template>
+
+      <template #footer>
+        <div class="flex justify-end gap-2 w-full">
+          <UButton
+            color="neutral"
+            variant="ghost"
+            :disabled="relocating"
+            @click="relocateOpen = false"
+          >
+            Cancel
+          </UButton>
+          <UButton :loading="relocating" @click="runRelocate">
+            Move world
           </UButton>
         </div>
       </template>
@@ -480,6 +549,48 @@ async function runDuplicate() {
     });
   } finally {
     duplicating.value = false;
+  }
+}
+
+// --- Storage relocation ---------------------------------------------------------
+
+const storageMoved = computed(
+  () =>
+    !!server.value?.targetSource &&
+    server.value.volumeSource !== server.value.targetSource
+);
+
+const relocateOpen = ref(false);
+const relocating = ref(false);
+
+async function runRelocate() {
+  relocating.value = true;
+  try {
+    const result = await $fetch<{ id: string; mode: "same" | "copied"; from: string }>(
+      `/api/server/${id.value}/relocate`,
+      { method: "POST" }
+    );
+
+    toast.add({
+      title: "World moved",
+      description:
+        result.mode === "copied"
+          ? `The world was copied. The old copy at ${result.from} is still there; delete it once everything works.`
+          : "The server now uses the configured data root.",
+      color: "success",
+    });
+
+    relocateOpen.value = false;
+    await refreshNuxtData("servers");
+    await router.replace(`/server/${result.id}/settings`);
+  } catch (error) {
+    toast.add({
+      title: "Error",
+      description: errorMessage(error, "Failed to move the world."),
+      color: "error",
+    });
+  } finally {
+    relocating.value = false;
   }
 }
 

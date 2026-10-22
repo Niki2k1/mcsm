@@ -166,6 +166,12 @@ const STYLES: Record<
     bg: "bg-warning/10",
     text: "text-warning",
   },
+  "storage-relocated": {
+    label: "World moved",
+    icon: "i-heroicons-folder-arrow-down-20-solid",
+    bg: "bg-primary/10",
+    text: "text-primary",
+  },
   "jars-uploaded": {
     label: "Jars uploaded",
     icon: "i-heroicons-puzzle-piece-20-solid",
