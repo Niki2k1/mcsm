@@ -18,6 +18,8 @@ export default defineEventHandler(async (event) => {
     const { removeServer, getServer } = useDocker(event);
     const server = await getServer(id);
     await removeServer(id, { removeVolume });
+    // A kept world can come back under the same volume, so its grants stay.
+    if (removeVolume && server.volume) await revokeServerAccess(server.volume);
     await recordActivity(
       server.volume,
       "deleted",

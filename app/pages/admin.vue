@@ -17,4 +17,7 @@
 
 <script setup lang="ts">
 useSeoMeta({ title: "Admin · MCSM" });
+
+const { user } = useUserSession();
+if (!user.value?.admin) await navigateTo("/", { replace: true });
 </script>

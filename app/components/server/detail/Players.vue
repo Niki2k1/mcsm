@@ -60,7 +60,7 @@
             <span class="text-sm font-medium flex-1 truncate">{{
               player.name
             }}</span>
-            <UDropdownMenu :items="onlineActions(player.name)">
+            <UDropdownMenu v-if="canAct" :items="onlineActions(player.name)">
               <UButton
                 icon="i-heroicons-ellipsis-vertical-20-solid"
                 variant="ghost"
@@ -97,6 +97,7 @@
             />
             <span class="text-sm flex-1 truncate">{{ player.name }}</span>
             <UButton
+              v-if="canAct"
               icon="i-heroicons-x-mark-20-solid"
               variant="ghost"
               color="error"
@@ -115,6 +116,7 @@
           </p>
 
           <UInput
+            v-if="canAct"
             v-model.trim="newWhitelistName"
             placeholder="Add player to whitelist"
             autocomplete="off"
@@ -166,6 +168,7 @@
             No baseline operators configured.
           </p>
 
+          <template v-if="canAct">
           <UInput
             v-model.trim="opName"
             placeholder="Player name"
@@ -193,6 +196,7 @@
               De-op
             </UButton>
           </div>
+          </template>
 
           <p class="text-xs text-muted pt-1">
             The list above is the configured baseline (Minecraft can't report
@@ -214,7 +218,8 @@ type PlayersResponse = {
   whitelist: PlayerEntry[];
 };
 
-const { id } = useServerDetail();
+const { id, can } = useServerDetail();
+const canAct = computed(() => can("operator"));
 const toast = useToast();
 
 const { data, refresh, status } = useFetch<PlayersResponse>(

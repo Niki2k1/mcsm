@@ -52,7 +52,7 @@
               </div>
             </div>
 
-            <div class="flex gap-2 shrink-0">
+            <div v-if="can('operator')" class="flex gap-2 shrink-0">
               <UButton
                 v-if="server.running"
                 icon="i-heroicons-arrow-path-20-solid"
@@ -168,6 +168,9 @@ const displayFavicon = computed(
   () => ping.value?.status?.favicon || server.value?.config?.ICON || undefined
 );
 
+const can = (need: ServerAccessLevel) =>
+  hasServerAccess(server.value?.access, need);
+
 provideServerDetail({
   id,
   server,
@@ -182,6 +185,7 @@ provideServerDetail({
     await refreshPing();
   },
   displayFavicon,
+  can,
 });
 
 // --- Header ------------------------------------------------------------------
@@ -226,50 +230,59 @@ const statusText = computed(() => {
 
 // --- Tabs --------------------------------------------------------------------
 
-const tabs = computed(() => [
+const allTabs = computed(() => [
   {
     label: "Overview",
+    role: "viewer" as ServerAccessLevel,
     icon: "i-heroicons-home-20-solid",
     to: `/server/${id.value}`,
     exact: true,
   },
   {
     label: "Configuration",
+    role: "manager" as ServerAccessLevel,
     icon: "i-heroicons-adjustments-horizontal-20-solid",
     to: `/server/${id.value}/configuration`,
   },
   {
     label: "Environment",
+    role: "manager" as ServerAccessLevel,
     icon: "i-heroicons-variable-20-solid",
     to: `/server/${id.value}/environment`,
   },
   {
     label: "Players",
+    role: "viewer" as ServerAccessLevel,
     icon: "i-heroicons-users-20-solid",
     to: `/server/${id.value}/players`,
   },
   {
     label: "Console",
+    role: "operator" as ServerAccessLevel,
     icon: "i-heroicons-command-line-20-solid",
     to: `/server/${id.value}/console`,
   },
   {
     label: "Analytics",
+    role: "viewer" as ServerAccessLevel,
     icon: "i-heroicons-chart-bar-20-solid",
     to: `/server/${id.value}/analytics`,
   },
   {
     label: "Backups",
+    role: "manager" as ServerAccessLevel,
     icon: "i-heroicons-archive-box-20-solid",
     to: `/server/${id.value}/backups`,
   },
   {
     label: "World",
+    role: "manager" as ServerAccessLevel,
     icon: "i-heroicons-globe-alt-20-solid",
     to: `/server/${id.value}/world`,
   },
   {
     label: "Map",
+    role: "viewer" as ServerAccessLevel,
     icon: "i-heroicons-map-20-solid",
     to: `/server/${id.value}/map`,
   },
@@ -285,14 +298,29 @@ const tabs = computed(() => [
           ? "Mods"
           : "Files",
     icon: "i-heroicons-puzzle-piece-20-solid",
+    role: "manager" as ServerAccessLevel,
     to: `/server/${id.value}/files`,
   },
   {
     label: "Settings",
+    role: "manager" as ServerAccessLevel,
     icon: "i-heroicons-cog-6-tooth-20-solid",
     to: `/server/${id.value}/settings`,
   },
 ]);
+
+const tabs = computed(() =>
+  allTabs.value.filter((tab) => can(tab.role)).map(({ role: _, ...tab }) => tab)
+);
+
+// Deep links into a tab the user can't use would only show failing requests.
+watchEffect(() => {
+  if (!server.value) return;
+  const tab = allTabs.value.find(
+    (entry) => !entry.exact && route.path.startsWith(entry.to)
+  );
+  if (tab && !can(tab.role)) navigateTo(`/server/${id.value}`, { replace: true });
+});
 
 // --- Actions ------------------------------------------------------------------
 

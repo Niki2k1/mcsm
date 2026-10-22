@@ -13,6 +13,8 @@ export type ServerDetail = {
   startedAt?: string | null;
   /** ISO timestamp of container creation. */
   createdAt?: string | null;
+  /** The caller's access level on this server. */
+  access: ServerAccessLevel;
 };
 
 /** One row from GET /api/server/[id]/activity. */
@@ -50,6 +52,8 @@ type ServerDetailContext = {
    * falling back to the ICON URL stored in the config.
    */
   displayFavicon: Ref<string | undefined>;
+  /** Whether the current user has at least `need` on this server. */
+  can: (need: ServerAccessLevel) => boolean;
 };
 
 const injectionKey: InjectionKey<ServerDetailContext> =

@@ -6,7 +6,8 @@ export default defineEventHandler(async (event) => {
 
   try {
     const { getServer } = useDocker(event);
-    return await getServer(id);
+    // The auth middleware already resolved the caller's level for this server.
+    return { ...(await getServer(id)), access: event.context.serverAccess ?? "admin" };
   } catch (error) {
     console.error(error);
     throw createError({ statusCode: 404, statusMessage: "Server not found" });
