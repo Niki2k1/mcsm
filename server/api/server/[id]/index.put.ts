@@ -23,6 +23,7 @@ export default defineEventHandler(async (event) => {
     );
     return { id: result.id, name: result.name, domain: result.domain };
   } catch (error) {
+    if (isError(error) && error.statusCode === 409) throw error;
     console.error(error);
     throw createError({
       statusCode: 500,

@@ -148,6 +148,19 @@ export const serverConfigSchema = v.object({
    * plugin/mod-capable types (Paper/Fabric/Forge).
    */
   BLUEMAP: v.optional(v.boolean(), false),
+  /**
+   * Simple Voice Chat, auto-installed from Modrinth. Needs its own UDP port
+   * published on the host because Infrarust only proxies TCP.
+   */
+  VOICE_CHAT: v.optional(v.boolean(), false),
+  /**
+   * Host (and container) UDP port for voice chat. `null` lets MCSM assign a
+   * free one; the assigned port is stored so recreates keep it.
+   */
+  voicePort: v.nullish(
+    v.pipe(v.number(), v.integer(), v.minValue(1), v.maxValue(65535)),
+    null
+  ),
 
   // --- Advanced -------------------------------------------------------------------
   /** Comma/newline-separated Modrinth project slugs to install (mods/plugins). */

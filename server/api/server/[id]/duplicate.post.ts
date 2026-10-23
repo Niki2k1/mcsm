@@ -6,7 +6,8 @@ import { serverConfigSchema } from "../../../schema/server.schema";
  *
  * The clone gets the source's full config but its own identity: the new name
  * drives the subdomain, container name and world volume, and the host port is
- * dropped (two containers can't publish the same port). The world is copied
+ * dropped (two containers can't publish the same port) while the voice port
+ * is reassigned. The world is copied
  * volume-to-volume through a helper container — the socket proxy has no EXEC
  * permission, so this is the only way to touch volume contents.
  */
@@ -61,9 +62,13 @@ export default defineEventHandler(async (event) => {
     name,
     subdomain: null,
     hostPort: null,
+    voicePort: null,
   });
 
-  const spec = await buildServerSpec(config, event);
+  const spec = await buildServerSpec(
+    await assignVoicePort(event, config),
+    event
+  );
 
   // The container name and world must be free — Docker would reject the
   // container with a raw 409, and copying into a volume that already holds
@@ -144,6 +149,7 @@ export default defineEventHandler(async (event) => {
       memoryBytes: spec.memoryBytes,
       port: spec.port,
       hostPort: spec.hostPort,
+      voiceChat: spec.voiceChat,
       volume: spec.volume,
       volumeSource: targetSource,
       restartPolicy: spec.restartPolicy,
