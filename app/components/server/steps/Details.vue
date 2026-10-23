@@ -25,6 +25,33 @@
       />
     </UFormField>
 
+    <template v-if="voiceChatSupported">
+      <UFormField
+        name="VOICE_CHAT"
+        label="Voice chat"
+        help="Installs Simple Voice Chat and publishes its UDP port directly on the host (the proxy only forwards TCP)."
+      >
+        <USwitch v-model="form.VOICE_CHAT" />
+      </UFormField>
+
+      <UFormField
+        v-if="form.VOICE_CHAT"
+        name="voicePort"
+        label="Voice chat port (UDP)"
+        :description="`Leave empty to pick the next free port from ${VOICE_CHAT_DEFAULT_PORT}.`"
+      >
+        <UInput
+          v-model.number="voicePort"
+          type="number"
+          :min="1"
+          :max="65535"
+          :placeholder="`Auto (${VOICE_CHAT_DEFAULT_PORT}+)`"
+          autocomplete="off"
+          class="w-full"
+        />
+      </UFormField>
+    </template>
+
     <UFormField name="domain" label="Domain" required>
       <div class="grid grid-cols-3 gap-2">
         <UInput
@@ -62,6 +89,11 @@
 </template>
 
 <script setup lang="ts">
+import {
+  serverTypeSupportsVoiceChat,
+  VOICE_CHAT_DEFAULT_PORT,
+} from "#shared/utils/voiceChat";
+
 const form = useCreateForm();
 const name = useNullableFormField("name");
 const domain = useNullableFormField("domain");
@@ -105,6 +137,17 @@ const hostPort = computed({
     form.value.hostPort = typeof value === "number" ? value : null;
   },
 });
+
+const voicePort = computed({
+  get: () => form.value.voicePort,
+  set(value: number | string | null) {
+    form.value.voicePort = typeof value === "number" ? value : null;
+  },
+});
+
+const voiceChatSupported = computed(() =>
+  serverTypeSupportsVoiceChat(form.value.type)
+);
 
 const subDomain = computed({
   get() {

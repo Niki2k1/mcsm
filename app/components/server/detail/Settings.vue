@@ -51,6 +51,33 @@
             class="w-full"
           />
         </UFormField>
+
+        <template v-if="voiceChatSupported">
+          <UFormField
+            label="Voice chat"
+            name="VOICE_CHAT"
+            help="Installs Simple Voice Chat and publishes its UDP port directly on the host (the proxy only forwards TCP)."
+          >
+            <USwitch v-model="general.VOICE_CHAT" />
+          </UFormField>
+
+          <UFormField
+            v-if="general.VOICE_CHAT"
+            label="Voice chat port (UDP)"
+            name="voicePort"
+            :help="`Leave empty to pick the next free port from ${VOICE_CHAT_DEFAULT_PORT}. Open it in the host's firewall.`"
+          >
+            <UInput
+              v-model.number="voicePort"
+              type="number"
+              :min="1"
+              :max="65535"
+              :placeholder="`Auto (${VOICE_CHAT_DEFAULT_PORT}+)`"
+              autocomplete="off"
+              class="w-full"
+            />
+          </UFormField>
+        </template>
       </div>
 
       <p v-else class="text-sm text-muted">
@@ -421,6 +448,10 @@ import vanilla from "~/assets/vanilla.webp";
 import paper from "~/assets/paper.svg";
 import fabric from "~/assets/fabric.png";
 import forge from "~/assets/forge.svg";
+import {
+  serverTypeSupportsVoiceChat,
+  VOICE_CHAT_DEFAULT_PORT,
+} from "#shared/utils/voiceChat";
 
 const { id, server, can, refresh: refreshServer } = useServerDetail();
 const toast = useToast();
@@ -432,6 +463,8 @@ const general = reactive({
   subdomain: "",
   domain: "",
   hostPort: null as number | null,
+  VOICE_CHAT: false,
+  voicePort: null as number | null,
 });
 
 function resetGeneral() {
@@ -440,6 +473,8 @@ function resetGeneral() {
   general.subdomain = config?.subdomain ?? "";
   general.domain = config?.domain ?? "";
   general.hostPort = config?.hostPort ?? null;
+  general.VOICE_CHAT = config?.VOICE_CHAT ?? false;
+  general.voicePort = config?.voicePort ?? null;
 }
 
 // A cleared number input yields "" (not null), which the server's schema
@@ -451,6 +486,17 @@ const hostPort = computed({
   },
 });
 
+const voicePort = computed({
+  get: () => general.voicePort,
+  set(value: number | string | null) {
+    general.voicePort = typeof value === "number" ? value : null;
+  },
+});
+
+const voiceChatSupported = computed(() =>
+  serverTypeSupportsVoiceChat(server.value?.config?.type)
+);
+
 watch(server, resetGeneral, { immediate: true });
 
 const generalDirty = computed(() => {
@@ -460,7 +506,9 @@ const generalDirty = computed(() => {
     general.name !== (config.name ?? "") ||
     general.subdomain !== (config.subdomain ?? "") ||
     general.domain !== (config.domain ?? "") ||
-    general.hostPort !== (config.hostPort ?? null)
+    general.hostPort !== (config.hostPort ?? null) ||
+    general.VOICE_CHAT !== (config.VOICE_CHAT ?? false) ||
+    general.voicePort !== (config.voicePort ?? null)
   );
 });
 
@@ -487,6 +535,8 @@ async function saveGeneral() {
         subdomain: general.subdomain || null,
         domain: general.domain,
         hostPort: general.hostPort,
+        VOICE_CHAT: general.VOICE_CHAT,
+        voicePort: general.voicePort,
       },
     });
 

@@ -72,6 +72,9 @@
           <span class="font-mono">{{ fullAddress || "—" }}</span>
         </ReviewRow>
         <ReviewRow label="Host Port">{{ form.hostPort || "—" }}</ReviewRow>
+        <ReviewRow v-if="voiceChatEnabled" label="Voice Chat (UDP)">
+          {{ form.voicePort || `Auto (${VOICE_CHAT_DEFAULT_PORT}+)` }}
+        </ReviewRow>
       </dl>
     </UCard>
 
@@ -119,6 +122,10 @@
 
 <script setup lang="ts">
 import MotdPreview from "~/components/server/motd/MotdPreview.vue";
+import {
+  serverTypeSupportsVoiceChat,
+  VOICE_CHAT_DEFAULT_PORT,
+} from "#shared/utils/voiceChat";
 import vanilla from "~/assets/vanilla.webp";
 import ftb from "~/assets/ftb.svg";
 import curseforge from "~/assets/curseforge.svg";
@@ -149,6 +156,10 @@ const bluemapEnabled = computed(
     ["PAPER", "FABRIC", "FORGE", "AUTO_CURSEFORGE"].includes(
       form.value.type ?? ""
     )
+);
+
+const voiceChatEnabled = computed(
+  () => form.value.VOICE_CHAT && serverTypeSupportsVoiceChat(form.value.type)
 );
 
 const fullAddress = computed(() => {

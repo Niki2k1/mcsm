@@ -10,10 +10,11 @@ const createSchema = v.object({
 });
 
 export default defineEventHandler(async (event) => {
-  const { eula: _eula, ...data } = await readValidatedBody(
+  const { eula: _eula, ...body } = await readValidatedBody(
     event,
     v.parser(createSchema)
   );
+  const data = await assignVoicePort(event, body);
 
   const { provisionServer } = useDocker(event);
   const spec = await buildServerSpec(data, event);
@@ -27,6 +28,7 @@ export default defineEventHandler(async (event) => {
       memoryBytes: spec.memoryBytes,
       port: spec.port,
       hostPort: spec.hostPort,
+      voiceChat: spec.voiceChat,
       volume: spec.volume,
       restartPolicy: spec.restartPolicy,
     });
@@ -35,6 +37,7 @@ export default defineEventHandler(async (event) => {
 
     return { id: container.id, name: container.name, domain: spec.domain };
   } catch (error) {
+    if (isError(error) && error.statusCode === 409) throw error;
     console.error(error);
     throw createError({
       statusCode: 500,

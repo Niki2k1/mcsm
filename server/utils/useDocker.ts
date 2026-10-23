@@ -141,6 +141,14 @@ export type ProvisionOptions = {
   volumeSource?: string;
   /** Docker restart policy ("unless-stopped" unless auto-stop is enabled). */
   restartPolicy?: string;
+  /** Publish this UDP port 1:1 and write it into the voice chat config. */
+  voiceChat?: VoiceChatSpec;
+};
+
+export type VoiceChatSpec = {
+  port: number;
+  /** Properties file path relative to /data. */
+  configPath: string;
 };
 
 // `event` is threaded through to `useRuntimeConfig(event)` so the Docker
@@ -248,6 +256,50 @@ export const useDocker = (event?: H3Event, hostId = "default") => {
     });
   }
 
+  /**
+   * Set `port=` in the voice chat properties before the server boots. The
+   * plugin/mod only writes the file on its first start, and reads it once at
+   * startup, so it has to exist with the right port up front. Only the port
+   * line is touched: anything else in the file (written by the plugin or edited
+   * by hand) stays as it is, and missing keys get the plugin's defaults.
+   */
+  async function writeVoiceChatPort(
+    source: string,
+    voice: VoiceChatSpec,
+    owner: { uid: number; gid: number }
+  ) {
+    await ensureImage(HELPER_IMAGE);
+    const script = [
+      'f="/data/$1"; d="$(dirname "$f")"',
+      'mkdir -p "$d"',
+      'if [ -f "$f" ] && grep -q "^port=" "$f"; then sed -i "s/^port=.*/port=$2/" "$f"',
+      // Guards against appending onto a last line without a newline.
+      'else { [ -s "$f" ] && [ -n "$(tail -c1 "$f")" ] && echo; echo "port=$2"; } >> "$f"; fi',
+      // A root-owned file would stop the plugin from saving its defaults.
+      'chown "$3" "$(dirname "$d")" "$d" "$f"',
+    ].join("\n");
+    const { exitCode, output } = await runHelper(
+      docker,
+      [
+        "sh",
+        "-c",
+        script,
+        "sh",
+        voice.configPath,
+        String(voice.port),
+        `${owner.uid}:${owner.gid}`,
+      ],
+      [`${source}:/data`]
+    );
+    if (exitCode !== 0) {
+      console.error("[mcsm] Voice chat config helper failed:", output);
+      throw createError({
+        statusCode: 500,
+        statusMessage: "Could not write the voice chat configuration",
+      });
+    }
+  }
+
   /** Create and start a Minecraft server container. */
   async function provisionServer(options: ProvisionOptions) {
     await ensureImage(options.image);
@@ -255,24 +307,40 @@ export const useDocker = (event?: H3Event, hostId = "default") => {
     const port = options.port ?? 25565;
     const network = options.network || config.docker?.network || undefined;
 
+    const voice = options.voiceChat;
+    const portBindings: Record<string, Array<{ HostPort: string }>> = {};
+    if (options.hostPort)
+      portBindings[`${port}/tcp`] = [{ HostPort: options.hostPort.toString() }];
+    if (voice)
+      portBindings[`${voice.port}/udp`] = [{ HostPort: voice.port.toString() }];
+
+    const source = options.volume
+      ? (options.volumeSource ?? worldSource(options.volume))
+      : undefined;
+
     const container = await docker.createContainer({
       name: options.name,
       Image: options.image,
       Env: Object.entries(options.env).map(([key, value]) => `${key}=${value}`),
       Labels: options.labels,
-      ExposedPorts: { [`${port}/tcp`]: {} },
+      ExposedPorts: {
+        [`${port}/tcp`]: {},
+        ...(voice ? { [`${voice.port}/udp`]: {} } : {}),
+      },
       HostConfig: {
         Memory: options.memoryBytes,
         RestartPolicy: { Name: options.restartPolicy ?? "unless-stopped" },
-        Binds: options.volume
-          ? [`${options.volumeSource ?? worldSource(options.volume)}:/data`]
-          : undefined,
+        Binds: source ? [`${source}:/data`] : undefined,
         NetworkMode: network,
-        PortBindings: options.hostPort
-          ? { [`${port}/tcp`]: [{ HostPort: options.hostPort.toString() }] }
-          : undefined,
+        PortBindings:
+          Object.keys(portBindings).length > 0 ? portBindings : undefined,
       },
     });
+
+    // On failure the container stays (unstarted) like after a failed start,
+    // so a recreate never loses the config stored in its labels.
+    if (voice && source)
+      await writeVoiceChatPort(source, voice, await containerOwner(container));
 
     await container.start();
 

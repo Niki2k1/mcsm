@@ -42,6 +42,20 @@ jobs:
 
       - run: pnpm typecheck
 
+  test:
+    name: Unit tests
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          persist-credentials: false
+
+      - uses: ./.github/actions/setup
+
+      - run: pnpm test
+
   # Builds the same image release.yml publishes and boots it. Several failures
   # only show at runtime in the built image (missing libsql native bindings,
   # migrations, the .data/db directory), so a passing build alone isn't enough.

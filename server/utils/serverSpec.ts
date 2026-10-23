@@ -1,6 +1,14 @@
 import type { H3Event } from "h3";
 import type { ServerConfig } from "../schema/server.schema";
 import type { ActivityAction } from "./activity";
+import {
+  activeVoicePort,
+  pickVoicePort,
+  serverTypeSupportsVoiceChat,
+  VOICE_CHAT_SLUG,
+  voiceChatConfigPath,
+  VoicePortConflictError,
+} from "#shared/utils/voiceChat";
 
 export const MC_PORT = 25565;
 
@@ -146,10 +154,12 @@ export async function buildServerSpec(data: ServerConfig, event?: H3Event) {
   // --- Advanced -------------------------------------------------------------------
   // BlueMap is installed via Modrinth like any other project, merged into the
   // user's own MODRINTH_PROJECTS list so the two never clobber each other.
-  const modrinthProjects =
-    data.BLUEMAP && serverTypeSupportsBluemap(data.type)
-      ? addModrinthProject(data.MODRINTH_PROJECTS, BLUEMAP_SLUG)
-      : data.MODRINTH_PROJECTS;
+  let modrinthProjects = data.MODRINTH_PROJECTS;
+  if (data.BLUEMAP && serverTypeSupportsBluemap(data.type))
+    modrinthProjects = addModrinthProject(modrinthProjects, BLUEMAP_SLUG);
+  const voicePort = activeVoicePort(data);
+  if (voicePort)
+    modrinthProjects = addModrinthProject(modrinthProjects, VOICE_CHAT_SLUG);
   if (modrinthProjects) {
     env.MODRINTH_PROJECTS = modrinthProjects;
     // Auto-installed projects often have required dependencies — e.g. Chunky
@@ -191,10 +201,46 @@ export async function buildServerSpec(data: ServerConfig, event?: H3Event) {
     memoryBytes: memory.limitBytes,
     hostPort,
     port: MC_PORT,
+    voiceChat: voicePort
+      ? { port: voicePort, configPath: voiceChatConfigPath(data.type) }
+      : undefined,
     // Auto-stop exits the container on purpose — "unless-stopped" would
     // immediately start it again and defeat the feature.
     restartPolicy: data.IDLE_BEHAVIOR === "stop" ? "no" : "unless-stopped",
   };
+}
+
+/**
+ * Fill in the voice port for a config that enables voice chat, checked against
+ * the ports of every other MCSM server on the host (read from their stored
+ * configs). Rejects a requested port that is already taken with a 409.
+ */
+export async function assignVoicePort(
+  event: H3Event | undefined,
+  data: ServerConfig,
+  options: { excludeId?: string; previous?: number | null } = {}
+): Promise<ServerConfig> {
+  if (!data.VOICE_CHAT || !serverTypeSupportsVoiceChat(data.type)) return data;
+
+  const servers = await useDocker(event).listServers();
+  const used = servers
+    .filter((server) => server.id !== options.excludeId)
+    .map((server) => activeVoicePort(server.config))
+    .filter((port): port is number => port !== null);
+
+  try {
+    const voicePort = pickVoicePort({
+      requested: data.voicePort,
+      previous: options.previous,
+      used,
+    });
+    return { ...data, voicePort };
+  } catch (error) {
+    if (error instanceof VoicePortConflictError) {
+      throw createError({ statusCode: 409, statusMessage: error.message });
+    }
+    throw error;
+  }
 }
 
 /**
@@ -217,6 +263,10 @@ export async function recreateServer(
   const { getServer, removeServer, provisionServer } = useDocker(event);
 
   const existing = await getServer(serverId);
+  data = await assignVoicePort(event, data, {
+    excludeId: existing.id,
+    previous: existing.config?.voicePort,
+  });
   const spec = await buildServerSpec(data, event);
 
   // Reuse the original container name and volume so the world survives even
@@ -234,6 +284,7 @@ export async function recreateServer(
     memoryBytes: spec.memoryBytes,
     port: spec.port,
     hostPort: spec.hostPort,
+    voiceChat: spec.voiceChat,
     volume,
     volumeSource: volumeSource ?? existing.volumeSource ?? undefined,
     restartPolicy: spec.restartPolicy,

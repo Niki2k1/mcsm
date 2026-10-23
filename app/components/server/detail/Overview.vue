@@ -76,6 +76,19 @@
         <p class="text-xs text-muted mt-2">
           Players connect with this address (default port 25565).
         </p>
+
+        <template v-if="voicePort">
+          <USeparator class="my-4" />
+          <p class="text-xs text-muted mb-1">Voice chat (UDP)</p>
+          <code
+            class="block truncate rounded-md bg-elevated px-3 py-2 text-sm font-mono"
+            >{{ server.domain }}:{{ voicePort }}</code
+          >
+          <p class="text-xs text-muted mt-2">
+            Clients with Simple Voice Chat connect to this port on their own
+            once they join. The port must be open in the host's firewall.
+          </p>
+        </template>
       </UCard>
 
       <!-- Configuration summary -->
@@ -112,6 +125,7 @@
 </template>
 
 <script setup lang="ts">
+import { activeVoicePort } from "#shared/utils/voiceChat";
 import { chatToMotd } from "~/utils/motd";
 import { durationSince } from "~/utils/time";
 
@@ -181,6 +195,8 @@ const about = computed(() => {
     { label: "Operators", value: String(config?.operators?.length ?? 0) },
   ];
 });
+
+const voicePort = computed(() => activeVoicePort(server.value?.config));
 
 // --- Copy address -------------------------------------------------------------
 

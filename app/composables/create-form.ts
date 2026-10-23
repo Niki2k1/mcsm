@@ -68,6 +68,10 @@ export type CreateForm = {
   // Integrations
   /** BlueMap 3D web map (Paper/Fabric/Forge only). */
   BLUEMAP: boolean;
+  /** Simple Voice Chat on its own published UDP port. */
+  VOICE_CHAT: boolean;
+  /** `null` = assigned by the server. */
+  voicePort: number | null;
 
   // Advanced
   MODRINTH_PROJECTS: string | null;
@@ -135,6 +139,8 @@ export const defaultCreateForm = (): CreateForm => ({
 
   // Integrations
   BLUEMAP: false,
+  VOICE_CHAT: false,
+  voicePort: null,
 
   // Advanced
   MODRINTH_PROJECTS: null,
