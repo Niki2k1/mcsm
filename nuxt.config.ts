@@ -1,4 +1,6 @@
 // https://nuxt.com/docs/api/configuration/nuxt-config
+import { version } from "./package.json";
+
 export default defineNuxtConfig({
   compatibilityDate: "2024-07-07",
 
@@ -21,7 +23,40 @@ export default defineNuxtConfig({
     "@nuxthub/core",
     "nuxt-charts",
     "nuxt-auth-utils",
+    "@nuxtjs/mcp-toolkit",
   ],
+
+  // MCP endpoint for AI clients (Claude, Cursor, ...). Tools live in
+  // server/mcp/tools; auth (OAuth + personal tokens) is in server/mcp/index.ts.
+  mcp: {
+    name: "MCSM",
+    version,
+    description: "Minecraft Server Manager: run and inspect Minecraft servers.",
+    instructions:
+      "MCSM manages Minecraft servers running in Docker. Call list_servers first; " +
+      "every other tool takes a server by its id (or display name). " +
+      "What you can do depends on the signed-in user's role on each server " +
+      "(viewer < operator < manager, admins can do everything) and on the scopes " +
+      "this connection was granted. Console commands run as the server console " +
+      "with full operator rights, so confirm with the user before running " +
+      "anything destructive (stop, kick, ban, op, world edits).",
+    route: "/mcp",
+  },
+
+  hooks: {
+    // The toolkit registers 404 stubs for the OAuth discovery routes because
+    // it ships no authorization server. Module handlers win over scanned
+    // routes, so they would shadow server/routes/.well-known/*.
+    "nitro:config"(nitroConfig) {
+      nitroConfig.handlers = nitroConfig.handlers?.filter(
+        (handler) =>
+          !handler?.route?.startsWith(
+            "/.well-known/oauth-protected-resource"
+          ) &&
+          !handler?.route?.startsWith("/.well-known/oauth-authorization-server")
+      );
+    },
+  },
 
   // nuxt-auth-utils: sealed session cookies + WebAuthn (passkeys).
   // Sessions are encrypted with NUXT_SESSION_PASSWORD (auto-generated into
@@ -96,6 +131,11 @@ export default defineNuxtConfig({
       },
     },
 
+    // Public origin of MCSM (e.g. https://mcsm.example.com), used as the OAuth
+    // issuer for MCP clients. Empty = derived from the request (honoring
+    // X-Forwarded-* headers), which is right behind most reverse proxies.
+    appUrl: "", // NUXT_APP_URL
+
     // Base URL where the *Minecraft containers* can reach MCSM — i.e. MCSM's
     // hostname on the shared Docker network, NOT the public domain. Containers
     // can't reach the host's public IP (NAT hairpin times out), so things they
@@ -150,6 +190,12 @@ export default defineNuxtConfig({
   },
 
   nitro: {
+    experimental: {
+      // MCP tool handlers get the request through useEvent(), which needs
+      // async context to survive across awaits.
+      asyncContext: true,
+    },
+
     storage: {
       // Pre-SQLite storage. Still mounted so server/plugins/migrations.ts can
       // import legacy JSON data (secrets/settings/domains) into the database.

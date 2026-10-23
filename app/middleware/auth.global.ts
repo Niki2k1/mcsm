@@ -4,7 +4,8 @@
  *
  *  - no accounts yet      → everything redirects to the setup wizard
  *  - not logged in        → everything redirects to /login
- *  - logged in            → /login and /setup redirect back to the dashboard
+ *  - logged in            → /login and /setup redirect back to the dashboard,
+ *                           or to the page that sent the user to /login
  */
 const PUBLIC_PAGES = ["/login", "/setup"];
 
@@ -33,9 +34,13 @@ export default defineNuxtRouteMiddleware(async (to) => {
   }
 
   if (session.loggedIn.value) {
+    const returnTo = takeReturnTo();
+    if (returnTo && returnTo !== to.fullPath) return navigateTo(returnTo);
     // Logged in: auth pages just bounce back to the dashboard.
     return PUBLIC_PAGES.includes(to.path) ? navigateTo("/") : undefined;
   }
 
-  return PUBLIC_PAGES.includes(to.path) ? undefined : navigateTo("/login");
+  if (PUBLIC_PAGES.includes(to.path)) return;
+  if (to.fullPath !== "/") rememberReturnTo(to.fullPath);
+  return navigateTo("/login");
 });

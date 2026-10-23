@@ -23,6 +23,7 @@
     "@minescope/mineping": "^2.0.1",
     "@nuxt/ui": "^4.11.2",
     "@nuxthub/core": "^0.10.8",
+    "@nuxtjs/mcp-toolkit": "^0.24.2",
     "@sfirew/minecraft-motd-parser": "^1.1.6",
     "@simplewebauthn/browser": "^14.0.0",
     "@simplewebauthn/server": "^14.0.3",
@@ -50,7 +51,8 @@
     "unstorage": "^1.17.5",
     "valibot": "^1.5.0",
     "vue": "^3.5.43",
-    "yaml": "^2.9.1"
+    "yaml": "^2.9.1",
+    "zod": "^4.6.7"
   },
   "devDependencies": {
     "@iconify-json/heroicons": "^1.2.3",
