@@ -144,6 +144,21 @@ export function parseChunkyProgress(response: string): ChunkyProgress {
   };
 }
 
+/**
+ * Region coordinates from region file names (`r.<x>.<z>.mca`, one per line).
+ * Anything that isn't a region file is ignored.
+ */
+export function parseRegionFileNames(
+  listing: string
+): { x: number; z: number }[] {
+  const regions: { x: number; z: number }[] = [];
+  for (const line of listing.split("\n")) {
+    const match = /^r\.(-?\d+)\.(-?\d+)\.mca$/.exec(line.trim());
+    if (match) regions.push({ x: Number(match[1]), z: Number(match[2]) });
+  }
+  return regions;
+}
+
 // ---------------------------------------------------------------------------
 // Chunky RCON commands (run inside a withRcon callback)
 // ---------------------------------------------------------------------------
@@ -267,4 +282,27 @@ export async function applyChunkyProgress(
   }
 
   return updated;
+}
+
+// ---------------------------------------------------------------------------
+// Generated regions on disk
+// ---------------------------------------------------------------------------
+
+/**
+ * Overworld regions that already have a region file in the volume. Chunky only
+ * reports its current chunk, so the files are the only record of where it has
+ * been while nobody was watching (or before a page reload).
+ */
+export async function listGeneratedRegions(
+  id: string,
+  level: string | null | undefined
+): Promise<{ x: number; z: number }[]> {
+  const root = worldRegionRoot(level);
+  if (!root) return [];
+  // Empty files are placeholders Minecraft creates before writing any chunk.
+  const out = await runInVolume(
+    id,
+    `find "/data/${root}" -maxdepth 1 -type f -name 'r.*.mca' -size +0 -printf '%f\\n' 2>/dev/null`
+  );
+  return parseRegionFileNames(out.replace(/\r/g, ""));
 }

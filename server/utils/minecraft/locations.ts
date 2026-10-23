@@ -57,6 +57,13 @@ export function worldDatapacksRoot(level?: string | null): string | null {
   return `${name}/datapacks`;
 }
 
+/** The active world's overworld region folder, or null if the world name isn't shell-safe. */
+export function worldRegionRoot(level?: string | null): string | null {
+  const name = (level || "world").trim();
+  if (!SAFE_LEVEL.test(name)) return null;
+  return `${name}/region`;
+}
+
 /**
  * Directory roots (relative to /data) the file manager may touch: plugin
  * configs live next to the jars; mod configs live in config/, plus the active

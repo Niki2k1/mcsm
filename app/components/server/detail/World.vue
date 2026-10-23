@@ -259,6 +259,7 @@
           :center-x="task?.centerX ?? form.centerX"
           :center-z="task?.centerZ ?? form.centerZ"
           :current="vizCurrent"
+          :generated-regions="regions?.regions"
         />
       </div>
     </UCard>
@@ -393,6 +394,16 @@ const { data: status, refresh } = useFetch<PregenStatus>(
   { retry: false }
 );
 
+// Region files are listed by a helper container, so this is fetched once and
+// on state changes rather than with every status poll; the live stream covers
+// progress in between.
+const { data: regions, refresh: refreshRegions } = useFetch<{
+  regions: { x: number; z: number }[];
+}>(() => `/api/server/${id.value}/pregen/regions`, {
+  retry: false,
+  server: false,
+});
+
 // Periodic fallback refresh (covers offline servers, other browser tabs, the
 // background sampler advancing the task).
 let interval: ReturnType<typeof setInterval> | null = null;
@@ -413,6 +424,7 @@ const displayState = computed(() => task.value?.state ?? "idle");
 const hasActiveTask = computed(
   () => displayState.value === "running" || displayState.value === "paused"
 );
+watch(displayState, () => refreshRegions());
 
 /** Chunky enabled + container freshly running, but RCON/Chunky not answering yet. */
 const installing = computed(

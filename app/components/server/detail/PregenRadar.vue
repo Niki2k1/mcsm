@@ -172,7 +172,7 @@
           class="size-2.5 rounded-[2px]"
           :style="{ backgroundColor: 'var(--ui-primary)', opacity: 0.3 }"
         />
-        Regions worked on
+        Regions generated
       </span>
       <span class="flex items-center gap-1.5">
         <span class="size-2.5 rounded-[2px] bg-white/10 ring-1 ring-white/20" />
@@ -188,8 +188,8 @@
  *
  * Chunky only reports a processed count, a rate/ETA and its current chunk
  * position — so that's exactly what this draws: the area being generated, the
- * regions we've actually observed Chunky working in (accumulated from polls
- * while the page is open), and its live position. Overall progress is a
+ * regions that already have a region file on disk plus those observed live
+ * while the page is open, and Chunky's live position. Overall progress is a
  * number, not a guessed fill pattern.
  */
 const props = defineProps<{
@@ -204,6 +204,8 @@ const props = defineProps<{
   centerZ?: number;
   /** Absolute chunk position Chunky is currently working on. */
   current?: { x: number; z: number } | null;
+  /** Regions (32×32 chunks) that already exist on disk. */
+  generatedRegions?: { x: number; z: number }[];
 }>();
 
 // --- Geometry -------------------------------------------------------------------
@@ -300,7 +302,11 @@ const visitedRects = computed(() => {
     current: boolean;
   }[] = [];
   const size = REGION_BLOCKS * scale.value;
-  for (const key of visited.value) {
+  const keys = new Set(visited.value);
+  for (const region of props.generatedRegions ?? []) {
+    keys.add(`${region.x},${region.z}`);
+  }
+  for (const key of keys) {
     const [rx = 0, rz = 0] = key.split(",").map(Number);
     const topLeft = blockToSvg(rx * REGION_BLOCKS, rz * REGION_BLOCKS);
     rects.push({
