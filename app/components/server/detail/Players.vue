@@ -95,15 +95,25 @@
         <div class="space-y-2">
           <div
             v-for="player in data?.whitelist ?? []"
-            :key="player.name"
+            :key="player.uuid || player.name"
             class="flex items-center gap-3 rounded-lg ring-1 ring-default p-2"
           >
             <UAvatar
-              :src="`/api/minecraft/${player.name}/skin`"
-              :alt="player.name"
+              :src="
+                player.name ? `/api/minecraft/${player.name}/skin` : undefined
+              "
+              :alt="player.name || 'Unknown player'"
               size="2xs"
             />
-            <span class="text-sm flex-1 truncate">{{ player.name }}</span>
+            <span v-if="player.name" class="text-sm flex-1 truncate">{{
+              player.name
+            }}</span>
+            <span
+              v-else
+              class="text-sm flex-1 truncate text-muted font-mono"
+              :title="player.uuid"
+              >Unknown ({{ player.uuid?.slice(0, 8) }})</span
+            >
             <UButton
               v-if="canAct"
               icon="i-heroicons-x-mark-20-solid"
@@ -112,7 +122,7 @@
               size="xs"
               :disabled="booting"
               :aria-label="`Remove ${player.name} from whitelist`"
-              @click="runAction('whitelist-remove', player.name)"
+              @click="runAction('whitelist-remove', player.name, player.uuid)"
             />
           </div>
 
@@ -176,15 +186,25 @@
         <div class="space-y-2">
           <div
             v-for="player in data?.ops ?? []"
-            :key="player.name"
+            :key="player.uuid || player.name"
             class="flex items-center gap-3 rounded-lg ring-1 ring-default p-2"
           >
             <UAvatar
-              :src="`/api/minecraft/${player.name}/skin`"
-              :alt="player.name"
+              :src="
+                player.name ? `/api/minecraft/${player.name}/skin` : undefined
+              "
+              :alt="player.name || 'Unknown player'"
               size="2xs"
             />
-            <span class="text-sm flex-1 truncate">{{ player.name }}</span>
+            <span v-if="player.name" class="text-sm flex-1 truncate">{{
+              player.name
+            }}</span>
+            <span
+              v-else
+              class="text-sm flex-1 truncate text-muted font-mono"
+              :title="player.uuid"
+              >Unknown ({{ player.uuid?.slice(0, 8) }})</span
+            >
             <UButton
               v-if="canAct"
               icon="i-heroicons-x-mark-20-solid"
@@ -193,7 +213,7 @@
               size="xs"
               :disabled="booting"
               :aria-label="`Remove operator ${player.name}`"
-              @click="runAction('deop', player.name)"
+              @click="runAction('deop', player.name, player.uuid)"
             />
           </div>
 
@@ -306,26 +326,29 @@ const ACTION_LABELS: Record<PlayerAction, string> = {
   kick: "Player kicked",
 };
 
-async function runAction(action: PlayerAction, name: string) {
-  if (!name) return;
+async function runAction(action: PlayerAction, name: string, uuid?: string) {
+  if (!name && !uuid) return;
   try {
     const { response } = await $fetch<{ response: string }>(
       `/api/server/${id.value}/players/action`,
-      { method: "POST", body: { action, name } }
+      { method: "POST", body: { action, name: name || undefined, uuid } }
     );
     toast.add({
       title: ACTION_LABELS[action],
-      description: response || `${action} ${name}`,
+      description: response || `${action} ${name || uuid}`,
       color: "success",
     });
     await refresh();
   } catch (error) {
-    const statusCode = (error as { statusCode?: number })?.statusCode;
+    const { statusCode, statusMessage } = (error ?? {}) as {
+      statusCode?: number;
+      statusMessage?: string;
+    };
     toast.add({
       title: "Action failed",
       description:
         statusCode === 409
-          ? "The server is not running."
+          ? statusMessage || "The server is not running."
           : statusCode === 404
             ? `Player “${name}” not found.`
             : "The command could not be executed.",

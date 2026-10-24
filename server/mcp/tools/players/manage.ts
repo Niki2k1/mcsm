@@ -11,7 +11,7 @@ const COMMANDS = {
 export default defineMcpTool({
   name: "manage_player",
   description:
-    "Op/deop, add to or remove from the whitelist, or kick a player on a running server. Changes the live server only, not the saved configuration.",
+    "Op/deop, add to or remove from the whitelist, or kick a player on a running server. Changes the server's whitelist.json / ops.json, which persist across restarts and recreates.",
   annotations: {
     readOnlyHint: false,
     destructiveHint: true,
