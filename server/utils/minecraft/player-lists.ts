@@ -80,7 +80,12 @@ export async function resolvePlayer(
     `https://api.mojang.com/users/profiles/minecraft/${name}`
   ).catch(() => undefined);
   if (!profile?.id) {
-    throw createError({ statusCode: 404, statusMessage: "Player not found" });
+    throw createError({
+      statusCode: 404,
+      statusMessage: "Player not found",
+      // Lets API clients tell this apart from an unknown server.
+      data: { reason: "player-not-found" },
+    });
   }
   return { name: profile.name, uuid: dashUuid(profile.id) };
 }

@@ -1,9 +1,10 @@
 import type { H3Event } from "h3";
 
 /**
- * Player management shared by every entry point (dashboard, MCP tools), so
- * they all follow the same rules: RCON while the server runs, a direct file
- * edit while it's stopped, and no changes while it is still starting.
+ * Player management shared by every entry point (dashboard, MCP tools and the
+ * public API), so they all follow the same rules: RCON while the server runs,
+ * a direct file edit while it's stopped, and no changes while it is still
+ * starting.
  */
 
 export const PLAYER_ACTIONS = [
@@ -176,4 +177,62 @@ export async function runPlayerAction(
     rcon.send(commands[action])
   );
   return { via: "rcon", response };
+}
+
+export type WhitelistChange = {
+  result: "added" | "already-whitelisted" | "removed" | "not-whitelisted";
+  /** The matching entry from whitelist.json after the change, if any. */
+  player: PlayerListEntry | null;
+} & PlayerActionResult;
+
+const findByName = (list: PlayerListEntry[], name: string) =>
+  list.find((entry) => entry.name.toLowerCase() === name.toLowerCase()) ?? null;
+
+/**
+ * Add or remove a whitelisted player and report what actually changed.
+ * The outcome is read back from whitelist.json instead of parsing the RCON
+ * reply, whose wording differs between versions, mods and languages; a
+ * running server saves the file before it answers the command.
+ */
+export async function changeWhitelist(
+  event: H3Event | undefined,
+  id: string,
+  op: "add" | "remove",
+  name: string
+): Promise<WhitelistChange> {
+  const before = findByName(await readPlayerList(id, "whitelist"), name);
+  const outcome = await runPlayerAction(
+    event,
+    id,
+    op === "add" ? "whitelist-add" : "whitelist-remove",
+    { name }
+  );
+  const after = findByName(await readPlayerList(id, "whitelist"), name);
+
+  if (op === "add") {
+    if (!after) {
+      // Minecraft refused it — in practice an unknown account.
+      throw createError({
+        statusCode: 404,
+        statusMessage: outcome.response || "Player not found",
+        data: { reason: "player-not-found" },
+      });
+    }
+    return {
+      ...outcome,
+      result: before ? "already-whitelisted" : "added",
+      player: after,
+    };
+  }
+  if (after) {
+    throw createError({
+      statusCode: 502,
+      statusMessage: outcome.response || "Player could not be removed",
+    });
+  }
+  return {
+    ...outcome,
+    result: before ? "removed" : "not-whitelisted",
+    player: null,
+  };
 }
