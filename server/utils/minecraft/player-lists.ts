@@ -115,3 +115,60 @@ export async function editPlayerListFile(
     { path: FILES[kind], data: Buffer.from(JSON.stringify(next, null, 2)) },
   ]);
 }
+
+export type WhitelistSettings = { enabled: boolean; enforce: boolean };
+
+const PROPERTY_KEYS: Record<keyof WhitelistSettings, string> = {
+  enabled: "white-list",
+  enforce: "enforce-whitelist",
+};
+
+/** Read the whitelist switches from a server.properties text. */
+export function parseWhitelistSettings(raw: string | null): WhitelistSettings {
+  const read = (key: string) =>
+    new RegExp(`^${key}\\s*=\\s*true\\s*$`, "m").test(raw ?? "");
+  return {
+    enabled: read(PROPERTY_KEYS.enabled),
+    enforce: read(PROPERTY_KEYS.enforce),
+  };
+}
+
+/** Set one property, appending it when the file doesn't have it yet. */
+export function setProperty(raw: string, key: string, value: string): string {
+  const line = new RegExp(`^${key}\\s*=.*$`, "m");
+  if (line.test(raw)) return raw.replace(line, `${key}=${value}`);
+  const separator = raw && !raw.endsWith("\n") ? "\n" : "";
+  return `${raw}${separator}${key}=${value}\n`;
+}
+
+/**
+ * The switches live in server.properties, which itzg leaves alone as long as
+ * MCSM doesn't pass ENABLE_WHITELIST / WHITELIST (only done for a new world).
+ */
+export async function readWhitelistSettings(
+  id: string
+): Promise<WhitelistSettings> {
+  const data = await readDataFile(id, "server.properties", MAX_LIST_BYTES);
+  return parseWhitelistSettings(data?.toString("utf8") ?? null);
+}
+
+/**
+ * Edit server.properties directly. Only while stopped: a running server
+ * rewrites the whole file from memory (e.g. on `whitelist on`), which would
+ * silently undo the edit.
+ */
+export async function writeWhitelistSetting(
+  id: string,
+  setting: keyof WhitelistSettings,
+  value: boolean
+): Promise<void> {
+  const data = await readDataFile(id, "server.properties", MAX_LIST_BYTES);
+  const next = setProperty(
+    data?.toString("utf8") ?? "",
+    PROPERTY_KEYS[setting],
+    String(value)
+  );
+  await putEntries(id, [
+    { path: "server.properties", data: Buffer.from(next) },
+  ]);
+}

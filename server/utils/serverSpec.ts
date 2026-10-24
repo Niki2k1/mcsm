@@ -39,15 +39,20 @@ export function sanitize(value: string) {
  * store rather than the per-server config, so they're set once and applied to
  * every container that needs them.
  */
-export async function buildServerSpec(data: ServerConfig, event?: H3Event) {
+export async function buildServerSpec(
+  data: ServerConfig,
+  event?: H3Event,
+  options: {
+    /**
+     * Seed ops, whitelist and the whitelist switches — only for a brand-new
+     * world. Afterwards they belong to the server's own files (Players tab),
+     * and passing them again would undo changes made there.
+     */
+    newWorld?: boolean;
+  } = {}
+) {
   const config = useRuntimeConfig(event);
   const secrets = await useSecrets().getAll();
-  // Older configs leave this null ("on when the wizard whitelist has
-  // entries"). Pin it, since the seed list no longer reflects the live one.
-  data = {
-    ...data,
-    ENABLE_WHITELIST: data.ENABLE_WHITELIST ?? data.whitelist.length > 0,
-  };
   const subdomain = sanitize(data.subdomain ?? data.name);
   const domain = `${subdomain}.${data.domain}`;
   const memory = parseMemory(data.memory);
@@ -88,18 +93,22 @@ export async function buildServerSpec(data: ServerConfig, event?: H3Event) {
   const cfApiKey = secrets.CURSEFORGE_API_KEY || data.CF_API_KEY;
   if (cfApiKey) env.CF_API_KEY = cfApiKey;
   if (data.CF_FILE_ID) env.CF_FILE_ID = data.CF_FILE_ID;
-  // The wizard's lists only seed a new world: SKIP leaves an existing
-  // ops.json / whitelist.json alone, so changes made on the Players tab
-  // survive every recreate instead of being merged back with stale lists.
-  // Names, not UUIDs: given a bare UUID itzg writes the entry with an empty
-  // name, which the Players tab couldn't display.
-  if (data.operators.length > 0) {
-    env.OPS = data.operators.map((user) => user.name).join(",");
-    env.EXISTING_OPS_FILE = "SKIP";
-  }
-  if (data.whitelist.length > 0) {
-    env.WHITELIST = data.whitelist.map((user) => user.name).join(",");
-    env.EXISTING_WHITELIST_FILE = "SKIP";
+  if (options.newWorld) {
+    // Names, not UUIDs: given a bare UUID itzg writes the entry with an empty
+    // name, which the Players tab couldn't display. SKIP guards against a
+    // world that already has its lists (e.g. a restored backup).
+    if (data.operators.length > 0) {
+      env.OPS = data.operators.map((user) => user.name).join(",");
+      env.EXISTING_OPS_FILE = "SKIP";
+    }
+    if (data.whitelist.length > 0) {
+      env.WHITELIST = data.whitelist.map((user) => user.name).join(",");
+      env.EXISTING_WHITELIST_FILE = "SKIP";
+    }
+    // itzg turns the whitelist (and enforcement) on whenever WHITELIST is
+    // set, so an explicit "off" only holds without seed entries.
+    if (data.ENABLE_WHITELIST !== null && data.ENABLE_WHITELIST !== undefined)
+      env.ENABLE_WHITELIST = String(data.ENABLE_WHITELIST);
   }
   if (data.VERSION) env.VERSION = data.VERSION.label;
 
@@ -111,8 +120,6 @@ export async function buildServerSpec(data: ServerConfig, event?: H3Event) {
     env.LEVEL_TYPE = data.LEVEL_TYPE;
   env.SPAWN_PROTECTION = String(data.SPAWN_PROTECTION ?? 16);
   if (data.ENABLE_COMMAND_BLOCK) env.ENABLE_COMMAND_BLOCK = "true";
-  env.ENABLE_WHITELIST = String(data.ENABLE_WHITELIST);
-  if (data.ENFORCE_WHITELIST) env.ENFORCE_WHITELIST = "true";
 
   // --- Performance & cost ------------------------------------------------------
   env.VIEW_DISTANCE = String(data.VIEW_DISTANCE ?? 10);

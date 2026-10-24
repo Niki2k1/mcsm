@@ -35,9 +35,12 @@ export default defineEventHandler(async (event) => {
   // custom vars — whatever remains is managed.
   const managedKeys = new Set<string>();
   if (server.config) {
+    // newWorld: containers created by MCSM carry the seed vars too, and
+    // those must not show up as custom ones.
     const spec = await buildServerSpec(
       { ...server.config, customEnv: [] },
-      event
+      event,
+      { newWorld: true }
     );
     for (const key of Object.keys(spec.env)) managedKeys.add(key);
   }

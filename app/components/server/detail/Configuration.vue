@@ -313,35 +313,22 @@
         <div>
           <h3 class="font-semibold">Players</h3>
           <p class="text-sm text-muted">
-            Who is whitelisted or op is managed on the
+            The whitelist, its switches and operators are managed on the
             <NuxtLink
               :to="`/server/${id}/players`"
               class="text-primary hover:underline"
               >Players tab</NuxtLink
-            >
-            — changes there apply without a restart.
+            >.
           </p>
         </div>
       </template>
 
-      <div class="space-y-4">
-        <div class="grid sm:grid-cols-2 gap-x-8 gap-y-3">
-          <ServerDetailToggleRow
-            v-model="whitelistEnabled"
-            label="Whitelist Enabled"
-            description="Only whitelisted players can join the server."
-          />
-          <ServerDetailToggleRow
-            v-model="form.ENFORCE_WHITELIST"
-            label="Enforce Whitelist"
-            description="Kick connected players that get removed from the whitelist."
-          />
-          <ServerDetailToggleRow
-            v-model="form.HIDE_ONLINE_PLAYERS"
-            label="Hide Online Players"
-            description="Don't show the player list in the server status."
-          />
-        </div>
+      <div class="grid sm:grid-cols-2 gap-x-8 gap-y-3">
+        <ServerDetailToggleRow
+          v-model="form.HIDE_ONLINE_PLAYERS"
+          label="Hide Online Players"
+          description="Don't show the player list in the server status."
+        />
       </div>
     </UCard>
 
@@ -803,18 +790,6 @@ const javaVersion = computed({
   get: () => form.value?.JAVA_VERSION ?? "latest",
   set: (value: CreateForm["JAVA_VERSION"]) => {
     if (form.value) form.value.JAVA_VERSION = value;
-  },
-});
-
-// Whitelist toggle: older configs store null ("on when the wizard whitelist has
-// entries"); the server pins it the same way on the next save.
-const whitelistEnabled = computed({
-  get: () => {
-    if (!form.value) return false;
-    return form.value.ENABLE_WHITELIST ?? form.value.whitelist.length > 0;
-  },
-  set: (value: boolean) => {
-    if (form.value) form.value.ENABLE_WHITELIST = value;
   },
 });
 

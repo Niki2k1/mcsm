@@ -3,6 +3,8 @@ import {
   dashUuid,
   offlineUuid,
   parsePlayerList,
+  parseWhitelistSettings,
+  setProperty,
   updatePlayerList,
 } from "../../server/utils/minecraft/player-lists";
 
@@ -54,5 +56,32 @@ describe("uuids", () => {
 
   it("derives the offline-mode UUID like the server does", () => {
     expect(offlineUuid("Notch")).toBe("b50ad385-829d-3141-a216-7e7d7539ba7f");
+  });
+});
+
+describe("server.properties switches", () => {
+  const props = "motd=hi\nwhite-list=true\nenforce-whitelist=false\n";
+
+  it("reads the whitelist switches", () => {
+    expect(parseWhitelistSettings(props)).toEqual({
+      enabled: true,
+      enforce: false,
+    });
+    expect(parseWhitelistSettings(null)).toEqual({
+      enabled: false,
+      enforce: false,
+    });
+  });
+
+  it("replaces an existing property and keeps the rest", () => {
+    expect(setProperty(props, "enforce-whitelist", "true")).toBe(
+      "motd=hi\nwhite-list=true\nenforce-whitelist=true\n"
+    );
+  });
+
+  it("appends a missing property", () => {
+    expect(setProperty("motd=hi", "white-list", "true")).toBe(
+      "motd=hi\nwhite-list=true\n"
+    );
   });
 });

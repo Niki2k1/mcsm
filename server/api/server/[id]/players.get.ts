@@ -5,6 +5,7 @@ import * as v from "valibot";
  * - online: who is connected right now (live, via RCON `list`)
  * - whitelist / ops: the server's own whitelist.json and ops.json, read from
  *   the volume — current whether the server is running or not
+ * - settings: whitelist on/off and enforcement, from server.properties
  */
 export default defineEventHandler(async (event) => {
   const { id } = await getValidatedRouterParams(
@@ -20,13 +21,21 @@ export default defineEventHandler(async (event) => {
     throw createError({ statusCode: 404, statusMessage: "Server not found" });
   }
 
-  const [whitelist, ops] = await Promise.all([
+  const [whitelist, ops, settings] = await Promise.all([
     readPlayerList(id, "whitelist"),
     readPlayerList(id, "ops"),
+    readWhitelistSettings(id),
   ]);
 
   if (!server.running) {
-    return { running: false, offline: true, online: [], ops, whitelist };
+    return {
+      running: false,
+      offline: true,
+      online: [],
+      ops,
+      whitelist,
+      settings,
+    };
   }
 
   try {
@@ -39,9 +48,17 @@ export default defineEventHandler(async (event) => {
       online: online.map((name) => ({ name })),
       ops,
       whitelist,
+      settings,
     };
   } catch {
     // RCON not ready yet (server still booting) — the lists are still valid.
-    return { running: true, offline: true, online: [], ops, whitelist };
+    return {
+      running: true,
+      offline: true,
+      online: [],
+      ops,
+      whitelist,
+      settings,
+    };
   }
 });

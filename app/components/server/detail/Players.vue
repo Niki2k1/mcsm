@@ -143,6 +143,24 @@
               />
             </template>
           </UInput>
+
+          <template v-if="canManage && data">
+            <USeparator class="py-2" />
+            <ServerDetailToggleRow
+              :model-value="data.settings.enabled"
+              label="Whitelist Enabled"
+              description="Only whitelisted players can join the server."
+              :disabled="booting || saving"
+              @update:model-value="changeSetting('enabled', $event)"
+            />
+            <ServerDetailToggleRow
+              :model-value="data.settings.enforce"
+              label="Enforce Whitelist"
+              description="Kick connected players that get removed from the whitelist. Restarts a running server."
+              :disabled="booting || saving"
+              @update:model-value="changeSetting('enforce', $event)"
+            />
+          </template>
         </div>
       </UCard>
 
@@ -209,6 +227,31 @@
         </div>
       </UCard>
     </div>
+
+    <UModal
+      v-model:open="enforceOpen"
+      title="Restart the server?"
+      description="Minecraft only reads this setting on startup, so the server is stopped, updated and started again. Connected players are disconnected."
+    >
+      <template #footer>
+        <div class="flex justify-end gap-2 w-full">
+          <UButton
+            color="neutral"
+            variant="ghost"
+            :disabled="saving"
+            @click="enforceOpen = false"
+          >
+            Cancel
+          </UButton>
+          <UButton
+            :loading="saving"
+            @click="saveSetting('enforce', !data?.settings.enforce)"
+          >
+            Restart and apply
+          </UButton>
+        </div>
+      </template>
+    </UModal>
   </div>
 </template>
 
@@ -220,10 +263,12 @@ type PlayersResponse = {
   online: PlayerEntry[];
   ops: PlayerEntry[];
   whitelist: PlayerEntry[];
+  settings: { enabled: boolean; enforce: boolean };
 };
 
 const { id, can } = useServerDetail();
 const canAct = computed(() => can("operator"));
+const canManage = computed(() => can("manager"));
 const toast = useToast();
 
 const { data, refresh, status } = useFetch<PlayersResponse>(
@@ -333,5 +378,49 @@ async function addOperator() {
   if (!name) return;
   await runAction("op", name);
   opName.value = "";
+}
+
+// --- Whitelist settings ----------------------------------------------------------
+
+type WhitelistSetting = "enabled" | "enforce";
+
+const saving = ref(false);
+const enforceOpen = ref(false);
+
+function changeSetting(setting: WhitelistSetting, value: boolean) {
+  // Enforcement needs a restart of a running server — ask first.
+  if (setting === "enforce" && data.value?.running) {
+    enforceOpen.value = true;
+    return;
+  }
+  saveSetting(setting, value);
+}
+
+async function saveSetting(setting: WhitelistSetting, value: boolean) {
+  saving.value = true;
+  try {
+    const { restarted } = await $fetch<{ restarted: boolean }>(
+      `/api/server/${id.value}/players/settings`,
+      { method: "POST", body: { setting, value } }
+    );
+    toast.add({
+      title: `${setting === "enabled" ? "Whitelist" : "Enforcement"} ${value ? "enabled" : "disabled"}`,
+      description: restarted
+        ? "The server is starting again."
+        : data.value?.running
+          ? undefined
+          : "Applies on the next start.",
+      color: "success",
+    });
+    enforceOpen.value = false;
+    await refresh();
+  } catch {
+    toast.add({
+      title: "Could not change the setting",
+      color: "error",
+    });
+  } finally {
+    saving.value = false;
+  }
 }
 </script>

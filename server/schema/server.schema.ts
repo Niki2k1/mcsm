@@ -81,11 +81,12 @@ export const serverConfigSchema = v.object({
   ),
   ENABLE_COMMAND_BLOCK: v.optional(v.boolean(), false),
   /**
-   * Whitelist on/off. `null` keeps itzg's automatic behaviour (enabled when
-   * the whitelist has entries) so configs from before this field existed
-   * don't change behaviour.
+   * Whitelist on/off for a new world only; `null` = on when the whitelist
+   * has entries. Afterwards the switches live in the server's own
+   * server.properties and are changed on the Players tab.
    */
   ENABLE_WHITELIST: v.nullish(v.boolean(), null),
+  /** Unused: itzg always enforces a seeded whitelist. Kept so old configs parse. */
   ENFORCE_WHITELIST: v.optional(v.boolean(), false),
 
   /**
