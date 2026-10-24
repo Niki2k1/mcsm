@@ -187,8 +187,9 @@ export const domains = sqliteTable("domains", {
 });
 
 /**
- * Personal access tokens for the MCP endpoint (scripts and clients that can't
- * run the OAuth flow). Only the sha256 is stored; the token is shown once.
+ * Personal access tokens for the MCP endpoint and the public /api/v1 API
+ * (scripts, bots and clients that can't run the OAuth flow). Only the sha256
+ * is stored; the token is shown once.
  */
 export const apiTokens = sqliteTable(
   "api_tokens",
@@ -201,10 +202,18 @@ export const apiTokens = sqliteTable(
     tokenHash: text("token_hash").notNull().unique(),
     /** First characters of the token, so users can tell tokens apart. */
     prefix: text("prefix").notNull(),
-    /** MCP scopes (see shared/utils/tokenScopes.ts). */
+    /** Token scopes (see shared/utils/tokenScopes.ts). */
     scopes: text("scopes", { mode: "json" }).$type<string[]>().notNull(),
+    /**
+     * World volumes the token is limited to (keyed like server_access, so the
+     * limit survives container recreates). Null = every server the user can
+     * access, including ones created later.
+     */
+    servers: text("servers", { mode: "json" }).$type<string[]>(),
     createdAt: integer("created_at").notNull(),
     lastUsedAt: integer("last_used_at"),
+    /** Null = never expires. */
+    expiresAt: integer("expires_at"),
   },
   (table) => [index("api_tokens_user_id_idx").on(table.userId)]
 );

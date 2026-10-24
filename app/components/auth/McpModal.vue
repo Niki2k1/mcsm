@@ -52,8 +52,9 @@
         <section class="space-y-2">
           <h3 class="text-sm font-semibold">Personal access tokens</h3>
           <p class="text-sm text-muted">
-            For clients and scripts that can't sign in through the browser. Send
-            the token as <code>Authorization: Bearer &lt;token&gt;</code>.
+            For clients, scripts and bots that can't sign in through the browser
+            — the MCP endpoint and the public <code>/api/v1</code> API. Send the
+            token as <code>Authorization: Bearer &lt;token&gt;</code>.
           </p>
 
           <UAlert
@@ -87,7 +88,20 @@
               </p>
               <p class="text-xs text-dimmed">
                 {{ scopeLabels(token.scopes) }} ·
+                {{ serverLabels(token.servers) }} ·
                 {{ lastUsed(token.lastUsedAt) }}
+              </p>
+              <p v-if="token.expiresAt" class="text-xs text-dimmed">
+                <UBadge
+                  v-if="token.expiresAt <= Date.now()"
+                  label="Expired"
+                  color="error"
+                  variant="subtle"
+                  size="sm"
+                />
+                <template v-else>
+                  Expires {{ new Date(token.expiresAt).toLocaleDateString() }}
+                </template>
               </p>
             </div>
             <UButton
@@ -116,6 +130,26 @@
                 v-model="newScopes"
                 :items="scopeItems"
                 value-key="value"
+              />
+            </UFormField>
+            <UFormField
+              label="Servers"
+              help="Leave empty for every server you can access, including future ones."
+            >
+              <USelectMenu
+                v-model="newServers"
+                :items="serverItems"
+                value-key="value"
+                multiple
+                placeholder="All my servers"
+                class="w-full"
+              />
+            </UFormField>
+            <UFormField label="Expires">
+              <USelect
+                v-model="newExpiry"
+                :items="expiryItems"
+                class="w-full"
               />
             </UFormField>
             <div class="flex justify-end">
@@ -155,6 +189,14 @@ const { data: tokens, refresh: refreshTokens } = useFetch("/api/me/tokens", {
   default: () => [],
   immediate: false,
 });
+// Only for naming servers in the token form and list.
+const { data: servers, refresh: refreshServers } = useFetch<
+  { id: string; name: string; volume: string | null }[]
+>("/api/server", {
+  key: "my-mcp-token-servers",
+  default: () => [],
+  immediate: false,
+});
 const { data: connections, refresh: refreshConnections } = useFetch(
   "/api/me/connections",
   { key: "my-mcp-connections", default: () => [], immediate: false }
@@ -164,6 +206,7 @@ watch(open, (value) => {
   if (value) {
     refreshTokens();
     refreshConnections();
+    refreshServers();
   } else {
     createdToken.value = null;
   }
@@ -181,12 +224,40 @@ function scopeLabels(scopes: string[]) {
     .join(", ");
 }
 
+const serverItems = computed(() =>
+  servers.value.flatMap((server) =>
+    server.volume
+      ? [{ label: server.name || server.id, value: server.volume }]
+      : []
+  )
+);
+
+function serverLabels(volumes: string[] | null) {
+  if (!volumes) return "all servers";
+  if (!volumes.length) return "no servers";
+  return volumes
+    .map(
+      (volume) =>
+        servers.value.find((server) => server.volume === volume)?.name || volume
+    )
+    .join(", ");
+}
+
+const expiryItems = [
+  { label: "Never", value: 0 },
+  { label: "30 days", value: 30 },
+  { label: "90 days", value: 90 },
+  { label: "1 year", value: 365 },
+];
+
 function lastUsed(at: number | null) {
   return at ? `used ${new Date(at).toLocaleString()}` : "never used";
 }
 
 const newName = ref("");
 const newScopes = ref<TokenScope[]>(["servers:read"]);
+const newServers = ref<string[]>([]);
+const newExpiry = ref(0);
 const creating = ref(false);
 const createdToken = ref<string | null>(null);
 
@@ -195,10 +266,16 @@ async function createToken() {
   try {
     const { token } = await $fetch("/api/me/tokens", {
       method: "POST",
-      body: { name: newName.value.trim(), scopes: newScopes.value },
+      body: {
+        name: newName.value.trim(),
+        scopes: newScopes.value,
+        servers: newServers.value.length ? newServers.value : null,
+        expiresInDays: newExpiry.value || null,
+      },
     });
     createdToken.value = token;
     newName.value = "";
+    newServers.value = [];
     await refreshTokens();
   } catch (error) {
     toast.add({

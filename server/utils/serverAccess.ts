@@ -138,7 +138,8 @@ export async function assertServerAccess(
   return level!;
 }
 
-/** Drop all grants for a world that no longer exists. */
+/** Drop all grants (users and token restrictions) for a world that no longer exists. */
 export async function revokeServerAccess(volume: string) {
   await db.delete(serverAccess).where(eq(serverAccess.volume, volume));
+  await forgetTokenServer(volume);
 }
