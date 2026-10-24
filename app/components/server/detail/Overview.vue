@@ -192,7 +192,6 @@ const about = computed(() => {
       value: config?.ONLINE_MODE ? "Enabled" : "Disabled",
     },
     { label: "Hardcore", value: config?.HARDCORE ? "Yes" : "No" },
-    { label: "Operators", value: String(config?.operators?.length ?? 0) },
   ];
 });
 

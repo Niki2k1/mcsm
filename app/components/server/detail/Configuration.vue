@@ -307,31 +307,24 @@
       </div>
     </UCard>
 
-    <!-- Players baseline -->
+    <!-- Players -->
     <UCard>
       <template #header>
         <div>
           <h3 class="font-semibold">Players</h3>
           <p class="text-sm text-muted">
-            The operator and whitelist baseline applied when the container is
-            (re)created. For live changes without a restart, use the
+            Who is whitelisted or op is managed on the
             <NuxtLink
               :to="`/server/${id}/players`"
               class="text-primary hover:underline"
               >Players tab</NuxtLink
-            >.
+            >
+            — changes there apply without a restart.
           </p>
         </div>
       </template>
 
       <div class="space-y-4">
-        <div class="grid sm:grid-cols-2 gap-6">
-          <UserList v-model="form.operators" title="Operators" />
-          <UserList v-model="form.whitelist" title="Whitelist" />
-        </div>
-
-        <USeparator />
-
         <div class="grid sm:grid-cols-2 gap-x-8 gap-y-3">
           <ServerDetailToggleRow
             v-model="whitelistEnabled"
@@ -813,8 +806,8 @@ const javaVersion = computed({
   },
 });
 
-// Whitelist toggle: null in the config means "automatic" (itzg enables the
-// whitelist when it has entries) — reflect that until the user decides.
+// Whitelist toggle: older configs store null ("on when the wizard whitelist has
+// entries"); the server pins it the same way on the next save.
 const whitelistEnabled = computed({
   get: () => {
     if (!form.value) return false;

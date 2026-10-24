@@ -3,10 +3,8 @@ import * as v from "valibot";
 /**
  * Player overview for a server:
  * - online: who is connected right now (live, via RCON `list`)
- * - whitelist: the live whitelist (via RCON `whitelist list`), falling back to
- *   the config baseline when the server is offline
- * - ops: the config baseline (Minecraft has no RCON command to list operators,
- *   so live op/deop changes can't be reflected here)
+ * - whitelist / ops: the server's own whitelist.json and ops.json, read from
+ *   the volume — current whether the server is running or not
  */
 export default defineEventHandler(async (event) => {
   const { id } = await getValidatedRouterParams(
@@ -22,35 +20,28 @@ export default defineEventHandler(async (event) => {
     throw createError({ statusCode: 404, statusMessage: "Server not found" });
   }
 
-  const ops = server.config?.operators ?? [];
-  const baseline = server.config?.whitelist ?? [];
+  const [whitelist, ops] = await Promise.all([
+    readPlayerList(id, "whitelist"),
+    readPlayerList(id, "ops"),
+  ]);
 
   if (!server.running) {
-    return { offline: true, online: [], ops, whitelist: baseline };
+    return { running: false, offline: true, online: [], ops, whitelist };
   }
 
   try {
-    return await withRcon(event, id, async (rcon) => {
-      const online = parsePlayerNames(await rcon.send("list"));
-      const liveWhitelist = parsePlayerNames(await rcon.send("whitelist list"));
-
-      // Keep any UUIDs we know from the config baseline for avatar lookups.
-      const uuidByName = new Map(
-        baseline.map((entry) => [entry.name.toLowerCase(), entry.uuid])
-      );
-
-      return {
-        offline: false,
-        online: online.map((name) => ({ name })),
-        ops,
-        whitelist: liveWhitelist.map((name) => ({
-          name,
-          uuid: uuidByName.get(name.toLowerCase()) ?? "",
-        })),
-      };
-    });
+    const online = await withRcon(event, id, async (rcon) =>
+      parsePlayerNames(await rcon.send("list"))
+    );
+    return {
+      running: true,
+      offline: false,
+      online: online.map((name) => ({ name })),
+      ops,
+      whitelist,
+    };
   } catch {
-    // RCON not ready yet (server still booting) — degrade to config data.
-    return { offline: true, online: [], ops, whitelist: baseline };
+    // RCON not ready yet (server still booting) — the lists are still valid.
+    return { running: true, offline: true, online: [], ops, whitelist };
   }
 });

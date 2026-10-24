@@ -1,12 +1,20 @@
 <template>
   <div class="space-y-6">
     <UAlert
-      v-if="data?.offline"
+      v-if="booting"
       icon="i-heroicons-exclamation-triangle"
       color="warning"
       variant="soft"
-      title="Server is not reachable"
-      description="Live player management needs a running server. Showing the configured baseline instead."
+      title="Server is starting"
+      description="Changes are possible again once the server is up."
+    />
+    <UAlert
+      v-else-if="data && !data.running"
+      icon="i-heroicons-information-circle"
+      color="neutral"
+      variant="soft"
+      title="Server is stopped"
+      description="Whitelist and operator changes are saved now and apply on the next start."
     />
 
     <div class="grid gap-6 lg:grid-cols-2">
@@ -73,13 +81,13 @@
         </div>
       </UCard>
 
-      <!-- Whitelist (live) -->
+      <!-- Whitelist -->
       <UCard>
         <template #header>
           <div>
             <h3 class="font-semibold">Whitelist</h3>
             <p class="text-sm text-muted">
-              Changes apply to the running server immediately.
+              Who may join when the whitelist is enabled.
             </p>
           </div>
         </template>
@@ -102,7 +110,7 @@
               variant="ghost"
               color="error"
               size="xs"
-              :disabled="data?.offline"
+              :disabled="booting"
               :aria-label="`Remove ${player.name} from whitelist`"
               @click="runAction('whitelist-remove', player.name)"
             />
@@ -121,7 +129,7 @@
             placeholder="Add player to whitelist"
             autocomplete="off"
             class="w-full"
-            :disabled="data?.offline"
+            :disabled="booting"
             @keyup.enter="addToWhitelist"
           >
             <template #trailing>
@@ -130,7 +138,7 @@
                 variant="link"
                 icon="i-heroicons-plus-20-solid"
                 aria-label="Add to whitelist"
-                :disabled="data?.offline"
+                :disabled="booting"
                 @click="addToWhitelist"
               />
             </template>
@@ -143,9 +151,7 @@
         <template #header>
           <div>
             <h3 class="font-semibold">Operators</h3>
-            <p class="text-sm text-muted">
-              Op or de-op players on the running server by name.
-            </p>
+            <p class="text-sm text-muted">Players with full command access.</p>
           </div>
         </template>
 
@@ -161,51 +167,45 @@
               size="2xs"
             />
             <span class="text-sm flex-1 truncate">{{ player.name }}</span>
-            <UBadge color="neutral" variant="soft" size="sm">baseline</UBadge>
+            <UButton
+              v-if="canAct"
+              icon="i-heroicons-x-mark-20-solid"
+              variant="ghost"
+              color="error"
+              size="xs"
+              :disabled="booting"
+              :aria-label="`Remove operator ${player.name}`"
+              @click="runAction('deop', player.name)"
+            />
           </div>
 
           <p
             v-if="!data?.ops?.length"
             class="text-sm text-muted py-2 text-center"
           >
-            No baseline operators configured.
+            No operators.
           </p>
 
-          <template v-if="canAct">
-            <UInput
-              v-model.trim="opName"
-              placeholder="Player name"
-              autocomplete="off"
-              class="w-full"
-              :disabled="data?.offline"
-              @keyup.enter="runAction('op', opName).then(() => (opName = ''))"
-            />
-            <div class="flex gap-2">
+          <UInput
+            v-if="canAct"
+            v-model.trim="opName"
+            placeholder="Make player operator"
+            autocomplete="off"
+            class="w-full"
+            :disabled="booting"
+            @keyup.enter="addOperator"
+          >
+            <template #trailing>
               <UButton
-                variant="soft"
-                size="sm"
-                :disabled="data?.offline || !opName"
-                @click="runAction('op', opName).then(() => (opName = ''))"
-              >
-                Op
-              </UButton>
-              <UButton
-                variant="soft"
-                color="warning"
-                size="sm"
-                :disabled="data?.offline || !opName"
-                @click="runAction('deop', opName).then(() => (opName = ''))"
-              >
-                De-op
-              </UButton>
-            </div>
-          </template>
-
-          <p class="text-xs text-muted pt-1">
-            The list above is the configured baseline (Minecraft can't report
-            live operators over RCON). Live changes still take effect on the
-            server.
-          </p>
+                color="neutral"
+                variant="link"
+                icon="i-heroicons-plus-20-solid"
+                aria-label="Make operator"
+                :disabled="booting"
+                @click="addOperator"
+              />
+            </template>
+          </UInput>
         </div>
       </UCard>
     </div>
@@ -215,6 +215,7 @@
 <script setup lang="ts">
 type PlayerEntry = { name: string; uuid?: string };
 type PlayersResponse = {
+  running: boolean;
   offline: boolean;
   online: PlayerEntry[];
   ops: PlayerEntry[];
@@ -229,6 +230,10 @@ const { data, refresh, status } = useFetch<PlayersResponse>(
   () => `/api/server/${id.value}/players`,
   { retry: false }
 );
+
+// Running but RCON not answering yet — a file edit now would be overwritten
+// by the server once it has loaded the lists.
+const booting = computed(() => !!data.value?.running && data.value.offline);
 
 // Refresh the online list every 30s while the tab is open.
 let interval: ReturnType<typeof setInterval> | null = null;
@@ -276,7 +281,9 @@ async function runAction(action: PlayerAction, name: string) {
       description:
         statusCode === 409
           ? "The server is not running."
-          : "The command could not be executed.",
+          : statusCode === 404
+            ? `Player “${name}” not found.`
+            : "The command could not be executed.",
       color: "error",
     });
   }
@@ -309,7 +316,7 @@ function onlineActions(name: string) {
   ];
 }
 
-// --- Whitelist add ---------------------------------------------------------------
+// --- Add forms -------------------------------------------------------------------
 
 const newWhitelistName = ref("");
 const opName = ref("");
@@ -319,5 +326,12 @@ async function addToWhitelist() {
   if (!name) return;
   await runAction("whitelist-add", name);
   newWhitelistName.value = "";
+}
+
+async function addOperator() {
+  const name = opName.value;
+  if (!name) return;
+  await runAction("op", name);
+  opName.value = "";
 }
 </script>
