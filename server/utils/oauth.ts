@@ -9,7 +9,7 @@ import {
   oauthTokens,
   users,
 } from "../db/schema";
-import { MCP_SCOPES, isMcpScope } from "#shared/utils/mcpScopes";
+import { TOKEN_SCOPES, isTokenScope } from "#shared/utils/tokenScopes";
 
 /**
  * OAuth 2.1 authorization server for the MCP endpoint. MCSM is its own
@@ -150,7 +150,7 @@ export function parseScopes(raw: string | undefined): string[] {
 
 function validateScopes(scopes: string[]): string[] {
   for (const scope of scopes) {
-    if (!isMcpScope(scope)) {
+    if (!isTokenScope(scope)) {
       throw new OAuthError("invalid_scope", `Unknown scope: ${scope}`);
     }
   }
@@ -292,7 +292,7 @@ export async function validateAuthorizeRequest(
   // Most MCP hosts don't request scopes at all; the consent screen shows the
   // user exactly what they hand out either way.
   const requested = validateScopes(parseScopes(query.scope));
-  const scopes = requested.length ? requested : [...MCP_SCOPES];
+  const scopes = requested.length ? requested : [...TOKEN_SCOPES];
 
   return {
     client,
@@ -603,7 +603,7 @@ export function oauthMetadata(event: H3Event) {
       token_endpoint: endpoints.token_endpoint,
       registration_endpoint: endpoints.registration_endpoint,
       revocation_endpoint: endpoints.revocation_endpoint,
-      scopes_supported: [...MCP_SCOPES],
+      scopes_supported: [...TOKEN_SCOPES],
       response_types_supported: ["code"],
       response_modes_supported: ["query"],
       grant_types_supported: ["authorization_code", "refresh_token"],
@@ -617,7 +617,7 @@ export function oauthMetadata(event: H3Event) {
     protectedResource: {
       resource: endpoints.resource,
       authorization_servers: [endpoints.issuer],
-      scopes_supported: [...MCP_SCOPES],
+      scopes_supported: [...TOKEN_SCOPES],
       bearer_methods_supported: ["header"],
       resource_name: "MCSM",
     },

@@ -1,27 +1,27 @@
 import type { ServerRole } from "./serverRoles";
 
 /**
- * What an MCP client (OAuth grant or personal token) may do. Scopes mirror the
- * per-server roles one to one: a tool needs both the matching scope and at
- * least that role on the server, so a token can narrow a user's access but
- * never widen it.
+ * What a bearer token (OAuth grant or personal access token) may do, on the
+ * MCP endpoint and the public API alike. Each scope maps to a per-server role:
+ * an action needs both the scope and at least that role on the server, so a
+ * token can narrow a user's access but never widen it.
  */
-export const MCP_SCOPES = [
+export const TOKEN_SCOPES = [
   "servers:read",
   "servers:operate",
   "servers:manage",
 ] as const;
 
-export type McpScope = (typeof MCP_SCOPES)[number];
+export type TokenScope = (typeof TOKEN_SCOPES)[number];
 
-export const MCP_SCOPE_ROLE: Record<McpScope, ServerRole> = {
+export const TOKEN_SCOPE_ROLE: Record<TokenScope, ServerRole> = {
   "servers:read": "viewer",
   "servers:operate": "operator",
   "servers:manage": "manager",
 };
 
-export const MCP_SCOPE_LABELS: Record<
-  McpScope,
+export const TOKEN_SCOPE_LABELS: Record<
+  TokenScope,
   { label: string; description: string }
 > = {
   "servers:read": {
@@ -39,6 +39,6 @@ export const MCP_SCOPE_LABELS: Record<
   },
 };
 
-export function isMcpScope(value: string): value is McpScope {
-  return (MCP_SCOPES as readonly string[]).includes(value);
+export function isTokenScope(value: string): value is TokenScope {
+  return (TOKEN_SCOPES as readonly string[]).includes(value);
 }

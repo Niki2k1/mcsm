@@ -9,7 +9,7 @@ export default defineEventHandler(async (event) => {
       v.object({
         name: v.pipe(v.string(), v.trim(), v.minLength(1), v.maxLength(80)),
         scopes: v.pipe(
-          v.array(v.picklist(MCP_SCOPES)),
+          v.array(v.picklist(TOKEN_SCOPES)),
           v.minLength(1, "Pick at least one scope")
         ),
       })

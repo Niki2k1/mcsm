@@ -138,10 +138,10 @@
 <script setup lang="ts">
 import { errorMessage } from "~/utils/errors";
 import {
-  MCP_SCOPES,
-  MCP_SCOPE_LABELS,
-  type McpScope,
-} from "#shared/utils/mcpScopes";
+  TOKEN_SCOPES,
+  TOKEN_SCOPE_LABELS,
+  type TokenScope,
+} from "#shared/utils/tokenScopes";
 
 const open = defineModel<boolean>("open", { default: false });
 
@@ -169,15 +169,15 @@ watch(open, (value) => {
   }
 });
 
-const scopeItems = MCP_SCOPES.map((scope) => ({
+const scopeItems = TOKEN_SCOPES.map((scope) => ({
   value: scope,
-  label: MCP_SCOPE_LABELS[scope].label,
-  description: MCP_SCOPE_LABELS[scope].description,
+  label: TOKEN_SCOPE_LABELS[scope].label,
+  description: TOKEN_SCOPE_LABELS[scope].description,
 }));
 
 function scopeLabels(scopes: string[]) {
   return scopes
-    .map((scope) => MCP_SCOPE_LABELS[scope as McpScope]?.label ?? scope)
+    .map((scope) => TOKEN_SCOPE_LABELS[scope as TokenScope]?.label ?? scope)
     .join(", ");
 }
 
@@ -186,7 +186,7 @@ function lastUsed(at: number | null) {
 }
 
 const newName = ref("");
-const newScopes = ref<McpScope[]>(["servers:read"]);
+const newScopes = ref<TokenScope[]>(["servers:read"]);
 const creating = ref(false);
 const createdToken = ref<string | null>(null);
 

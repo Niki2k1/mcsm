@@ -30,10 +30,10 @@
             />
             <div>
               <p class="text-sm font-medium">
-                {{ MCP_SCOPE_LABELS[scope as McpScope]?.label ?? scope }}
+                {{ TOKEN_SCOPE_LABELS[scope as TokenScope]?.label ?? scope }}
               </p>
               <p class="text-xs text-muted">
-                {{ MCP_SCOPE_LABELS[scope as McpScope]?.description }}
+                {{ TOKEN_SCOPE_LABELS[scope as TokenScope]?.description }}
               </p>
             </div>
           </li>
@@ -76,7 +76,7 @@
 
 <script setup lang="ts">
 import { errorMessage } from "~/utils/errors";
-import { MCP_SCOPE_LABELS, type McpScope } from "#shared/utils/mcpScopes";
+import { TOKEN_SCOPE_LABELS, type TokenScope } from "#shared/utils/tokenScopes";
 
 definePageMeta({ layout: false });
 

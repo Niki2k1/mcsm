@@ -201,7 +201,7 @@ export const apiTokens = sqliteTable(
     tokenHash: text("token_hash").notNull().unique(),
     /** First characters of the token, so users can tell tokens apart. */
     prefix: text("prefix").notNull(),
-    /** MCP scopes (see shared/utils/mcpScopes.ts). */
+    /** MCP scopes (see shared/utils/tokenScopes.ts). */
     scopes: text("scopes", { mode: "json" }).$type<string[]>().notNull(),
     createdAt: integer("created_at").notNull(),
     lastUsedAt: integer("last_used_at"),
