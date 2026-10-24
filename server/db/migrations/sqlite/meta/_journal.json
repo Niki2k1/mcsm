@@ -43,6 +43,13 @@
       "when": 1792865274930,
       "tag": "0005_omniscient_sumo",
       "breakpoints": true
+    },
+    {
+      "idx": 6,
+      "version": "6",
+      "when": 1792865595143,
+      "tag": "0006_bitter_havok",
+      "breakpoints": true
     }
   ]
 }

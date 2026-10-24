@@ -299,3 +299,41 @@ export const oauthTokens = sqliteTable(
   },
   (table) => [index("oauth_tokens_grant_id_idx").on(table.grantId)]
 );
+
+/**
+ * One-time whitelist claims made through the public API: an opaque claim key
+ * chosen by the client (e.g. `discord:<user id>`) may whitelist exactly one
+ * player per server, and a player can only be claimed by one key. Removing a
+ * player from the whitelist keeps the claim on purpose — only releasing it
+ * lets the key claim again.
+ */
+export const whitelistClaims = sqliteTable(
+  "whitelist_claims",
+  {
+    id: integer("id").primaryKey({ autoIncrement: true }),
+    /** World volume name — stable server identity. */
+    volume: text("volume").notNull(),
+    claimKey: text("claim_key").notNull(),
+    playerName: text("player_name").notNull(),
+    /** Lower-cased name; Minecraft names are case-insensitive. */
+    playerKey: text("player_key").notNull(),
+    /** Null while the claim is being applied. */
+    playerUuid: text("player_uuid"),
+    /**
+     * The personal access token that made the claim (null for OAuth); kept
+     * after the token is deleted.
+     */
+    tokenId: integer("token_id"),
+    createdAt: integer("created_at").notNull(),
+  },
+  (table) => [
+    uniqueIndex("whitelist_claims_volume_key_idx").on(
+      table.volume,
+      table.claimKey
+    ),
+    uniqueIndex("whitelist_claims_volume_player_idx").on(
+      table.volume,
+      table.playerKey
+    ),
+  ]
+);

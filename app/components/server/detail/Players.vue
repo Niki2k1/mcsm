@@ -246,6 +246,62 @@
           </UInput>
         </div>
       </UCard>
+
+      <!-- One-time claims made through the public API (e.g. a Discord bot) -->
+      <UCard v-if="claims.length" class="lg:col-span-2">
+        <template #header>
+          <div>
+            <h3 class="font-semibold">Whitelist claims</h3>
+            <p class="text-sm text-muted">
+              Players whitelisted through an API token's self-service claim.
+              Each claim key can claim one player; release a claim to let it
+              claim again. Releasing keeps the player whitelisted.
+            </p>
+          </div>
+        </template>
+
+        <div class="space-y-2">
+          <div
+            v-for="claim in claims"
+            :key="claim.id"
+            class="flex items-center gap-3 rounded-lg ring-1 ring-default p-2"
+          >
+            <UAvatar
+              :src="`/api/minecraft/${claim.playerName}/skin`"
+              :alt="claim.playerName"
+              size="2xs"
+            />
+            <div class="min-w-0 flex-1">
+              <p class="text-sm truncate">
+                {{ claim.playerName }}
+                <UBadge
+                  v-if="!isWhitelisted(claim.playerName)"
+                  label="Not whitelisted"
+                  color="neutral"
+                  variant="subtle"
+                  size="sm"
+                />
+              </p>
+              <p class="text-xs text-dimmed truncate">
+                <span class="font-mono">{{ claim.claimKey }}</span>
+                · {{ timeAgo(claim.createdAt) }}
+                <template v-if="claim.tokenName">
+                  · via {{ claim.tokenName }}
+                </template>
+              </p>
+            </div>
+            <UButton
+              v-if="canManage"
+              icon="i-heroicons-arrow-uturn-left-20-solid"
+              variant="ghost"
+              color="neutral"
+              size="xs"
+              label="Release"
+              @click="releaseClaim(claim)"
+            />
+          </div>
+        </div>
+      </UCard>
     </div>
 
     <UModal
@@ -276,6 +332,9 @@
 </template>
 
 <script setup lang="ts">
+import { errorMessage } from "~/utils/errors";
+import { timeAgo } from "~/utils/time";
+
 type PlayerEntry = { name: string; uuid?: string };
 type PlayersResponse = {
   running: boolean;
@@ -291,6 +350,47 @@ const canAct = computed(() => can("operator"));
 const canManage = computed(() => can("manager"));
 const toast = useToast();
 
+type Claim = {
+  id: number;
+  claimKey: string;
+  playerName: string;
+  playerUuid: string | null;
+  createdAt: number;
+  tokenName: string | null;
+};
+
+// Claims are operator-only; viewers would just get a 403.
+const { data: claimData, refresh: refreshClaims } = useFetch<Claim[]>(
+  () => `/api/server/${id.value}/claims`,
+  { default: () => [], retry: false, immediate: canAct.value }
+);
+const claims = computed(() => claimData.value ?? []);
+
+const isWhitelisted = (name: string) =>
+  !!data.value?.whitelist.some(
+    (entry) => entry.name.toLowerCase() === name.toLowerCase()
+  );
+
+async function releaseClaim(claim: Claim) {
+  try {
+    await $fetch(`/api/server/${id.value}/claims/${claim.id}`, {
+      method: "DELETE",
+    });
+    toast.add({
+      title: "Claim released",
+      description: `${claim.claimKey} can claim a player again.`,
+      color: "success",
+    });
+    await refreshClaims();
+  } catch (error) {
+    toast.add({
+      title: "Could not release claim",
+      description: errorMessage(error, "Releasing the claim failed."),
+      color: "error",
+    });
+  }
+}
+
 const { data, refresh, status } = useFetch<PlayersResponse>(
   () => `/api/server/${id.value}/players`,
   { retry: false }
@@ -303,7 +403,10 @@ const booting = computed(() => !!data.value?.running && data.value.offline);
 // Refresh the online list every 30s while the tab is open.
 let interval: ReturnType<typeof setInterval> | null = null;
 onMounted(() => {
-  interval = setInterval(refresh, 30_000);
+  interval = setInterval(() => {
+    refresh();
+    if (canAct.value) refreshClaims();
+  }, 30_000);
 });
 onUnmounted(() => {
   if (interval) clearInterval(interval);

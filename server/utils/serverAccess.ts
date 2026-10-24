@@ -34,6 +34,7 @@ const OPERATOR_ROUTES = new Set([
   "POST restart",
   "POST rcon",
   "POST players/action",
+  "GET claims",
 ]);
 
 /**

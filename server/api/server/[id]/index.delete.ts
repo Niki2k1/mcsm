@@ -27,7 +27,10 @@ export default defineEventHandler(async (event) => {
     const server = await getServer(id);
     await removeServer(id, { removeVolume });
     // A kept world can come back under the same volume, so its grants stay.
-    if (removeVolume && server.volume) await revokeServerAccess(server.volume);
+    if (removeVolume && server.volume) {
+      await revokeServerAccess(server.volume);
+      await deleteWhitelistClaims(server.volume);
+    }
     await recordActivity(
       server.volume,
       "deleted",
