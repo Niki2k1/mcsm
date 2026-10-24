@@ -4,7 +4,7 @@
       <p class="text-sm font-medium">{{ label }}</p>
       <p class="text-xs text-muted">{{ description }}</p>
     </div>
-    <USwitch v-model="model" />
+    <USwitch v-model="model" :disabled="disabled" />
   </div>
 </template>
 
@@ -13,6 +13,7 @@
 defineProps<{
   label: string;
   description: string;
+  disabled?: boolean;
 }>();
 
 const model = defineModel<boolean>({ required: true });

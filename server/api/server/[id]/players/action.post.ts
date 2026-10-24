@@ -1,11 +1,9 @@
 import * as v from "valibot";
 
 /**
- * Live player management via RCON — no container recreation needed.
- *
- * NOTE: these change the *running* server (its ops.json / whitelist.json in
- * the world volume). They do not update the config baseline stored in the
- * `mcsm.config` label; that's what the Configuration tab is for.
+ * Player management without recreating the container. A running server gets
+ * the command over RCON and rewrites its ops.json / whitelist.json itself; a
+ * stopped one has the file edited directly, so it applies on the next start.
  */
 export default defineEventHandler(async (event) => {
   const { id } = await getValidatedRouterParams(
@@ -28,6 +26,27 @@ export default defineEventHandler(async (event) => {
       })
     )
   );
+
+  const { getServer } = useDocker(event);
+  let server: Awaited<ReturnType<typeof getServer>>;
+  try {
+    server = await getServer(id);
+  } catch {
+    throw createError({ statusCode: 404, statusMessage: "Server not found" });
+  }
+
+  if (!server.running && action !== "kick") {
+    const kind = action.startsWith("whitelist") ? "whitelist" : "ops";
+    const op = action === "op" || action === "whitelist-add" ? "add" : "remove";
+    // Removal matches by name, so it needs no lookup (and works for players
+    // whose Mojang account no longer resolves).
+    const player =
+      op === "add"
+        ? await resolvePlayer(name, server.config?.ONLINE_MODE ?? true)
+        : { name, uuid: "" };
+    await editPlayerListFile(id, kind, op, player);
+    return { response: "" };
+  }
 
   const commands: Record<typeof action, string> = {
     op: `op ${name}`,

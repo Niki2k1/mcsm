@@ -17,7 +17,7 @@ export default defineEventHandler(async (event) => {
   const data = await assignVoicePort(event, body);
 
   const { provisionServer } = useDocker(event);
-  const spec = await buildServerSpec(data, event);
+  const spec = await buildServerSpec(data, event, { newWorld: true });
 
   try {
     const container = await provisionServer({

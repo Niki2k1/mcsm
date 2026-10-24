@@ -307,14 +307,13 @@
       </div>
     </UCard>
 
-    <!-- Players baseline -->
+    <!-- Players -->
     <UCard>
       <template #header>
         <div>
           <h3 class="font-semibold">Players</h3>
           <p class="text-sm text-muted">
-            The operator and whitelist baseline applied when the container is
-            (re)created. For live changes without a restart, use the
+            The whitelist, its switches and operators are managed on the
             <NuxtLink
               :to="`/server/${id}/players`"
               class="text-primary hover:underline"
@@ -324,31 +323,12 @@
         </div>
       </template>
 
-      <div class="space-y-4">
-        <div class="grid sm:grid-cols-2 gap-6">
-          <UserList v-model="form.operators" title="Operators" />
-          <UserList v-model="form.whitelist" title="Whitelist" />
-        </div>
-
-        <USeparator />
-
-        <div class="grid sm:grid-cols-2 gap-x-8 gap-y-3">
-          <ServerDetailToggleRow
-            v-model="whitelistEnabled"
-            label="Whitelist Enabled"
-            description="Only whitelisted players can join the server."
-          />
-          <ServerDetailToggleRow
-            v-model="form.ENFORCE_WHITELIST"
-            label="Enforce Whitelist"
-            description="Kick connected players that get removed from the whitelist."
-          />
-          <ServerDetailToggleRow
-            v-model="form.HIDE_ONLINE_PLAYERS"
-            label="Hide Online Players"
-            description="Don't show the player list in the server status."
-          />
-        </div>
+      <div class="grid sm:grid-cols-2 gap-x-8 gap-y-3">
+        <ServerDetailToggleRow
+          v-model="form.HIDE_ONLINE_PLAYERS"
+          label="Hide Online Players"
+          description="Don't show the player list in the server status."
+        />
       </div>
     </UCard>
 
@@ -810,18 +790,6 @@ const javaVersion = computed({
   get: () => form.value?.JAVA_VERSION ?? "latest",
   set: (value: CreateForm["JAVA_VERSION"]) => {
     if (form.value) form.value.JAVA_VERSION = value;
-  },
-});
-
-// Whitelist toggle: null in the config means "automatic" (itzg enables the
-// whitelist when it has entries) — reflect that until the user decides.
-const whitelistEnabled = computed({
-  get: () => {
-    if (!form.value) return false;
-    return form.value.ENABLE_WHITELIST ?? form.value.whitelist.length > 0;
-  },
-  set: (value: boolean) => {
-    if (form.value) form.value.ENABLE_WHITELIST = value;
   },
 });
 

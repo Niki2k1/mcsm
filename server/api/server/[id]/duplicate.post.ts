@@ -65,9 +65,11 @@ export default defineEventHandler(async (event) => {
     voicePort: null,
   });
 
+  // A copied world brings its own player lists and server.properties.
   const spec = await buildServerSpec(
     await assignVoicePort(event, config),
-    event
+    event,
+    { newWorld: !(copyWorld && server.volumeSource) }
   );
 
   // The container name and world must be free — Docker would reject the

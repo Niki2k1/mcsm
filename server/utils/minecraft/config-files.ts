@@ -213,14 +213,16 @@ export async function listFiles(
   return { roots: scope.roots, entries, truncated };
 }
 
-/** Read a single config file as UTF-8 text. Rejects binary or oversized files. */
-export async function readConfigFile(
+/**
+ * Read one file from /data through the Docker archive API, which works
+ * whether or not the container is running. Returns null when it's missing.
+ * Unscoped — callers validate the path (see `safeRelPath`).
+ */
+export async function readDataFile(
   id: string,
-  type: string | null | undefined,
-  level: string | null | undefined,
-  inputPath: string
-): Promise<{ path: string; content: string }> {
-  const path = safeRelPath(inputPath, scopeFor(type, level));
+  path: string,
+  maxBytes = MAX_TEXT_BYTES
+): Promise<Buffer | null> {
   const { docker } = useDocker();
   const container = docker.getContainer(id);
 
@@ -228,13 +230,11 @@ export async function readConfigFile(
   try {
     stream = await container.getArchive({ path: `/data/${path}` });
   } catch (error) {
-    if ((error as { statusCode?: number }).statusCode === 404) {
-      throw createError({ statusCode: 404, statusMessage: "File not found" });
-    }
+    if ((error as { statusCode?: number }).statusCode === 404) return null;
     throw error;
   }
 
-  const data = await new Promise<Buffer>((resolve, reject) => {
+  return new Promise<Buffer | null>((resolve, reject) => {
     const tar = extract();
     let found: Buffer | null = null;
 
@@ -248,12 +248,12 @@ export async function readConfigFile(
       entry.on("data", (raw) => {
         const chunk = raw as Uint8Array;
         size += chunk.length;
-        if (size > MAX_TEXT_BYTES) {
+        if (size > maxBytes) {
           tar.destroy();
           reject(
             createError({
               statusCode: 413,
-              statusMessage: `File too large to edit (max ${MAX_TEXT_BYTES / 1024 / 1024} MB)`,
+              statusMessage: `File too large to edit (max ${maxBytes / 1024 / 1024} MB)`,
             })
           );
           return;
@@ -266,19 +266,25 @@ export async function readConfigFile(
       });
     });
 
-    tar.on("finish", () => {
-      if (!found) {
-        reject(
-          createError({ statusCode: 404, statusMessage: "File not found" })
-        );
-      } else {
-        resolve(found);
-      }
-    });
+    tar.on("finish", () => resolve(found));
     tar.on("error", reject);
     stream.on("error", reject);
     stream.pipe(tar);
   });
+}
+
+/** Read a single config file as UTF-8 text. Rejects binary or oversized files. */
+export async function readConfigFile(
+  id: string,
+  type: string | null | undefined,
+  level: string | null | undefined,
+  inputPath: string
+): Promise<{ path: string; content: string }> {
+  const path = safeRelPath(inputPath, scopeFor(type, level));
+  const data = await readDataFile(id, path);
+  if (!data) {
+    throw createError({ statusCode: 404, statusMessage: "File not found" });
+  }
 
   // Reject binaries — a NUL byte is a reliable enough signal for config files.
   if (data.includes(0)) {
@@ -318,9 +324,9 @@ export async function writeConfigFile(
 /**
  * Push files (and the folders leading to them) into /data in one archive.
  * Missing parent folders are created, since putArchive fails when the target
- * directory doesn't exist yet.
+ * directory doesn't exist yet. Unscoped — callers validate the paths.
  */
-async function putEntries(
+export async function putEntries(
   id: string,
   files: { path: string; data: Buffer }[],
   folders: string[] = []
