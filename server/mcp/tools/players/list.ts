@@ -3,7 +3,7 @@ import { z } from "zod";
 export default defineMcpTool({
   name: "list_players",
   description:
-    "Who is online on a server right now, plus its whitelist and operators. Offline servers return the configured whitelist and operators only.",
+    "Who is online on a server right now, plus its whitelist and operators (read from the server's own whitelist.json / ops.json, so also current while it's stopped).",
   annotations: {
     readOnlyHint: true,
     idempotentHint: true,
@@ -15,10 +15,14 @@ export default defineMcpTool({
   },
   handler: async ({ server: ref }) => {
     const { server, event } = await requireMcpServer(ref, "servers:read");
-    const operators = (server.config?.operators ?? []).map((op) => op.name);
-    const whitelist = (server.config?.whitelist ?? []).map(
-      (entry) => entry.name
-    );
+    // Unresolvable entries (offline-mode players) fall back to their UUID so
+    // they stay visible instead of disappearing from the list.
+    const names = (list: PlayerListEntry[]) =>
+      list.map((entry) => entry.name || entry.uuid);
+    const [whitelist, operators] = await Promise.all([
+      readPlayerList(server.id, "whitelist").then(names),
+      readPlayerList(server.id, "ops").then(names),
+    ]);
     if (!server.running) {
       return { running: false, online: [], whitelist, operators };
     }
@@ -26,7 +30,7 @@ export default defineMcpTool({
       return await withRcon(event, server.id, async (rcon) => ({
         running: true,
         online: parsePlayerNames(await rcon.send("list")),
-        whitelist: parsePlayerNames(await rcon.send("whitelist list")),
+        whitelist,
         operators,
       }));
     } catch {

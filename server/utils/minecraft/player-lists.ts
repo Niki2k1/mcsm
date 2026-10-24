@@ -90,7 +90,14 @@ export async function readPlayerList(
   kind: PlayerListKind
 ): Promise<PlayerListEntry[]> {
   const data = await readDataFile(id, FILES[kind], MAX_LIST_BYTES);
-  return parsePlayerList(data?.toString("utf8") ?? null);
+  const list = parsePlayerList(data?.toString("utf8") ?? null);
+  return Promise.all(
+    list.map(async (entry) =>
+      entry.name
+        ? entry
+        : { ...entry, name: await cachedProfileName(entry.uuid) }
+    )
+  );
 }
 
 /**
