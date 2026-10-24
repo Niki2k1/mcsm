@@ -4,6 +4,7 @@ import {
   integer,
   real,
   index,
+  uniqueIndex,
   primaryKey,
 } from "drizzle-orm/sqlite-core";
 
@@ -184,3 +185,108 @@ export const settings = sqliteTable("settings", {
 export const domains = sqliteTable("domains", {
   domain: text("domain").primaryKey(),
 });
+
+/**
+ * Personal access tokens for the MCP endpoint (scripts and clients that can't
+ * run the OAuth flow). Only the sha256 is stored; the token is shown once.
+ */
+export const apiTokens = sqliteTable(
+  "api_tokens",
+  {
+    id: integer("id").primaryKey({ autoIncrement: true }),
+    userId: integer("user_id")
+      .notNull()
+      .references(() => users.id, { onDelete: "cascade" }),
+    name: text("name").notNull(),
+    tokenHash: text("token_hash").notNull().unique(),
+    /** First characters of the token, so users can tell tokens apart. */
+    prefix: text("prefix").notNull(),
+    /** MCP scopes (see shared/utils/mcpScopes.ts). */
+    scopes: text("scopes", { mode: "json" }).$type<string[]>().notNull(),
+    createdAt: integer("created_at").notNull(),
+    lastUsedAt: integer("last_used_at"),
+  },
+  (table) => [index("api_tokens_user_id_idx").on(table.userId)]
+);
+
+/**
+ * OAuth 2.1 clients. MCP hosts register themselves through dynamic client
+ * registration; registering grants nothing until a user consents.
+ */
+export const oauthClients = sqliteTable("oauth_clients", {
+  /** client_id */
+  id: text("id").primaryKey(),
+  name: text("name").notNull(),
+  /** Null for public (PKCE-only) clients. */
+  secretHash: text("secret_hash"),
+  redirectUris: text("redirect_uris", { mode: "json" })
+    .$type<string[]>()
+    .notNull(),
+  /** none | client_secret_basic | client_secret_post */
+  tokenEndpointAuthMethod: text("token_endpoint_auth_method")
+    .notNull()
+    .default("none"),
+  clientUri: text("client_uri"),
+  logoUri: text("logo_uri"),
+  createdAt: integer("created_at").notNull(),
+});
+
+/** Short-lived, single-use authorization codes (PKCE S256). */
+export const oauthAuthorizationCodes = sqliteTable(
+  "oauth_authorization_codes",
+  {
+    codeHash: text("code_hash").primaryKey(),
+    clientId: text("client_id")
+      .notNull()
+      .references(() => oauthClients.id, { onDelete: "cascade" }),
+    userId: integer("user_id")
+      .notNull()
+      .references(() => users.id, { onDelete: "cascade" }),
+    redirectUri: text("redirect_uri").notNull(),
+    scopes: text("scopes", { mode: "json" }).$type<string[]>().notNull(),
+    codeChallenge: text("code_challenge").notNull(),
+    expiresAt: integer("expires_at").notNull(),
+  }
+);
+
+/** A user's consent for one client — one row per (client, user). */
+export const oauthGrants = sqliteTable(
+  "oauth_grants",
+  {
+    id: integer("id").primaryKey({ autoIncrement: true }),
+    clientId: text("client_id")
+      .notNull()
+      .references(() => oauthClients.id, { onDelete: "cascade" }),
+    userId: integer("user_id")
+      .notNull()
+      .references(() => users.id, { onDelete: "cascade" }),
+    scopes: text("scopes", { mode: "json" }).$type<string[]>().notNull(),
+    createdAt: integer("created_at").notNull(),
+    lastUsedAt: integer("last_used_at"),
+    revokedAt: integer("revoked_at"),
+  },
+  (table) => [
+    uniqueIndex("oauth_grants_client_user_idx").on(
+      table.clientId,
+      table.userId
+    ),
+  ]
+);
+
+/** Opaque access and refresh tokens issued for a grant (sha256 only). */
+export const oauthTokens = sqliteTable(
+  "oauth_tokens",
+  {
+    id: integer("id").primaryKey({ autoIncrement: true }),
+    tokenHash: text("token_hash").notNull().unique(),
+    /** access | refresh */
+    kind: text("kind").notNull(),
+    grantId: integer("grant_id")
+      .notNull()
+      .references(() => oauthGrants.id, { onDelete: "cascade" }),
+    scopes: text("scopes", { mode: "json" }).$type<string[]>().notNull(),
+    expiresAt: integer("expires_at").notNull(),
+    revokedAt: integer("revoked_at"),
+  },
+  (table) => [index("oauth_tokens_grant_id_idx").on(table.grantId)]
+);
