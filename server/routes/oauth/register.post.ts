@@ -55,7 +55,7 @@ export default defineEventHandler(async (event) => {
       );
     }
     const scopes = parseScopes(meta.scope);
-    if (scopes.some((scope) => !isMcpScope(scope))) {
+    if (scopes.some((scope) => !isTokenScope(scope))) {
       throw new OAuthError("invalid_client_metadata", "Unknown scope");
     }
 
@@ -79,7 +79,7 @@ export default defineEventHandler(async (event) => {
       token_endpoint_auth_method: client.tokenEndpointAuthMethod,
       grant_types: SUPPORTED_GRANTS,
       response_types: ["code"],
-      scope: (scopes.length ? scopes : MCP_SCOPES).join(" "),
+      scope: (scopes.length ? scopes : TOKEN_SCOPES).join(" "),
       ...(client.clientUri ? { client_uri: client.clientUri } : {}),
       ...(client.logoUri ? { logo_uri: client.logoUri } : {}),
     };

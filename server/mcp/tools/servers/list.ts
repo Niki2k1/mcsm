@@ -9,28 +9,20 @@ export default defineMcpTool({
   },
   enabled: (event) => hasMcpScope(event, "servers:read"),
   handler: async () => {
-    const { user } = useMcpAuth();
     const servers = await useDocker(useEvent()).listServers();
-    const grants = user.admin ? null : await grantsForUser(user.id);
-
-    return servers.flatMap((server) => {
-      const access = grants
-        ? server.volume
-          ? grants.get(server.volume)
-          : undefined
-        : "admin";
-      if (!access) return [];
-      return [
-        {
-          id: server.id,
-          name: server.name,
-          type: server.type,
-          version: server.config?.VERSION?.label ?? null,
-          address: server.domain || null,
-          running: server.running,
-          access,
-        },
-      ];
-    });
+    const visible = await serversForToken(
+      useMcpAuth(),
+      servers,
+      "servers:read"
+    );
+    return visible.map((server) => ({
+      id: server.id,
+      name: server.name,
+      type: server.type,
+      version: server.config?.VERSION?.label ?? null,
+      address: server.domain || null,
+      running: server.running,
+      access: server.access,
+    }));
   },
 });

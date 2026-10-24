@@ -15,33 +15,19 @@ export default defineMcpTool({
   },
   handler: async ({ server: ref }) => {
     const { server, event } = await requireMcpServer(ref, "servers:read");
+    const players = await getPlayerOverview(event, server.id);
     // Unresolvable entries (offline-mode players) fall back to their UUID so
     // they stay visible instead of disappearing from the list.
     const names = (list: PlayerListEntry[]) =>
       list.map((entry) => entry.name || entry.uuid);
-    const [whitelist, operators] = await Promise.all([
-      readPlayerList(server.id, "whitelist").then(names),
-      readPlayerList(server.id, "ops").then(names),
-    ]);
-    if (!server.running) {
-      return { running: false, online: [], whitelist, operators };
-    }
-    try {
-      return await withRcon(event, server.id, async (rcon) => ({
-        running: true,
-        online: parsePlayerNames(await rcon.send("list")),
-        whitelist,
-        operators,
-      }));
-    } catch {
-      // RCON comes up late in the boot sequence.
-      return {
-        running: true,
-        starting: true,
-        online: [],
-        whitelist,
-        operators,
-      };
-    }
+    return {
+      running: players.running,
+      // RCON comes up late in the boot sequence; changes wait until then.
+      starting: players.running && players.offline,
+      online: players.online.map((player) => player.name),
+      whitelist: names(players.whitelist),
+      operators: names(players.ops),
+      whitelistEnabled: players.settings.enabled,
+    };
   },
 });

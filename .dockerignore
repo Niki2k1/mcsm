@@ -14,3 +14,4 @@ node-compile-cache
 Dockerfile
 .dockerignore
 README.md
+integrations

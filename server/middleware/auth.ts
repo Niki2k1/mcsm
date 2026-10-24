@@ -12,6 +12,9 @@ import type { UserRow } from "../utils/auth";
  *  - /api/resource-packs — Minecraft game clients download packs from here
  *  - /map/<volume> — when that volume's map has been published (toggle on the
  *    Map panel); otherwise it stays login-only
+ *  - /api/v1 — the public API, which takes a bearer token (personal access
+ *    token or OAuth) instead of a session; each handler checks scope, server
+ *    restriction and role (see bearerAuth.ts)
  *
  * Logged-in users are then authorized: admin-only areas need the admin flag,
  * per-server routes and maps need a grant on that server (see serverAccess.ts).
@@ -40,6 +43,10 @@ export default defineEventHandler(async (event) => {
 
   if (PUBLIC_PREFIXES.some((prefix) => path.startsWith(prefix))) return;
 
+  // Token-only: no session cookies, so it can't be driven cross-site from a
+  // logged-in browser.
+  if (path.startsWith(PUBLIC_API_PREFIX)) return authenticateApiRequest(event);
+
   // Published maps are world-readable; everything else needs a session.
   if (isMap) {
     const volume = path.split("/")[2] ?? "";
@@ -61,6 +68,50 @@ export default defineEventHandler(async (event) => {
     statusMessage: "Authentication required",
   });
 });
+
+const PUBLIC_API_PREFIX = "/api/v1/";
+
+// Valid tokens are unguessable, so this only stops a misconfigured client
+// from hammering the database with a revoked token.
+const failedTokenAttempts = createRateLimiter({ limit: 30, windowMs: 60_000 });
+// Generous for a bot; mainly bounds how many RCON connections and Docker
+// archive reads one leaked or looping token can trigger.
+const TOKEN_RATE_LIMIT = 120;
+const tokenRequests = createRateLimiter({
+  limit: TOKEN_RATE_LIMIT,
+  windowMs: 60_000,
+});
+
+async function authenticateApiRequest(event: H3Event) {
+  const ip = getRequestIP(event, { xForwardedFor: true }) ?? "unknown";
+  if (failedTokenAttempts.isBlocked(ip)) throw tooManyRequests(event, 60);
+
+  const auth = await authenticateBearer(event);
+  if (!auth) {
+    failedTokenAttempts.hit(ip);
+    setHeader(event, "WWW-Authenticate", 'Bearer realm="mcsm"');
+    throw createError({
+      statusCode: 401,
+      statusMessage: "Invalid, expired or missing token",
+    });
+  }
+
+  // OAuth access tokens rotate, so their user is the stable key.
+  const key = auth.tokenId ? `pat:${auth.tokenId}` : `oauth:${auth.user.id}`;
+  const { allowed, remaining, resetAt } = tokenRequests.hit(key);
+  const retryAfter = Math.max(1, Math.ceil((resetAt - Date.now()) / 1000));
+  setHeader(event, "RateLimit-Limit", String(TOKEN_RATE_LIMIT));
+  setHeader(event, "RateLimit-Remaining", String(remaining));
+  setHeader(event, "RateLimit-Reset", String(retryAfter));
+  if (!allowed) throw tooManyRequests(event, retryAfter);
+
+  event.context.bearerAuth = auth;
+}
+
+function tooManyRequests(event: H3Event, retryAfterSeconds: number) {
+  setHeader(event, "Retry-After", String(retryAfterSeconds));
+  return createError({ statusCode: 429, statusMessage: "Too many requests" });
+}
 
 const ADMIN_PREFIXES = ["/api/admin/", "/api/users"];
 

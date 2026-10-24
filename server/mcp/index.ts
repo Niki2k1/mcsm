@@ -29,6 +29,6 @@ export default defineMcpHandler({
         }
       );
     }
-    event.context.mcpAuth = auth;
+    event.context.bearerAuth = auth;
   },
 });

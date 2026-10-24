@@ -11,6 +11,8 @@ export default defineEventHandler(async (event) => {
       name: apiTokens.name,
       prefix: apiTokens.prefix,
       scopes: apiTokens.scopes,
+      servers: apiTokens.servers,
+      expiresAt: apiTokens.expiresAt,
       createdAt: apiTokens.createdAt,
       lastUsedAt: apiTokens.lastUsedAt,
     })
