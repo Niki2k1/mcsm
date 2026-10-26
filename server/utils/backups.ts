@@ -100,9 +100,10 @@ export async function getBackup(volume: string, backupId: number) {
  * around the tar so the snapshot is consistent, and re-enabled afterwards.
  */
 export async function createBackup(
-  event: H3Event,
+  event: H3Event | undefined,
   serverId: string,
-  label?: string
+  label?: string,
+  options: { automatic?: boolean } = {}
 ) {
   const { getServer, docker, ensureImage, backupSource, ensureBackupStore } =
     useDocker(event);
@@ -177,6 +178,7 @@ export async function createBackup(
         createdAt: Date.now(),
         label: label ?? null,
         state: "done",
+        automatic: options.automatic ?? false,
       })
       .returning();
 
@@ -437,7 +439,7 @@ export async function uploadBackup(
 
 /** Delete a backup tarball and its metadata. */
 export async function deleteBackup(
-  event: H3Event,
+  event: H3Event | undefined,
   serverId: string,
   backupId: number
 ) {

@@ -36,6 +36,13 @@
       "when": 1792749382486,
       "tag": "0004_clammy_supernaut",
       "breakpoints": true
+    },
+    {
+      "idx": 5,
+      "version": "6",
+      "when": 1792934772016,
+      "tag": "0005_loose_shatterstar",
+      "breakpoints": true
     }
   ]
 }
