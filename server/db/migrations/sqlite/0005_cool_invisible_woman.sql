@@ -12,4 +12,5 @@ CREATE TABLE `backup_schedules` (
 	`last_error` text
 );
 --> statement-breakpoint
+ALTER TABLE `backups` ADD `engine` text DEFAULT 'tar' NOT NULL;--> statement-breakpoint
 ALTER TABLE `backups` ADD `automatic` integer DEFAULT false NOT NULL;

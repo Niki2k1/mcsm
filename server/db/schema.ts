@@ -69,8 +69,14 @@ export const backups = sqliteTable(
   {
     id: integer("id").primaryKey({ autoIncrement: true }),
     volume: text("volume").notNull(),
-    /** Tarball filename inside the mcsm-backups volume, e.g. `mc-smp/172....tar.gz`. */
+    /**
+     * Tarball path inside the backup store (`mc-smp/172....tar.gz`), or
+     * `restic/<snapshot id>` for restic backups.
+     */
     filename: text("filename").notNull().unique(),
+    /** restic | tar */
+    engine: text("engine").notNull().default("tar"),
+    /** Tarball size; for restic, the new data this backup added to the store. */
     sizeBytes: integer("size_bytes"),
     createdAt: integer("created_at").notNull(),
     label: text("label"),

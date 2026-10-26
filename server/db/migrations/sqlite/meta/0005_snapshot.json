@@ -1,7 +1,7 @@
 {
   "version": "6",
   "dialect": "sqlite",
-  "id": "97d9b885-681e-4613-ac43-5f5ad6355675",
+  "id": "5c930c27-be63-4153-9b74-c3447f10f206",
   "prevId": "3169cf66-a570-4ec7-bd3f-074797caf457",
   "tables": {
     "activity_events": {
@@ -269,6 +269,14 @@
           "primaryKey": false,
           "notNull": true,
           "autoincrement": false
+        },
+        "engine": {
+          "name": "engine",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true,
+          "autoincrement": false,
+          "default": "'tar'"
         },
         "size_bytes": {
           "name": "size_bytes",

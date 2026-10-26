@@ -164,7 +164,13 @@
             </p>
             <p class="text-xs text-muted">
               {{ formatDate(backup.createdAt) }} ·
-              {{ formatSize(backup.sizeBytes) }}
+              <span
+                v-if="backup.engine === 'restic'"
+                title="New data this backup stored. Unchanged parts of the world are shared with the other backups."
+              >
+                +{{ formatSize(backup.sizeBytes) }} new
+              </span>
+              <template v-else>{{ formatSize(backup.sizeBytes) }}</template>
             </p>
           </div>
           <div class="flex gap-2 shrink-0">
@@ -265,6 +271,7 @@ type Backup = {
   id: number;
   volume: string;
   filename: string;
+  engine: "restic" | "tar";
   sizeBytes: number | null;
   createdAt: number;
   label: string | null;
