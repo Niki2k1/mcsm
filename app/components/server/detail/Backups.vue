@@ -4,6 +4,86 @@
       <template #header>
         <div class="flex flex-wrap items-center justify-between gap-3">
           <div>
+            <h3 class="font-semibold">Automatic backups</h3>
+            <p class="text-sm text-muted">
+              Back up the world on a schedule and keep the newest ones. Manual
+              backups are never deleted.
+            </p>
+          </div>
+          <USwitch
+            v-model="schedule.enabled"
+            label="Enabled"
+            :disabled="savingSchedule"
+          />
+        </div>
+      </template>
+
+      <div class="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
+        <UFormField label="Every">
+          <USelect
+            v-model="schedule.intervalHours"
+            :items="intervalItems"
+            class="w-full"
+            :disabled="!schedule.enabled"
+          />
+        </UFormField>
+        <UFormField
+          :label="schedule.intervalHours < 24 ? 'Starting at' : 'At'"
+          :hint="timeZone"
+        >
+          <UInput
+            v-model="schedule.atTime"
+            type="time"
+            class="w-full"
+            :disabled="!schedule.enabled"
+          />
+        </UFormField>
+        <UFormField label="Keep" hint="automatic backups">
+          <UInputNumber
+            v-model="schedule.keep"
+            :min="1"
+            :max="100"
+            class="w-full"
+            :disabled="!schedule.enabled"
+          />
+        </UFormField>
+        <UFormField label="Skip idle slots">
+          <UCheckbox
+            v-model="schedule.onlyIfPlayed"
+            label="Only when someone played"
+            class="pt-1.5"
+            :disabled="!schedule.enabled"
+          />
+        </UFormField>
+      </div>
+
+      <template #footer>
+        <div class="flex flex-wrap items-center justify-between gap-3">
+          <p class="text-sm text-muted">
+            <template v-if="savedSchedule?.enabled && savedSchedule.nextRunAt">
+              Next backup {{ formatDate(savedSchedule.nextRunAt) }}.
+            </template>
+            <template v-else>No automatic backups.</template>
+            <template v-if="savedSchedule?.lastRunAt">
+              Last run {{ formatDate(savedSchedule.lastRunAt) }}:
+              <span :class="lastResultClass">{{ lastResultText }}</span>
+            </template>
+          </p>
+          <UButton
+            :loading="savingSchedule"
+            :disabled="!scheduleDirty"
+            @click="saveSchedule"
+          >
+            Save schedule
+          </UButton>
+        </div>
+      </template>
+    </UCard>
+
+    <UCard>
+      <template #header>
+        <div class="flex flex-wrap items-center justify-between gap-3">
+          <div>
             <h3 class="font-semibold">World backups</h3>
             <p class="text-sm text-muted">
               Snapshots of the world volume, stored on the
@@ -71,12 +151,26 @@
             class="size-5 text-muted shrink-0"
           />
           <div class="min-w-0 flex-1">
-            <p class="text-sm font-medium">
+            <p class="text-sm font-medium flex items-center gap-2">
               {{ backup.label || formatDate(backup.createdAt) }}
+              <UBadge
+                v-if="backup.automatic"
+                size="sm"
+                variant="subtle"
+                color="neutral"
+              >
+                Auto
+              </UBadge>
             </p>
             <p class="text-xs text-muted">
               {{ formatDate(backup.createdAt) }} ·
-              {{ formatSize(backup.sizeBytes) }}
+              <span
+                v-if="backup.engine === 'restic'"
+                title="New data this backup stored. Unchanged parts of the world are shared with the other backups."
+              >
+                +{{ formatSize(backup.sizeBytes) }} new
+              </span>
+              <template v-else>{{ formatSize(backup.sizeBytes) }}</template>
             </p>
           </div>
           <div class="flex gap-2 shrink-0">
@@ -177,10 +271,25 @@ type Backup = {
   id: number;
   volume: string;
   filename: string;
+  engine: "restic" | "tar";
   sizeBytes: number | null;
   createdAt: number;
   label: string | null;
   state: string;
+  automatic: boolean;
+};
+
+type Schedule = {
+  enabled: boolean;
+  intervalHours: number;
+  atTime: string;
+  timeZone: string;
+  keep: number;
+  onlyIfPlayed: boolean;
+  nextRunAt: number | null;
+  lastRunAt: number | null;
+  lastResult: "done" | "skipped" | "failed" | null;
+  lastError: string | null;
 };
 
 const { id, refresh: refreshServer } = useServerDetail();
@@ -190,6 +299,105 @@ const { data: backups, refresh } = useFetch<Backup[]>(
   () => `/api/server/${id.value}/backups`,
   { default: () => [] }
 );
+
+// --- Schedule ---------------------------------------------------------------
+
+// Times are entered in the browser's zone and stored with it, so "04:00" stays
+// the viewer's 04:00 no matter which zone the MCSM container runs in.
+const timeZone = Intl.DateTimeFormat().resolvedOptions().timeZone;
+
+const intervalItems = [
+  { label: "Hour", value: 1 },
+  { label: "2 hours", value: 2 },
+  { label: "3 hours", value: 3 },
+  { label: "4 hours", value: 4 },
+  { label: "6 hours", value: 6 },
+  { label: "8 hours", value: 8 },
+  { label: "12 hours", value: 12 },
+  { label: "Day", value: 24 },
+  { label: "2 days", value: 48 },
+  { label: "3 days", value: 72 },
+  { label: "Week", value: 168 },
+];
+
+const { data: savedSchedule, refresh: refreshSchedule } = useFetch<Schedule>(
+  () => `/api/server/${id.value}/backups/schedule`
+);
+
+const schedule = reactive({
+  enabled: false,
+  intervalHours: 24,
+  atTime: "04:00",
+  keep: 7,
+  onlyIfPlayed: true,
+});
+watch(
+  savedSchedule,
+  (saved) => {
+    if (!saved) return;
+    Object.assign(schedule, {
+      enabled: saved.enabled,
+      intervalHours: saved.intervalHours,
+      atTime: saved.atTime,
+      keep: saved.keep,
+      onlyIfPlayed: saved.onlyIfPlayed,
+    });
+  },
+  { immediate: true }
+);
+
+const scheduleDirty = computed(() => {
+  const saved = savedSchedule.value;
+  if (!saved) return false;
+  return (
+    saved.enabled !== schedule.enabled ||
+    saved.intervalHours !== schedule.intervalHours ||
+    saved.atTime !== schedule.atTime ||
+    saved.keep !== schedule.keep ||
+    saved.onlyIfPlayed !== schedule.onlyIfPlayed ||
+    // Re-saving from another zone moves the slots, so count it as a change.
+    (schedule.enabled && saved.timeZone !== timeZone)
+  );
+});
+
+const lastResultText = computed(() => {
+  const saved = savedSchedule.value;
+  if (saved?.lastResult === "done") return "backup created";
+  if (saved?.lastResult === "skipped")
+    return saved.lastError ?? "skipped, nobody played";
+  if (saved?.lastResult === "failed") return saved.lastError ?? "failed";
+  return "";
+});
+const lastResultClass = computed(() =>
+  savedSchedule.value?.lastResult === "failed" ? "text-error" : ""
+);
+
+const savingSchedule = ref(false);
+
+async function saveSchedule() {
+  savingSchedule.value = true;
+  try {
+    savedSchedule.value = await $fetch<Schedule>(
+      `/api/server/${id.value}/backups/schedule`,
+      { method: "PUT", body: { ...schedule, timeZone } }
+    );
+    toast.add({
+      title: schedule.enabled
+        ? "Backup schedule saved"
+        : "Automatic backups turned off",
+      color: "success",
+    });
+  } catch (error) {
+    toast.add({
+      title: "Could not save the schedule",
+      description: errorMessage(error, "Saving the schedule failed."),
+      color: "error",
+    });
+    await refreshSchedule();
+  } finally {
+    savingSchedule.value = false;
+  }
+}
 
 // --- Create -----------------------------------------------------------------
 

@@ -20,6 +20,7 @@ export default defineMcpTool({
       id: backup.id,
       label: backup.label,
       state: backup.state,
+      engine: backup.engine,
       sizeBytes: backup.sizeBytes,
       createdAt: new Date(backup.createdAt).toISOString(),
     }));

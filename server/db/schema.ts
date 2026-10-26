@@ -69,16 +69,49 @@ export const backups = sqliteTable(
   {
     id: integer("id").primaryKey({ autoIncrement: true }),
     volume: text("volume").notNull(),
-    /** Tarball filename inside the mcsm-backups volume, e.g. `mc-smp/172....tar.gz`. */
+    /**
+     * Tarball path inside the backup store (`mc-smp/172....tar.gz`), or
+     * `restic/<snapshot id>` for restic backups.
+     */
     filename: text("filename").notNull().unique(),
+    /** restic | tar */
+    engine: text("engine").notNull().default("tar"),
+    /** Tarball size; for restic, the new data this backup added to the store. */
     sizeBytes: integer("size_bytes"),
     createdAt: integer("created_at").notNull(),
     label: text("label"),
     /** running | done | failed */
     state: text("state").notNull().default("done"),
+    /** Made by the backup schedule; only these are pruned by its retention. */
+    automatic: integer("automatic", { mode: "boolean" })
+      .notNull()
+      .default(false),
   },
   (table) => [index("backups_volume_idx").on(table.volume)]
 );
+
+/** Automatic backup schedule per server, keyed by world volume. */
+export const backupSchedules = sqliteTable("backup_schedules", {
+  volume: text("volume").primaryKey(),
+  enabled: integer("enabled", { mode: "boolean" }).notNull().default(false),
+  intervalHours: integer("interval_hours").notNull().default(24),
+  /** "HH:MM" the slots are anchored to, in `timeZone`. */
+  atTime: text("at_time").notNull().default("04:00"),
+  /** IANA zone of whoever saved the schedule, so "04:00" means their 04:00. */
+  timeZone: text("time_zone").notNull().default("UTC"),
+  /** Automatic backups to keep; older ones are deleted after each run. */
+  keep: integer("keep").notNull().default(7),
+  /** Skip a slot when nobody played since the last automatic backup. */
+  onlyIfPlayed: integer("only_if_played", { mode: "boolean" })
+    .notNull()
+    .default(true),
+  /** When the schedule was last saved; slots before it are never caught up. */
+  updatedAt: integer("updated_at").notNull(),
+  lastRunAt: integer("last_run_at"),
+  /** done | skipped | failed */
+  lastResult: text("last_result"),
+  lastError: text("last_error"),
+});
 
 /**
  * Current world pre-generation (Chunky) task per server — one row per volume.
