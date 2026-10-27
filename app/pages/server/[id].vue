@@ -302,7 +302,7 @@ const allTabs = computed(() => [
     label:
       server.value?.config?.type === "PAPER"
         ? "Plugins"
-        : ["FABRIC", "FORGE", "AUTO_CURSEFORGE"].includes(
+        : ["FABRIC", "FORGE", "NEOFORGE", "AUTO_CURSEFORGE"].includes(
               server.value?.config?.type ?? ""
             )
           ? "Mods"

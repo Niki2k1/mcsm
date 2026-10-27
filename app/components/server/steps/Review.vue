@@ -133,6 +133,7 @@ import modrinth from "~/assets/modrinth.svg";
 import paper from "~/assets/paper.svg";
 import fabric from "~/assets/fabric.png";
 import forge from "~/assets/forge.svg";
+import neoforge from "~/assets/neoforge.svg";
 
 const form = useCreateForm();
 
@@ -145,6 +146,7 @@ const typeMeta = computed(() => {
     PAPER: { name: "Paper", icon: paper },
     FABRIC: { name: "Fabric", icon: fabric },
     FORGE: { name: "Forge", icon: forge },
+    NEOFORGE: { name: "NeoForge", icon: neoforge },
   };
 
   return form.value.type ? types[form.value.type] : null;
@@ -153,7 +155,7 @@ const typeMeta = computed(() => {
 const bluemapEnabled = computed(
   () =>
     form.value.BLUEMAP &&
-    ["PAPER", "FABRIC", "FORGE", "AUTO_CURSEFORGE"].includes(
+    ["PAPER", "FABRIC", "FORGE", "NEOFORGE", "AUTO_CURSEFORGE"].includes(
       form.value.type ?? ""
     )
 );

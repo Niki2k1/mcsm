@@ -19,7 +19,8 @@
         </p>
         <p class="max-w-md mx-auto">
           The 3D web map uses the BlueMap plugin, which needs a server that can
-          load plugins or mods — Paper, Fabric, Forge or a CurseForge modpack.
+          load plugins or mods — Paper, Fabric, Forge, NeoForge or a CurseForge
+          modpack.
         </p>
       </div>
     </UCard>

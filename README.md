@@ -34,7 +34,7 @@ Properties → Review) for creating new servers.
   keeping the world volume; every action lands in a per-server activity feed.
 - **In-game server list preview** — see your server exactly as players do:
   icon, live MOTD, player count and latency, rendered in the Minecraft font.
-- **Multiple server types** — Vanilla, Paper, Fabric, Forge, Feed The Beast
+- **Multiple server types** — Vanilla, Paper, Fabric, Forge, NeoForge, Feed The Beast
   and CurseForge modpacks.
 - **Operators & whitelist** — look players up by username; their UUID and skin
   avatar are resolved from Mojang automatically. Online players can be kicked
@@ -475,6 +475,6 @@ Infrarust code.
   `public/`) and [Poppins](https://github.com/itfoundry/Poppins) are licensed
   under the SIL Open Font License 1.1 ([`public/OFL.txt`](public/OFL.txt)).
 - **Logos** — the MCSM logo and the Vanilla "V" icon are original artwork. The
-  CurseForge, Feed The Beast, Forge, Paper, Fabric and Modrinth logos are
+  CurseForge, Feed The Beast, Forge, NeoForge, Paper, Fabric and Modrinth logos are
   trademarks of their respective owners and are only used to identify the
   server types MCSM can run.

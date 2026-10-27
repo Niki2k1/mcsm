@@ -7,7 +7,13 @@ import { serverConfigSchema } from "../../../schema/server.schema";
  * meaningful migration would need modpack ids the danger zone doesn't collect
  * — creating a fresh server is the honest path there.
  */
-const MIGRATION_TARGETS = ["VANILLA", "PAPER", "FABRIC", "FORGE"] as const;
+const MIGRATION_TARGETS = [
+  "VANILLA",
+  "PAPER",
+  "FABRIC",
+  "FORGE",
+  "NEOFORGE",
+] as const;
 
 /**
  * Migrate a server to a different variant (danger zone).

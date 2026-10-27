@@ -173,7 +173,7 @@ And everything else a server needs
   Guided setup wizard
 
   #description
-  Pick a type — Vanilla, Paper, Fabric, Forge, FTB or CurseForge — choose a
+  Pick a type — Vanilla, Paper, Fabric, Forge, NeoForge, FTB or CurseForge — choose a
   version, configure the world and go live in minutes.
   :::
 

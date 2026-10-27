@@ -448,6 +448,7 @@ import vanilla from "~/assets/vanilla.webp";
 import paper from "~/assets/paper.svg";
 import fabric from "~/assets/fabric.png";
 import forge from "~/assets/forge.svg";
+import neoforge from "~/assets/neoforge.svg";
 import {
   serverTypeSupportsVoiceChat,
   VOICE_CHAT_DEFAULT_PORT,
@@ -672,6 +673,12 @@ const VARIANTS = [
     name: "Forge",
     icon: forge,
     description: "The classic mod loader.",
+  },
+  {
+    value: "NEOFORGE",
+    name: "NeoForge",
+    icon: neoforge,
+    description: "A modding API for Minecraft: Java Edition, based on Forge.",
   },
 ];
 

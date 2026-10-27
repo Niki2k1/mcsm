@@ -24,6 +24,7 @@ export const serverConfigSchema = v.object({
     "PAPER",
     "FABRIC",
     "FORGE",
+    "NEOFORGE",
   ]),
   name: v.string(),
   domain: v.string(),
@@ -146,7 +147,7 @@ export const serverConfigSchema = v.object({
   /**
    * BlueMap 3D web map (https://bluemap.bluecolored.de). Auto-installed from
    * Modrinth and served through MCSM at /map/<volume>/. Only applies to
-   * plugin/mod-capable types (Paper/Fabric/Forge).
+   * plugin/mod-capable types (Paper/Fabric/Forge/NeoForge).
    */
   BLUEMAP: v.optional(v.boolean(), false),
   /**
