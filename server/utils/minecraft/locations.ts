@@ -68,8 +68,10 @@ export function worldRegionRoot(level?: string | null): string | null {
 /**
  * Directory roots (relative to /data) the file manager may touch: plugin
  * configs live next to the jars; mod configs live in config/, plus the active
- * world's serverconfig/ (Forge/NeoForge per-world configs). Every type also
- * gets the active world's datapacks/.
+ * world's serverconfig/ (Forge/NeoForge per-world configs). Paper also needs
+ * config/, because since 1.19 it keeps paper-global.yml and
+ * paper-world-defaults.yml there instead of in /data. Every type also gets the
+ * active world's datapacks/.
  */
 export function configRoots(
   type?: string | null,
@@ -77,7 +79,7 @@ export function configRoots(
 ): string[] {
   if (!serverTypeSupportsJars(type)) return [];
 
-  const roots = type === "PAPER" ? ["plugins"] : ["config"];
+  const roots = type === "PAPER" ? ["plugins", "config"] : ["config"];
   if (type !== "PAPER") {
     const worldServerConfig = worldServerConfigRoot(level);
     if (worldServerConfig) roots.push(worldServerConfig);
@@ -89,7 +91,7 @@ export function configRoots(
 
 /**
  * Root-level files (directly in /data) that are also editable — server configs
- * like bukkit.yml, spigot.yml, paper-global.yml. Matched by extension.
+ * like bukkit.yml, spigot.yml, commands.yml. Matched by extension.
  * server.properties is intentionally NOT editable: itzg regenerates it from
  * env vars on every start, so edits there would be silently lost.
  */
