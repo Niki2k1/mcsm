@@ -103,7 +103,7 @@ own license. Contact: info@niki2k1.dev
 NOT AN OFFICIAL MINECRAFT PRODUCT. NOT APPROVED BY OR ASSOCIATED WITH MOJANG
 OR MICROSOFT. Minecraft is a trademark of Mojang AB.
 
-The CurseForge, Feed The Beast, Forge, Paper, Fabric and Modrinth names and
+The CurseForge, Feed The Beast, Forge, NeoForge, Paper, Fabric and Modrinth names and
 logos are trademarks of their respective owners and are used only to identify
 the server types MCSM can run.
 

@@ -66,7 +66,7 @@ export type CreateForm = {
   GENERATE_STRUCTURES: boolean;
 
   // Integrations
-  /** BlueMap 3D web map (Paper/Fabric/Forge only). */
+  /** BlueMap 3D web map (Paper/Fabric/Forge/NeoForge only). */
   BLUEMAP: boolean;
   /** Simple Voice Chat on its own published UDP port. */
   VOICE_CHAT: boolean;

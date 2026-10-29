@@ -14,6 +14,7 @@ export const JAR_SUPPORTED_TYPES = [
   "PAPER",
   "FABRIC",
   "FORGE",
+  "NEOFORGE",
   "AUTO_CURSEFORGE",
 ] as const;
 

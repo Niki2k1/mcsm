@@ -731,7 +731,9 @@ const customProperties = nullableField("CUSTOM_SERVER_PROPERTIES");
 // Modpack types pin their own Minecraft version, so only the plain server
 // types get a version picker. itzg honours VERSION for all of these.
 const supportsVersion = computed(() =>
-  ["VANILLA", "PAPER", "FABRIC", "FORGE"].includes(form.value?.type ?? "")
+  ["VANILLA", "PAPER", "FABRIC", "FORGE", "NEOFORGE"].includes(
+    form.value?.type ?? ""
+  )
 );
 
 const version = computed({

@@ -118,7 +118,7 @@ async function modrinthFetch<T>(
  */
 export function modrinthLoader(
   type: string | null | undefined
-): "paper" | "fabric" | "forge" | null {
+): "paper" | "fabric" | "forge" | "neoforge" | null {
   switch (type) {
     case "PAPER":
       return "paper";
@@ -126,6 +126,8 @@ export function modrinthLoader(
       return "fabric";
     case "FORGE":
       return "forge";
+    case "NEOFORGE":
+      return "neoforge";
     default:
       return null;
   }

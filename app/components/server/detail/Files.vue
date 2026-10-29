@@ -18,7 +18,7 @@
           {{
             server?.config?.type === "FTBA"
               ? "The Feed The Beast installer owns the mods folder and re-syncs it on every start — manually added files would be removed again."
-              : "Vanilla servers have no plugin or mod loader. Use a Paper, Fabric, Forge or CurseForge modpack server to install plugins or mods."
+              : "Vanilla servers have no plugin or mod loader. Use a Paper, Fabric, Forge, NeoForge or CurseForge modpack server to install plugins or mods."
           }}
         </p>
       </div>
@@ -290,7 +290,7 @@ const toast = useToast();
 
 // --- Type gating ----------------------------------------------------------------
 
-const SUPPORTED = ["PAPER", "FABRIC", "FORGE", "AUTO_CURSEFORGE"];
+const SUPPORTED = ["PAPER", "FABRIC", "FORGE", "NEOFORGE", "AUTO_CURSEFORGE"];
 const supported = computed(() =>
   SUPPORTED.includes(server.value?.config?.type ?? "")
 );

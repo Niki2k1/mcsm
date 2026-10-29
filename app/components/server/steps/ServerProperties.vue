@@ -147,7 +147,7 @@ const formFields: FormField[] = [
 const form = useCreateForm();
 
 const bluemapSupported = computed(() =>
-  ["PAPER", "FABRIC", "FORGE", "AUTO_CURSEFORGE"].includes(
+  ["PAPER", "FABRIC", "FORGE", "NEOFORGE", "AUTO_CURSEFORGE"].includes(
     form.value.type ?? ""
   )
 );

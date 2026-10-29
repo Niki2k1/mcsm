@@ -63,6 +63,7 @@ import modrinth from "~/assets/modrinth.svg";
 import paper from "~/assets/paper.svg";
 import fabric from "~/assets/fabric.png";
 import forge from "~/assets/forge.svg";
+import neoforge from "~/assets/neoforge.svg";
 
 const form = useCreateForm();
 
@@ -174,6 +175,13 @@ const types: {
     description:
       "Minecraft Forge is a free, open-source server that allows players to install and run Minecraft mods.",
     icon: forge,
+    customFields: [versionField],
+  },
+  {
+    name: "NeoForge",
+    value: "NEOFORGE",
+    description: "A modding API for Minecraft: Java Edition, based on Forge",
+    icon: neoforge,
     customFields: [versionField],
   },
 ];
