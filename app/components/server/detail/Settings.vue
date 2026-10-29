@@ -168,6 +168,26 @@
 
       <div class="divide-y divide-default">
         <div
+          class="flex flex-wrap items-center justify-between gap-4 py-4 first:pt-0 last:pb-0"
+        >
+          <div class="min-w-0">
+            <p class="text-sm font-medium">Reset world</p>
+            <p class="text-xs text-muted">
+              Backs up the current world, then starts a fresh one. Earlier
+              worlds stay restorable from Backups.
+            </p>
+          </div>
+          <UButton
+            color="error"
+            variant="soft"
+            :loading="resetting"
+            @click="resetOpen = true"
+          >
+            Reset world
+          </UButton>
+        </div>
+
+        <div
           v-if="server.config"
           class="flex flex-wrap items-center justify-between gap-4 py-4 first:pt-0 last:pb-0"
         >
@@ -216,6 +236,38 @@
         </div>
       </div>
     </UCard>
+
+    <!-- World reset confirmation -->
+    <UModal
+      v-model:open="resetOpen"
+      title="Reset world"
+      description="The current world is backed up first, then deleted. The server boots a brand-new world."
+    >
+      <template #body>
+        <UAlert
+          icon="i-heroicons-archive-box"
+          color="info"
+          variant="soft"
+          title="Nothing is lost"
+          :description="`A backup is created automatically before the reset. Restore it anytime from Backups.${server?.running ? ' The server restarts during the reset.' : ''}`"
+        />
+      </template>
+      <template #footer>
+        <div class="flex justify-end gap-2 w-full">
+          <UButton
+            color="neutral"
+            variant="ghost"
+            :disabled="resetting"
+            @click="resetOpen = false"
+          >
+            Keep current world
+          </UButton>
+          <UButton color="error" :loading="resetting" @click="resetWorld">
+            Back up &amp; reset
+          </UButton>
+        </div>
+      </template>
+    </UModal>
 
     <!-- Delete confirmation -->
     <UModal
@@ -398,7 +450,7 @@
             color="warning"
             variant="soft"
             title="Plugins and mods don't carry over"
-            description="Files only the old variant can load (its plugins/mods and loader files) are removed, and world features added by mods stop working. Everything is backed up first, so the old setup stays restorable from the Backups tab. The server starts after the migration to install the new software."
+            description="Files only the old variant can load (its plugins/mods and loader files) are removed, and world features added by mods stop working. Everything is backed up first, so the old setup stays restorable from Backups. The server starts after the migration to install the new software."
           />
 
           <p class="text-sm">
@@ -640,6 +692,40 @@ async function runRelocate() {
     });
   } finally {
     relocating.value = false;
+  }
+}
+
+// --- World reset ---------------------------------------------------------------
+
+const resetOpen = ref(false);
+const resetting = ref(false);
+
+async function resetWorld() {
+  resetting.value = true;
+  try {
+    const result = await $fetch<{ backupId: number; restarted: boolean }>(
+      `/api/server/${id.value}/world/reset`,
+      { method: "POST" }
+    );
+    resetOpen.value = false;
+    toast.add({
+      title: "World reset",
+      description: `The previous world was saved as backup #${result.backupId}. ${
+        result.restarted
+          ? "A fresh world is generating."
+          : "A fresh world generates on the next start."
+      }`,
+      color: "success",
+    });
+    await refreshServer();
+  } catch (error) {
+    toast.add({
+      title: "World reset failed",
+      description: errorMessage(error, "Could not reset the world."),
+      color: "error",
+    });
+  } finally {
+    resetting.value = false;
   }
 }
 

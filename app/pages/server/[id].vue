@@ -1,6 +1,6 @@
 <template>
   <UContainer>
-    <UPage>
+    <div>
       <!-- Not found -->
       <div v-if="error" class="py-24 text-center text-muted space-y-4">
         <UIcon
@@ -46,9 +46,25 @@
                 <!-- Live MOTD as the server reports it -->
                 <MotdPreview v-if="motd" :motd="motd" />
 
-                <p class="font-mono text-sm text-muted truncate">
-                  {{ server.domain }}
-                </p>
+                <div class="flex items-center gap-1 min-w-0">
+                  <p class="font-mono text-sm text-muted truncate">
+                    {{ server.domain }}
+                  </p>
+                  <UTooltip :text="copied ? 'Copied' : 'Copy address'">
+                    <UButton
+                      :icon="
+                        copied
+                          ? 'i-heroicons-check-20-solid'
+                          : 'i-heroicons-clipboard-20-solid'
+                      "
+                      :color="copied ? 'success' : 'neutral'"
+                      variant="ghost"
+                      size="xs"
+                      aria-label="Copy server address"
+                      @click="copyAddress"
+                    />
+                  </UTooltip>
+                </div>
               </div>
             </div>
 
@@ -86,18 +102,42 @@
           </div>
         </div>
 
-        <!-- Tab bar (Vercel/GitHub style) -->
-        <UNavigationMenu
-          :items="tabs"
-          highlight
-          class="border-b border-default -mx-4 px-4 sm:-mx-6 sm:px-6 mt-6"
-        />
+        <UPage>
+          <template #left>
+            <UPageAside>
+              <UNavigationMenu
+                :items="navGroups"
+                orientation="vertical"
+                highlight
+              />
+            </UPageAside>
+          </template>
 
-        <UPageBody>
-          <NuxtPage />
-        </UPageBody>
+          <!-- The aside only shows from lg up; a horizontal tab bar can't fit eleven entries on a phone. -->
+          <UDropdownMenu
+            :items="navGroups"
+            :content="{ align: 'start' }"
+            :ui="{ content: 'w-(--reka-dropdown-menu-trigger-width)' }"
+            class="lg:hidden"
+          >
+            <UButton
+              :icon="activeTab?.icon"
+              :label="activeTab?.label"
+              trailing-icon="i-heroicons-chevron-up-down-20-solid"
+              color="neutral"
+              variant="outline"
+              block
+              class="mt-6 justify-start"
+              :ui="{ trailingIcon: 'ms-auto' }"
+            />
+          </UDropdownMenu>
+
+          <UPageBody>
+            <NuxtPage />
+          </UPageBody>
+        </UPage>
       </template>
-    </UPage>
+    </div>
   </UContainer>
 </template>
 
@@ -205,6 +245,15 @@ const motd = computed(() => chatToMotd(ping.value?.status?.description));
 /** Header icon: a just-uploaded icon shows immediately, before any restart. */
 const favicon = displayFavicon;
 
+const copied = ref(false);
+
+async function copyAddress() {
+  if (!server.value) return;
+  await navigator.clipboard.writeText(server.value.domain);
+  copied.value = true;
+  setTimeout(() => (copied.value = false), 2000);
+}
+
 const breadcrumb = computed(() => [
   { label: "Servers", to: "/", icon: "i-heroicons-squares-2x2-16-solid" },
   { label: server.value?.name ?? "Server" },
@@ -238,89 +287,139 @@ const statusText = computed(() => {
   }
 });
 
-// --- Tabs --------------------------------------------------------------------
+// --- Navigation -------------------------------------------------------------
 
-const allTabs = computed(() => [
+interface NavTab {
+  label: string;
+  role: ServerAccessLevel;
+  icon: string;
+  to: string;
+  exact?: boolean;
+}
+
+const navSections = computed<{ label?: string; items: NavTab[] }[]>(() => [
   {
-    label: "Overview",
-    role: "viewer" as ServerAccessLevel,
-    icon: "i-heroicons-home-20-solid",
-    to: `/server/${id.value}`,
-    exact: true,
-  },
-  {
-    label: "Configuration",
-    role: "manager" as ServerAccessLevel,
-    icon: "i-heroicons-adjustments-horizontal-20-solid",
-    to: `/server/${id.value}/configuration`,
-  },
-  {
-    label: "Environment",
-    role: "manager" as ServerAccessLevel,
-    icon: "i-heroicons-variable-20-solid",
-    to: `/server/${id.value}/environment`,
-  },
-  {
-    label: "Players",
-    role: "viewer" as ServerAccessLevel,
-    icon: "i-heroicons-users-20-solid",
-    to: `/server/${id.value}/players`,
-  },
-  {
-    label: "Console",
-    role: "operator" as ServerAccessLevel,
-    icon: "i-heroicons-command-line-20-solid",
-    to: `/server/${id.value}/console`,
-  },
-  {
-    label: "Analytics",
-    role: "viewer" as ServerAccessLevel,
-    icon: "i-heroicons-chart-bar-20-solid",
-    to: `/server/${id.value}/analytics`,
-  },
-  {
-    label: "Backups",
-    role: "manager" as ServerAccessLevel,
-    icon: "i-heroicons-archive-box-20-solid",
-    to: `/server/${id.value}/backups`,
+    items: [
+      {
+        label: "Overview",
+        role: "viewer",
+        icon: "i-heroicons-home-20-solid",
+        to: `/server/${id.value}`,
+        exact: true,
+      },
+      {
+        label: "Console",
+        role: "operator",
+        icon: "i-heroicons-command-line-20-solid",
+        to: `/server/${id.value}/console`,
+      },
+      {
+        label: "Players",
+        role: "viewer",
+        icon: "i-heroicons-users-20-solid",
+        to: `/server/${id.value}/players`,
+      },
+      {
+        label: "Audit Log",
+        role: "viewer",
+        icon: "i-heroicons-clipboard-document-list-20-solid",
+        to: `/server/${id.value}/audit-log`,
+      },
+      {
+        label: "Analytics",
+        role: "viewer",
+        icon: "i-heroicons-chart-bar-20-solid",
+        to: `/server/${id.value}/analytics`,
+      },
+    ],
   },
   {
     label: "World",
-    role: "manager" as ServerAccessLevel,
-    icon: "i-heroicons-globe-alt-20-solid",
-    to: `/server/${id.value}/world`,
+    items: [
+      {
+        label: "Map",
+        role: "viewer",
+        icon: "i-heroicons-map-20-solid",
+        to: `/server/${id.value}/map`,
+      },
+      {
+        label: "Pre-Generation",
+        role: "manager",
+        icon: "i-heroicons-globe-alt-20-solid",
+        to: `/server/${id.value}/world`,
+      },
+      {
+        label: "Backups",
+        role: "manager",
+        icon: "i-heroicons-archive-box-20-solid",
+        to: `/server/${id.value}/backups`,
+      },
+    ],
   },
   {
-    label: "Map",
-    role: "viewer" as ServerAccessLevel,
-    icon: "i-heroicons-map-20-solid",
-    to: `/server/${id.value}/map`,
-  },
-  {
-    // Paper loads plugins; the mod loaders load mods. Unsupported types still
-    // get the tab (it explains why the feature isn't available).
-    label:
-      server.value?.config?.type === "PAPER"
-        ? "Plugins"
-        : ["FABRIC", "FORGE", "NEOFORGE", "AUTO_CURSEFORGE"].includes(
-              server.value?.config?.type ?? ""
-            )
-          ? "Mods"
-          : "Files",
-    icon: "i-heroicons-puzzle-piece-20-solid",
-    role: "manager" as ServerAccessLevel,
-    to: `/server/${id.value}/files`,
-  },
-  {
-    label: "Settings",
-    role: "manager" as ServerAccessLevel,
-    icon: "i-heroicons-cog-6-tooth-20-solid",
-    to: `/server/${id.value}/settings`,
+    label: "Server",
+    items: [
+      {
+        label: "Configuration",
+        role: "manager",
+        icon: "i-heroicons-adjustments-horizontal-20-solid",
+        to: `/server/${id.value}/configuration`,
+      },
+      {
+        label: "Mods & Plugins",
+        role: "manager",
+        icon: "i-heroicons-puzzle-piece-20-solid",
+        to: `/server/${id.value}/mods`,
+      },
+      {
+        label: "Files",
+        role: "manager",
+        icon: "i-heroicons-folder-20-solid",
+        to: `/server/${id.value}/files`,
+      },
+      {
+        label: "Environment",
+        role: "manager",
+        icon: "i-heroicons-variable-20-solid",
+        to: `/server/${id.value}/environment`,
+      },
+      {
+        label: "Settings",
+        role: "manager",
+        icon: "i-heroicons-cog-6-tooth-20-solid",
+        to: `/server/${id.value}/settings`,
+      },
+    ],
   },
 ]);
 
-const tabs = computed(() =>
-  allTabs.value.filter((tab) => can(tab.role)).map(({ role: _, ...tab }) => tab)
+const allTabs = computed(() =>
+  navSections.value.flatMap((section) => section.items)
+);
+
+const visibleSections = computed(() =>
+  navSections.value
+    .map((section) => ({
+      label: section.label,
+      items: section.items
+        .filter((tab) => can(tab.role))
+        .map(({ role: _, ...tab }) => tab),
+    }))
+    .filter((section) => section.items.length)
+);
+
+const navGroups = computed(() =>
+  visibleSections.value.map((section) =>
+    section.label
+      ? [{ label: section.label, type: "label" as const }, ...section.items]
+      : section.items
+  )
+);
+
+const activeTab = computed(() =>
+  allTabs.value.find((tab) =>
+    tab.exact ? route.path === tab.to : route.path.startsWith(tab.to)
+  )
 );
 
 // Deep links into a tab the user can't use would only show failing requests.
