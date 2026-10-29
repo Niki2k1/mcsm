@@ -70,6 +70,18 @@
         >
           Sign in with Microsoft
         </UButton>
+
+        <UButton
+          v-if="isDev"
+          block
+          color="warning"
+          variant="soft"
+          icon="i-heroicons-code-bracket"
+          :loading="devLoggingIn"
+          @click="signInAsDevAdmin"
+        >
+          Dev login (first admin)
+        </UButton>
       </div>
     </div>
   </AuthShell>
@@ -154,6 +166,22 @@ async function signInWithPasskey() {
     }
   } finally {
     authenticating.value = false;
+  }
+}
+
+const isDev = import.meta.dev;
+const devLoggingIn = ref(false);
+
+async function signInAsDevAdmin() {
+  devLoggingIn.value = true;
+  formError.value = "";
+  try {
+    await $fetch("/api/auth/dev-login", { method: "POST" });
+    await onLoggedIn();
+  } catch (error) {
+    formError.value = errorMessage(error, "Dev login failed.");
+  } finally {
+    devLoggingIn.value = false;
   }
 }
 
