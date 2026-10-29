@@ -7,7 +7,7 @@ import { parse as parseYaml } from "yaml";
  * File manager access to a server's volume.
  *
  * Scope depends on the server type (see locations.ts):
- *   - plugin servers: plugins/**
+ *   - plugin servers: plugins/** and config/** (paper-global.yml, ...)
  *   - mod servers:    config/** and <level>/serverconfig/** (Forge/NeoForge
  *                     per-world configs for the active world)
  *   - both:           <level>/datapacks/** and root-level *.yml / *.yaml /
