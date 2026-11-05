@@ -50,7 +50,7 @@ jobs:
       contents: write
       pull-requests: write
     steps:
-      - uses: danielroe/uppt/pr@6ec27140623aa835e362f866d8ab0018ab057f4d # v0.6.11
+      - uses: danielroe/uppt/pr@6c1a9b480b0f02a3f535dedaf1a113f590aa56f2 # v0.6.12
         with:
           token: ${{ secrets.GITHUB_TOKEN }}
           prerelease: ${{ inputs.prerelease }}
@@ -72,7 +72,7 @@ jobs:
       contents: write
       actions: write
     steps:
-      - uses: danielroe/uppt/release@6ec27140623aa835e362f866d8ab0018ab057f4d # v0.6.11
+      - uses: danielroe/uppt/release@6c1a9b480b0f02a3f535dedaf1a113f590aa56f2 # v0.6.12
         with:
           token: ${{ secrets.GITHUB_TOKEN }}
 
@@ -111,7 +111,7 @@ jobs:
         uses: docker/setup-buildx-action@f87e5991a6d7451dcb8d9637bfbc97413f497069 # v4.4.1
 
       - name: Log in to GHCR
-        uses: docker/login-action@dbcb813823bdd20940b903addbd779551569679f # v4.6.0
+        uses: docker/login-action@81c6f93d4bc991e510b342a00b419b3bb4efc5c6 # v4.7.0
         with:
           registry: ${{ env.REGISTRY }}
           username: ${{ github.actor }}
