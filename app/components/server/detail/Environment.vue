@@ -101,12 +101,8 @@
         </div>
       </template>
 
-      <div class="divide-y divide-default">
-        <div
-          v-for="envVar in containerEnv"
-          :key="envVar.key"
-          class="flex items-center gap-3 py-2 first:pt-0 last:pb-0"
-        >
+      <DefineEnvRow v-slot="{ envVar }">
+        <div class="flex items-center gap-3 py-2 first:pt-0 last:pb-0">
           <UBadge
             :color="SOURCE_BADGES[envVar.source].color"
             variant="soft"
@@ -129,7 +125,7 @@
 
           <UTooltip
             v-if="envVar.source === 'managed'"
-            text="Managed by MCSM — change it on the Configuration tab"
+            text="Managed by MCSM — change it on the Configuration page"
           >
             <UIcon
               name="i-heroicons-lock-closed-20-solid"
@@ -148,7 +144,44 @@
           </UButton>
           <span v-else class="w-[18px] shrink-0" />
         </div>
+      </DefineEnvRow>
+
+      <div class="divide-y divide-default">
+        <ReuseEnvRow
+          v-for="envVar in editableEnv"
+          :key="envVar.key"
+          :env-var="envVar"
+        />
       </div>
+
+      <UCollapsible
+        v-if="managedEnv.length"
+        :class="{ 'mt-4': editableEnv.length }"
+      >
+        <UButton
+          color="neutral"
+          variant="ghost"
+          size="sm"
+          icon="i-heroicons-lock-closed-20-solid"
+          trailing-icon="i-heroicons-chevron-down-20-solid"
+          :label="`${managedEnv.length} managed by MCSM`"
+          class="group -mx-2.5"
+          :ui="{
+            trailingIcon:
+              'group-data-[state=open]:rotate-180 transition-transform duration-200',
+          }"
+        />
+
+        <template #content>
+          <div class="divide-y divide-default pt-2">
+            <ReuseEnvRow
+              v-for="envVar in managedEnv"
+              :key="envVar.key"
+              :env-var="envVar"
+            />
+          </div>
+        </template>
+      </UCollapsible>
     </UCard>
 
     <!-- Sticky save bar -->
@@ -212,6 +245,18 @@ const {
 } = useFetch<EnvVar[]>(() => `/api/server/${id.value}/env`, {
   default: () => [],
 });
+
+const editableEnv = computed(() =>
+  containerEnv.value.filter((envVar) => envVar.source !== "managed")
+);
+// Managed values mirror the Configuration page, so they only add noise to this list.
+const managedEnv = computed(() =>
+  containerEnv.value.filter((envVar) => envVar.source === "managed")
+);
+
+const [DefineEnvRow, ReuseEnvRow] = createReusableTemplate<{
+  envVar: EnvVar;
+}>();
 
 const SOURCE_BADGES = {
   managed: { label: "managed", color: "neutral" as const },

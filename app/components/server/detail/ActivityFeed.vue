@@ -2,13 +2,13 @@
   <UCard>
     <template #header>
       <div class="flex items-center justify-between">
-        <h3 class="font-semibold">Activity</h3>
+        <h3 class="font-semibold">Audit log</h3>
         <UButton
           icon="i-heroicons-arrow-path-20-solid"
           variant="ghost"
           color="neutral"
           size="xs"
-          aria-label="Refresh activity"
+          aria-label="Refresh audit log"
           :loading="status === 'pending'"
           @click="refresh()"
         />

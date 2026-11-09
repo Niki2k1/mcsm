@@ -1,126 +1,90 @@
 <template>
-  <div v-if="server" class="grid gap-6 lg:grid-cols-3">
-    <div class="lg:col-span-2 space-y-6">
-      <!-- Live status -->
-      <UCard>
-        <template #header>
-          <h3 class="font-semibold">Status</h3>
-        </template>
+  <div v-if="server" class="space-y-6">
+    <!-- Live status -->
+    <UCard>
+      <template #header>
+        <h3 class="font-semibold">Status</h3>
+      </template>
 
-        <div class="space-y-4">
-          <!-- The server exactly as players see it in their multiplayer screen -->
-          <ServerListPreview
-            :name="server.name"
-            :motd="motd"
-            :favicon="displayFavicon"
-            :players="ping?.status?.players"
-            :latency="ping?.latency"
-          />
+      <div class="space-y-4">
+        <!-- The server exactly as players see it in their multiplayer screen -->
+        <ServerListPreview
+          :name="server.name"
+          :motd="motd"
+          :favicon="displayFavicon"
+          :players="ping?.status?.players"
+          :latency="ping?.latency"
+        />
 
-          <div class="grid grid-cols-2 sm:grid-cols-4 gap-4">
-            <div>
-              <p class="text-xs text-muted mb-1">State</p>
-              <UBadge :color="stateColor" variant="soft">{{
-                stateText
-              }}</UBadge>
-            </div>
-            <div>
-              <p class="text-xs text-muted mb-1">Players</p>
-              <p class="text-sm font-medium">
-                <template v-if="ping?.status?.players">
-                  {{ ping.status.players.online }}/{{ ping.status.players.max }}
-                </template>
-                <template v-else>—</template>
-              </p>
-            </div>
-            <div>
-              <p class="text-xs text-muted mb-1">Latency</p>
-              <p class="text-sm font-medium">
-                <template v-if="ping?.latency != null"
-                  >{{ ping.latency }}ms</template
-                >
-                <template v-else>—</template>
-              </p>
-            </div>
-            <div>
-              <p class="text-xs text-muted mb-1">Uptime</p>
-              <p class="text-sm font-medium">{{ uptime }}</p>
-            </div>
+        <div class="grid grid-cols-2 sm:grid-cols-4 gap-4">
+          <div>
+            <p class="text-xs text-muted mb-1">State</p>
+            <UBadge :color="stateColor" variant="soft">{{ stateText }}</UBadge>
+          </div>
+          <div>
+            <p class="text-xs text-muted mb-1">Players</p>
+            <p class="text-sm font-medium">
+              <template v-if="ping?.status?.players">
+                {{ ping.status.players.online }}/{{ ping.status.players.max }}
+              </template>
+              <template v-else>—</template>
+            </p>
+          </div>
+          <div>
+            <p class="text-xs text-muted mb-1">Latency</p>
+            <p class="text-sm font-medium">
+              <template v-if="ping?.latency != null"
+                >{{ ping.latency }}ms</template
+              >
+              <template v-else>—</template>
+            </p>
+          </div>
+          <div>
+            <p class="text-xs text-muted mb-1">Uptime</p>
+            <p class="text-sm font-medium">{{ uptime }}</p>
           </div>
         </div>
-      </UCard>
+      </div>
+    </UCard>
 
-      <!-- Connection -->
-      <UCard>
-        <template #header>
-          <h3 class="font-semibold">Connection</h3>
-        </template>
+    <!-- Voice chat (the game address lives in the page header) -->
+    <UCard v-if="voicePort">
+      <template #header>
+        <h3 class="font-semibold">Voice chat</h3>
+      </template>
 
-        <div class="flex items-center gap-2">
-          <code
-            class="flex-1 min-w-0 truncate rounded-md bg-elevated px-3 py-2 text-sm font-mono"
-            >{{ server.domain }}</code
-          >
+      <CopyField :value="`${server.domain}:${voicePort}`" />
+      <p class="text-xs text-muted mt-2">
+        Clients with Simple Voice Chat connect to this UDP port on their own
+        once they join. The port must be open in the host's firewall.
+      </p>
+    </UCard>
+
+    <!-- Configuration summary -->
+    <UCard>
+      <template #header>
+        <div class="flex items-center justify-between">
+          <h3 class="font-semibold">About</h3>
           <UButton
-            :icon="
-              copied
-                ? 'i-heroicons-check-20-solid'
-                : 'i-heroicons-clipboard-20-solid'
-            "
-            :color="copied ? 'success' : 'neutral'"
-            variant="soft"
-            aria-label="Copy server address"
-            @click="copyAddress"
-          />
-        </div>
-        <p class="text-xs text-muted mt-2">
-          Players connect with this address (default port 25565).
-        </p>
-
-        <template v-if="voicePort">
-          <USeparator class="my-4" />
-          <p class="text-xs text-muted mb-1">Voice chat (UDP)</p>
-          <code
-            class="block truncate rounded-md bg-elevated px-3 py-2 text-sm font-mono"
-            >{{ server.domain }}:{{ voicePort }}</code
+            v-if="can('manager')"
+            :to="`/server/${id}/configuration`"
+            variant="ghost"
+            color="neutral"
+            size="xs"
+            trailing-icon="i-heroicons-arrow-right-20-solid"
           >
-          <p class="text-xs text-muted mt-2">
-            Clients with Simple Voice Chat connect to this port on their own
-            once they join. The port must be open in the host's firewall.
-          </p>
-        </template>
-      </UCard>
+            Configure
+          </UButton>
+        </div>
+      </template>
 
-      <!-- Configuration summary -->
-      <UCard>
-        <template #header>
-          <div class="flex items-center justify-between">
-            <h3 class="font-semibold">About</h3>
-            <UButton
-              v-if="can('manager')"
-              :to="`/server/${id}/configuration`"
-              variant="ghost"
-              color="neutral"
-              size="xs"
-              trailing-icon="i-heroicons-arrow-right-20-solid"
-            >
-              Configure
-            </UButton>
-          </div>
-        </template>
-
-        <dl class="grid grid-cols-2 sm:grid-cols-3 gap-x-4 gap-y-5">
-          <div v-for="item in about" :key="item.label">
-            <dt class="text-xs text-muted mb-1">{{ item.label }}</dt>
-            <dd class="text-sm font-medium">{{ item.value }}</dd>
-          </div>
-        </dl>
-      </UCard>
-    </div>
-
-    <div>
-      <ServerDetailActivityFeed />
-    </div>
+      <dl class="grid grid-cols-2 sm:grid-cols-3 gap-x-4 gap-y-5">
+        <div v-for="item in about" :key="item.label">
+          <dt class="text-xs text-muted mb-1">{{ item.label }}</dt>
+          <dd class="text-sm font-medium">{{ item.value }}</dd>
+        </div>
+      </dl>
+    </UCard>
   </div>
 </template>
 
@@ -196,15 +160,4 @@ const about = computed(() => {
 });
 
 const voicePort = computed(() => activeVoicePort(server.value?.config));
-
-// --- Copy address -------------------------------------------------------------
-
-const copied = ref(false);
-
-async function copyAddress() {
-  if (!server.value) return;
-  await navigator.clipboard.writeText(server.value.domain);
-  copied.value = true;
-  setTimeout(() => (copied.value = false), 2000);
-}
 </script>

@@ -163,7 +163,7 @@ type SearchHit = {
 const props = defineProps<{
   /** Modrinth project ids already installed on the server. */
   installedProjectIds: Set<string>;
-  /** The Files tab's "restart after changes" toggle value. */
+  /** The Mods & Plugins page's "restart after changes" toggle value. */
   restart: boolean;
   /** "Plugins" or "Mods" — for copy. */
   kindLabel: string;
