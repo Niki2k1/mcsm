@@ -32,6 +32,13 @@ services:
       - /var/run/docker.sock:/var/run/docker.sock:ro
     networks:
       - dockerproxy
+    # Infrarust waits for this (see its depends_on), so report healthy only
+    # once the API actually answers.
+    healthcheck:
+      test: ["CMD", "wget", "-qO-", "http://127.0.0.1:2375/_ping"]
+      interval: 2s
+      timeout: 3s
+      retries: 15
 
   mcsm:
     image: ghcr.io/niki2k1/mcsm:latest
@@ -114,8 +121,14 @@ services:
     # a specific build (upstream only publishes the moving `latest` tag).
     image: ghcr.io/shadowner/infrarust:latest
     restart: unless-stopped
+    # Infrarust lists the existing servers only once at startup and never
+    # retries (Shadowner/Infrarust#103). If the proxy isn't listening yet,
+    # those servers stay unroutable until Infrarust restarts, so wait for the
+    # proxy to answer. A Docker daemon restart ignores this ordering; restart
+    # infrarust if servers are unreachable after a host reboot.
     depends_on:
-      - docker-socket-proxy
+      docker-socket-proxy:
+        condition: service_healthy
     environment:
       # Infrarust's docker provider selects the connection method from the
       # endpoint scheme (tcp:// -> bollard connect_with_http_defaults), but that
@@ -198,5 +211,5 @@ configs:
       # Prefer the shared network MCSM attaches Minecraft containers to when
       # resolving their backend addresses.
       network = "infrarust"
-      # Fallback polling interval; real-time updates come from the event stream.
+      # Not read by the docker provider (it follows the event stream only).
       poll_interval = "10s"
