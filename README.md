@@ -224,7 +224,7 @@ built server — see [Nuxt runtime config](https://nuxt.com/docs/guide/going-fur
 | `NUXT_DOCKER_HOSTS_DEFAULT_SOCKET_PATH` | ✅     | Path to the Docker socket MCSM provisions on. Defaults to `/var/run/docker.sock`. |
 | `NUXT_DOCKER_NETWORK`                 | ✅       | Shared Docker network Infrarust and the MC containers join. Default `infrarust`. |
 | `NUXT_DOCKER_IMAGE`                   | –        | Server image. Default `itzg/minecraft-server`. |
-| `NUXT_DOCKER_DATA_ROOT`               | –        | Absolute host path for worlds (`servers/<name>`) and backups (`backups/`) as plain directories instead of named volumes. Recommended on Unraid. Doesn't migrate existing data. |
+| `NUXT_DOCKER_DATA_ROOT`               | –        | Absolute host path for worlds (`servers/<name>`) and backups (`backups/`) as plain directories instead of named volumes. Recommended on Unraid and TrueNAS. Doesn't migrate existing data. |
 | `NUXT_RCON_PASSWORD`                  | –        | RCON password set on every server for the console. Default `minecraft`. Change it. |
 | `NUXT_RCON_PORT`                      | –        | RCON port inside the container. Default `25575` (never published). |
 | `NUXT_INTERNAL_URL`                   | –        | URL where the Minecraft containers reach MCSM on the shared Docker network (for icon downloads). Default `http://mcsm:3000`. |
@@ -339,6 +339,16 @@ for both in the Docker tab (Unraid stops containers with `docker stop`, so
 the restart policy alone won't bring them back after a reboot). Full
 walkthrough in the
 [installation docs](docs/content/1.getting-started/2.installation.md#deploy-on-unraid).
+
+### TrueNAS
+
+TrueNAS 24.10 and later run Apps as plain Docker Compose projects, so the
+stack installs as a custom app from [`truenas/mcsm.yaml`](truenas/mcsm.yaml).
+Create a dataset (e.g. `tank/apps/mcsm`), paste the file under **Apps →
+Discover Apps → ⋮ → Install via YAML** with the app name `mcsm`, and fill in
+the dataset path, session password and RCON password marked `EDIT`. Worlds,
+backups and the database land on that dataset. Full walkthrough in the
+[installation docs](docs/content/1.getting-started/2.installation.md#deploy-on-truenas).
 
 ### Plain Docker
 

@@ -1,0 +1,167 @@
+# MCSM for TrueNAS 24.10 ("Electric Eel") and later, installed as a custom
+# app: Apps → Discover Apps → ⋮ → Install via YAML, app name `mcsm`.
+#
+# TrueNAS runs each app as a plain Docker Compose project (ix-<app name>), so
+# this is the docker-compose.yml stack — mcsm, infrarust, docker-socket-proxy —
+# with two TrueNAS changes:
+#   - Worlds, backups and the database live on a dataset you create, not in
+#     named volumes inside the hidden ix-apps dataset, so they are covered by
+#     your snapshot, replication and backup tasks.
+#   - x-portals / x-notes add the Web UI button and notes on the Apps screen.
+#
+# Edit the three values marked EDIT before installing. TrueNAS stores the YAML
+# without these comments and with the dataset path expanded into both places
+# it is used, so later edits in "Edit" have to change both.
+
+# EDIT: an existing dataset (Datasets → Add Dataset, preset "Generic"). Worlds
+# go to servers/<name>, backups to backups/, the database to db/.
+x-mcsm-dataset: &dataset /mnt/tank/apps/mcsm
+
+services:
+  docker-socket-proxy:
+    image: tecnativa/docker-socket-proxy:latest
+    restart: unless-stopped
+    environment:
+      CONTAINERS: "1"
+      IMAGES: "1"
+      NETWORKS: "1"
+      VOLUMES: "1"
+      EVENTS: "1"
+      INFO: "1"
+      VERSION: "1"
+      PING: "1"
+      POST: "1"
+    volumes:
+      - /var/run/docker.sock:/var/run/docker.sock:ro
+    networks:
+      - dockerproxy
+    healthcheck:
+      test: ["CMD", "wget", "-qO-", "http://127.0.0.1:2375/_ping"]
+      interval: 2s
+      timeout: 3s
+      retries: 15
+
+  mcsm:
+    image: ghcr.io/niki2k1/mcsm:latest
+    restart: unless-stopped
+    depends_on:
+      - docker-socket-proxy
+    environment:
+      NUXT_DOCKER_HOSTS_DEFAULT_HOST: docker-socket-proxy
+      NUXT_DOCKER_HOSTS_DEFAULT_PORT: "2375"
+      NUXT_DOCKER_HOSTS_DEFAULT_PROTOCOL: http
+      NUXT_DOCKER_NETWORK: infrarust
+      NUXT_DOCKER_IMAGE: itzg/minecraft-server
+      # Minecraft containers bind-mount their world from here. It is a path on
+      # the TrueNAS host, passed to the Docker API, not one inside this container.
+      NUXT_DOCKER_DATA_ROOT: *dataset
+      NUXT_INTERNAL_URL: http://mcsm:3000
+      # EDIT: replace the whole ${...} with the output of `openssl rand -hex 32`.
+      # There is no .env file on TrueNAS, so leaving it makes the install fail
+      # with this message instead of silently logging everyone out on restart.
+      NUXT_SESSION_PASSWORD: "${NUXT_SESSION_PASSWORD:?replace it in the YAML with 32+ random characters (openssl rand -hex 32)}"
+      # EDIT: replace the whole ${...} with a password of your choice.
+      NUXT_RCON_PASSWORD: "${NUXT_RCON_PASSWORD:?replace it in the YAML with a password for the in-app console}"
+      # The dashboard is reached over plain http://<truenas-ip>:3000, where
+      # browsers drop Secure cookies. Set to "true" behind a TLS reverse proxy.
+      NUXT_SESSION_COOKIE_SECURE: "false"
+      # NUXT_OAUTH_MICROSOFT_CLIENT_ID: ""
+      # NUXT_OAUTH_MICROSOFT_CLIENT_SECRET: ""
+      # NUXT_OAUTH_MICROSOFT_TENANT: common
+    healthcheck:
+      test:
+        - CMD
+        - node
+        - -e
+        - "fetch('http://127.0.0.1:3000/').then(r=>process.exit(r.ok?0:1)).catch(()=>process.exit(1))"
+      interval: 10s
+      timeout: 5s
+      retries: 5
+      start_period: 30s
+    volumes:
+      # create_host_path: false makes a dataset path that doesn't exist (e.g.
+      # an unedited /mnt/tank) fail the install. Otherwise Docker would create
+      # it as a plain directory on the boot pool.
+      - type: bind
+        source: *dataset
+        target: /app/.data
+        bind:
+          create_host_path: false
+    networks:
+      - infrarust
+      - dockerproxy
+    ports:
+      - "3000:3000"
+
+  infrarust:
+    image: ghcr.io/shadowner/infrarust:latest
+    restart: unless-stopped
+    # Infrarust lists the existing servers only once at startup and never
+    # retries (Shadowner/Infrarust#103). If the proxy isn't listening yet,
+    # those servers stay unroutable until Infrarust restarts. TrueNAS recreates
+    # the whole stack on every install, edit and update, so wait for the proxy
+    # to answer. A reboot ignores this ordering; restart the app if servers are
+    # unreachable afterwards.
+    depends_on:
+      docker-socket-proxy:
+        condition: service_healthy
+    environment:
+      # See docker-compose.yml: the docker provider takes the address from
+      # DOCKER_HOST, not from the [docker] endpoint.
+      DOCKER_HOST: tcp://docker-socket-proxy:2375
+    configs:
+      - source: infrarust_config
+        target: /app/config/config.toml
+    volumes:
+      - infrarust-servers:/app/config/servers
+    command: ["--config", "/app/config/config.toml", "--plugins-dir", "/app/config/plugins"]
+    ports:
+      - "25565:25565"
+    networks:
+      - infrarust
+      - dockerproxy
+
+networks:
+  # Fixed name: MCSM attaches the Minecraft containers it creates to it by
+  # name, and compose would otherwise prefix it with the ix-mcsm project.
+  infrarust:
+    name: infrarust
+  dockerproxy:
+    internal: true
+
+volumes:
+  infrarust-servers:
+
+configs:
+  infrarust_config:
+    content: |
+      bind = "0.0.0.0:25565"
+      servers_dir = "/app/config/servers"
+
+      [docker]
+      endpoint = "tcp://docker-socket-proxy:2375"
+      network = "infrarust"
+      poll_interval = "10s"
+
+# The UI swaps 0.0.0.0 for the address TrueNAS was opened with. Keep the port
+# in sync with the mcsm port mapping above.
+x-portals:
+  - name: Web UI
+    scheme: http
+    host: 0.0.0.0
+    port: 3000
+    path: /
+
+x-notes: |
+  # MCSM
+
+  Open the Web UI and run the first-launch wizard, then add a domain under
+  **Admin → Domains**.
+
+  Point a DNS wildcard such as `*.mc.example.com` at this TrueNAS host and
+  forward port 25565 on your router. Infrarust routes each server by the
+  domain players connect with.
+
+  Worlds and backups are stored on the dataset set in `NUXT_DOCKER_DATA_ROOT`.
+  The Minecraft servers MCSM creates run as separate containers, so they don't
+  appear in the Apps list. Manage them in the dashboard.
